@@ -20,7 +20,8 @@ const NavBar: React.FC = () => {
     if (!activeItem) return {};
 
     const { offsetLeft, offsetWidth } = activeItem;
-    const textWidth = activeItem.querySelector('span')?.offsetWidth || 0;
+    const textElement = activeItem.querySelector('span');
+    const textWidth = textElement ? textElement.offsetWidth : 0;
     const padding = 16; // Adjust this value to control the highlight padding
 
     return {

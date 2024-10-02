@@ -45,7 +45,7 @@ const Swap: NextPage = () => {
 
   return (
     <>
-      <CardContent sx={{ padding: 0, width: '100%' }}>
+      <CardContent sx={{ padding: 0, width: '100%', pb: '0px !important' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '0px !important' }}>
           <Typography
             variant="p"

@@ -2,6 +2,7 @@ import React, { ReactNode, useRef, useEffect, useState } from 'react';
 import { Box, styled, Card, CardContent } from '@mui/material';
 import NavBar from '../components/nav/NavBar';
 import bg from './background.png';
+import { useRouter } from 'next/router';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: '#030615',
@@ -10,32 +11,79 @@ const StyledCard = styled(Card)(({ theme }) => ({
   display: 'flex',
   width: '680px',
   padding: theme.spacing(4),
-  paddingBottom: 0,
+  paddingBottom: theme.spacing(4),
   transition: 'height 0.3s ease-in-out',
 }));
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState<number | undefined>(undefined);
+  const router = useRouter();
+
+  const updateHeight = () => {
+    if (contentRef.current) {
+      const newHeight = contentRef.current.scrollHeight;
+      setContentHeight(newHeight);
+    }
+  };
 
   useEffect(() => {
-    const updateHeight = () => {
-      if (contentRef.current) {
-        setContentHeight(contentRef.current.scrollHeight);
-      }
+    const handleRouteChange = () => {
+      // Reset height when route changes
+      setContentHeight(undefined);
     };
 
-    updateHeight();
-    window.addEventListener('resize', updateHeight);
+    router.events.on('routeChangeStart', handleRouteChange);
 
     return () => {
-      window.removeEventListener('resize', updateHeight);
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [router]);
+
+  useEffect(() => {
+    updateHeight();
+
+    // Set up a MutationObserver to watch for changes in the DOM
+    const observer = new MutationObserver(updateHeight);
+    if (contentRef.current) {
+      observer.observe(contentRef.current, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        characterData: true,
+      });
+    }
+
+    // Set up a ResizeObserver to watch for size changes
+    const resizeObserver = new ResizeObserver(updateHeight);
+    if (contentRef.current) {
+      resizeObserver.observe(contentRef.current);
+    }
+
+    // Use requestAnimationFrame to ensure we're updating after layout calculations
+    const rafId = requestAnimationFrame(updateHeight);
+
+    // Clean up observers on component unmount
+    return () => {
+      observer.disconnect();
+      resizeObserver.disconnect();
+      cancelAnimationFrame(rafId);
     };
   }, [children]);
 
+  // Force re-render on children change
+  useEffect(() => {
+    setContentHeight(undefined);
+    const timerId = setTimeout(updateHeight, 0);
+    return () => clearTimeout(timerId);
+  }, [children]);
+
   return (
-    <StyledCard sx={{ height: contentHeight ? `${contentHeight}px + 32px` : 'auto' }}>
-      <CardContent sx={{ p: 0, width: '100%', height: '100%' }} ref={contentRef}>
+    <StyledCard sx={{ height: contentHeight ? `calc(${contentHeight}px + 64px)` : 'auto' }}>
+      <CardContent
+        sx={{ p: 0, width: '100%', height: '100%', pb: '0px !important' }}
+        ref={contentRef}
+      >
         {children}
       </CardContent>
     </StyledCard>

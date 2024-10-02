@@ -23,8 +23,16 @@ const theme = createTheme({
     h6: {
       fontWeight: 600,
     },
+    h5: {
+      fontWeight: 600,
+      fontSize: '20px',
+    },
+    subtitle1: {
+      fontWeight: 600,
+      fontSize: '20px',
+    },
     body1: {
-      fontSize: '0.875rem',
+      fontSize: '16px',
     },
     body2: {
       fontSize: '0.75rem',
