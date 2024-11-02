@@ -52,10 +52,12 @@ export const createBlendSlice: StateCreator<DataStore, [], [], BlendSlice> = (se
         latest_ledger_close
       );
 
+      console.log('backstop', backstop, process.env.NEXT_PUBLIC_BACKSTOP);
+
       // all pools in the reward zone + the request pools are loaded on the backstop
       let horizonServer = get().horizonServer();
       let pools = new Map<string, Pool>();
-      let pool = 'CBYCVLEHLOVGH6XYYOMXNXWC3AVSYSRUXK3MHWKVIQSDF7JQ2YNEF2FN';
+      let pool = 'CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV';
       let assetStellarMetadata = new Map<string, StellarTokenMetadata>();
       try {
         let pool_data = await Pool.load(network, pool, latest_ledger_close);

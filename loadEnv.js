@@ -4,7 +4,7 @@ import { config } from 'dotenv-flow';
 
 function loadEnv() {
   const target = process.env.TARGET_ENV || 'testnet';
-  const dotenvPath = process.cwd() + `/.env`;
+  const dotenvPath = process.cwd() + `/.env.local`;
 
   if (!fs.existsSync(dotenvPath)) {
     console.error(`[loadEnv] ${dotenvPath} does not exist`);

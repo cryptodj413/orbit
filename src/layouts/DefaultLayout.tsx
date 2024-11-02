@@ -3,6 +3,7 @@ import { Box, styled, Card, CardContent } from '@mui/material';
 import NavBar from '../components/nav/NavBar';
 import bg from './background.png';
 import { useRouter } from 'next/router';
+import ConnectWalletModal from '../components/nav/ConnectWalletModal';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: '#030615',
@@ -39,44 +40,6 @@ const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       router.events.off('routeChangeStart', handleRouteChange);
     };
   }, [router]);
-
-  useEffect(() => {
-    updateHeight();
-
-    // Set up a MutationObserver to watch for changes in the DOM
-    const observer = new MutationObserver(updateHeight);
-    if (contentRef.current) {
-      observer.observe(contentRef.current, {
-        childList: true,
-        subtree: true,
-        attributes: true,
-        characterData: true,
-      });
-    }
-
-    // Set up a ResizeObserver to watch for size changes
-    const resizeObserver = new ResizeObserver(updateHeight);
-    if (contentRef.current) {
-      resizeObserver.observe(contentRef.current);
-    }
-
-    // Use requestAnimationFrame to ensure we're updating after layout calculations
-    const rafId = requestAnimationFrame(updateHeight);
-
-    // Clean up observers on component unmount
-    return () => {
-      observer.disconnect();
-      resizeObserver.disconnect();
-      cancelAnimationFrame(rafId);
-    };
-  }, [children]);
-
-  // Force re-render on children change
-  useEffect(() => {
-    setContentHeight(undefined);
-    const timerId = setTimeout(updateHeight, 0);
-    return () => clearTimeout(timerId);
-  }, [children]);
 
   return (
     <StyledCard sx={{ height: contentHeight ? `calc(${contentHeight}px + 64px)` : 'auto' }}>
@@ -117,6 +80,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
         }}
       >
         <NavBar />
+        <ConnectWalletModal />
         <ChildrenCard>{children}</ChildrenCard>
       </Box>
     </Box>

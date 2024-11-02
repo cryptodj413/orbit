@@ -1,39 +1,142 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Grid, Button } from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { CurrencyExchange, Calculate, History } from '@mui/icons-material';
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { Typography, Grid, Box, Button } from '@mui/material';
 import { NextPage } from 'next';
-import DashboardCard from '../components/dashboard/DashboardCard';
-import StyledGrid from '../components/common/StyledGrid';
+import { Icon } from '../components/common/Icon';
+import { FlameIcon } from '../components/common/FlameIcon';
+import { RightArrowIcon } from '../components/common/RightArrowIcon';
+
+const WithdrawButton = (): JSX.Element => {
+  return (
+    <Button
+      sx={{
+        background: 'rgba(150, 253, 2, 0.16)',
+        borderRadius: '8px',
+        color: 'white',
+        padding: '8px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        '&:hover': {
+          backgroundColor: '#96fd0252',
+        },
+      }}
+    >
+      <Typography
+        variant="h6"
+        component="span"
+        sx={{
+          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
+          fontWeight: 'bold',
+          fontSize: '1.25rem',
+          lineHeight: 'normal',
+          letterSpacing: '-0.8px',
+        }}
+      >
+        Withdraw
+      </Typography>
+      {/* <AddIcon sx={{ fontSize: '24px' }} /> */}
+    </Button>
+  );
+};
+
+const RepayButton = (): JSX.Element => {
+  return (
+    <Button
+      sx={{
+        background: 'rgba(253, 2, 213, 0.16)',
+        borderRadius: '8px',
+        color: 'white',
+        padding: '8px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        '&:hover': {
+          backgroundColor: '#96fd0252',
+        },
+      }}
+    >
+      <Typography
+        variant="h6"
+        component="span"
+        sx={{
+          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
+          fontWeight: 'bold',
+          fontSize: '1.25rem',
+          lineHeight: 'normal',
+          letterSpacing: '-0.8px',
+        }}
+      >
+        Repay
+      </Typography>
+      {/* <AddIcon sx={{ fontSize: '24px' }} /> */}
+    </Button>
+  );
+};
+
+const InfoSection = ({ title, items }) => (
+  <Grid item xs={6}>
+    <Typography variant="h5" gutterBottom>
+      {title}
+    </Typography>
+    {items.map((item, index) => (
+      <Typography
+        key={index}
+        variant="body1"
+        sx={{ display: 'flex', justifyContent: 'space-between' }}
+      >
+        <span>{item.label}:</span>
+        <span style={{ fontWeight: 'bold' }}>{item.value}</span>
+      </Typography>
+    ))}
+  </Grid>
+);
 
 const Dashboard: NextPage = () => {
   const riskValue = 20; // Example risk value (0-100)
 
+  const overviewData = [
+    { label: 'Total Collateral Deposited', value: '315.16USD' },
+    { label: 'Total Debt Outstanding', value: '20.15%' },
+  ];
+
+  const positionsData = [{ label: 'Total Collateral Deposited', value: '315.16USD' }];
+
+  const balancesData = [
+    { label: 'Stellar Lumens', value: '1,562 XLM' },
+    { label: 'Orbital US Dollar', value: '102.78 oUSD' },
+  ];
+
   return (
-    <Grid>
-      <Grid container>
-        <Grid xs={6} item>
-          <Typography variant="h5">Overview</Typography>
-          <Typography variant="body1">Total Collateral Deposited: 315.16USD</Typography>
-          <Typography variant="body1">Total Debt Outstanding: 20.15%</Typography>
-        </Grid>
-        <Grid xs={6} item>
-          <Typography variant="h5">My Positions</Typography>
-          <Typography variant="body1">Total Collateral Deposited: 315.16USD</Typography>
+    <Grid container spacing={4}>
+      <Grid container item spacing={4}>
+        <InfoSection title="Overview" items={overviewData} />
+        <InfoSection title="My Positions" items={positionsData} />
+      </Grid>
+      <Grid container item spacing={4}>
+        <InfoSection title="Balances" items={balancesData} />
+        <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <FlameIcon />
+          <Box>
+            <Typography variant="body1">Claim Pool Emissions</Typography>
+            <Typography variant="subtitle1">0 BLEND</Typography>
+          </Box>
+          <RightArrowIcon />
         </Grid>
       </Grid>
-      <Grid container>
-        <Grid item xs={6}>
-          <Typography variant="h5">Balances</Typography>
-          <Typography variant="body1">Stellar Lumens 1,562 XLM</Typography>
-          <Typography variant="body1">Orbital US Dollar 102.78 oUSD</Typography>
-        </Grid>
-      </Grid>
-      <Grid container>
+
+      <Grid container item spacing={4}>
         <Grid item xs={3}>
           <Typography variant="body1">Asset</Typography>
-          <Typography variant="subtitle1">XLM</Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <img
+              src={'/icons/tokens/xlm.svg'}
+              alt={'XLM'}
+              width="30px"
+              height="30px"
+              style={{ borderRadius: '100px' }}
+            />
+            <Typography variant="subtitle1">XLM</Typography>
+          </Box>
         </Grid>
         <Grid item xs={3}>
           <Typography variant="body1">Balance</Typography>
@@ -44,7 +147,33 @@ const Dashboard: NextPage = () => {
           <Typography variant="subtitle1">151.09%</Typography>
         </Grid>
         <Grid item xs={3}>
-          {/* Button */}
+          <WithdrawButton />
+        </Grid>
+      </Grid>
+      <Grid container item spacing={4}>
+        <Grid item xs={3}>
+          <Typography variant="body1">Asset</Typography>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <img
+              src={'/icons/tokens/xlm.svg'}
+              alt={'XLM'}
+              width="30px"
+              height="30px"
+              style={{ borderRadius: '100px' }}
+            />
+            <Typography variant="subtitle1">XLM</Typography>
+          </Box>
+        </Grid>
+        <Grid item xs={3}>
+          <Typography variant="body1">Balance</Typography>
+          <Typography variant="subtitle1">3.06k</Typography>
+        </Grid>
+        <Grid item xs={3}>
+          <Typography variant="body1">APR</Typography>
+          <Typography variant="subtitle1">151.09%</Typography>
+        </Grid>
+        <Grid item xs={3}>
+          <RepayButton />
         </Grid>
       </Grid>
     </Grid>

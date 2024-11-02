@@ -1,10 +1,9 @@
-// components/borrow/CollateralRatioSlider.tsx
 import React from 'react';
 import { Box, Typography, Slider } from '@mui/material';
 
 interface CollateralRatioSliderProps {
   value: number;
-  onChange: (newValue: number) => void;
+  onChange: (event: Event, newValue: number | number[]) => void;
 }
 
 const CollateralRatioSlider: React.FC<CollateralRatioSliderProps> = ({ value, onChange }) => (
@@ -15,18 +14,18 @@ const CollateralRatioSlider: React.FC<CollateralRatioSliderProps> = ({ value, on
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Slider
         value={value}
-        onChange={(_, newValue) => onChange(newValue as number)}
+        onChange={onChange}
         aria-labelledby="collateral-ratio-slider"
         valueLabelDisplay="auto"
         step={1}
         marks={[
-          { value: 135, label: '135%' },
+          { value: 110, label: '110%' },
           { value: 200, label: '200%' },
-          { value: 250, label: '250%' },
           { value: 300, label: '300%' },
+          { value: 500, label: '500%' },
         ]}
-        min={135}
-        max={300}
+        min={110}
+        max={500}
         sx={{
           color: '#96FD02',
           '& .MuiSlider-thumb': {

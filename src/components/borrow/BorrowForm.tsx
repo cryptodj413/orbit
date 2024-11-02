@@ -1,4 +1,3 @@
-// components/borrow/BorrowForm.tsx
 import React from 'react';
 import { Box, Typography, Select, MenuItem } from '@mui/material';
 import DynamicWidthInput from '../common/DynamicWidthInput';
@@ -15,23 +14,37 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
   oUsdAmount,
   onXlmChange,
   onOUsdChange,
-}) => (
-  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-    <CurrencyInput
-      value={xlmAmount}
-      onChange={onXlmChange}
-      currency="XLM"
-      label="Stellar Lumen (XLM)"
-    />
-    <Box sx={{ color: 'white', fontSize: 24 }}>↔</Box>
-    <CurrencyInput
-      value={oUsdAmount}
-      onChange={onOUsdChange}
-      currency="oUSD"
-      label="Orbital Dollar (oUSD)"
-    />
-  </Box>
-);
+}) => {
+  const conversionRate = 0.005481; // 1 XLM = 0.005481 oUSD
+
+  const handleXlmChange = (value: string) => {
+    onXlmChange(value);
+    onOUsdChange((parseFloat(value || '0') * conversionRate).toFixed(2));
+  };
+
+  const handleOUsdChange = (value: string) => {
+    onOUsdChange(value);
+    onXlmChange((parseFloat(value || '0') / conversionRate).toFixed(2));
+  };
+
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <CurrencyInput
+        value={xlmAmount}
+        onChange={handleXlmChange}
+        currency="XLM"
+        label="Stellar Lumen (XLM)"
+      />
+      <Box sx={{ color: 'white', fontSize: 24 }}>↔</Box>
+      <CurrencyInput
+        value={oUsdAmount}
+        onChange={handleOUsdChange}
+        currency="oUSD"
+        label="Orbital Dollar (oUSD)"
+      />
+    </Box>
+  );
+};
 
 interface CurrencyInputProps {
   value: string;

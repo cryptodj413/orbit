@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -10,8 +10,27 @@ import {
   Select,
   MenuItem,
   InputBase,
+  TextField,
+  useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import {
+  parseResult,
+  PoolContract,
+  PositionEstimates,
+  RequestType,
+  SubmitArgs,
+  UserPositions,
+} from '@blend-capital/blend-sdk';
+import { SorobanRpc } from '@stellar/stellar-sdk';
+import { useSettings, ViewType } from '../../contexts';
+import { TxStatus, TxType, useWallet } from '../../contexts/wallet';
+import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../../hooks/debounce';
+import { useStore } from '../../store/store';
+import { toBalance, toPercentage } from '../../utils/formatter';
+import { requiresTrustline } from '../../utils/horizon';
+import { scaleInputToBigInt } from '../../utils/scval';
+import { getErrorFromSim, SubmitError } from '../../utils/txSim';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: '#030615',
@@ -88,28 +107,126 @@ const DynamicWidthInput = ({ value, onChange, placeholder }) => {
 };
 
 const BorrowAnvil: React.FC = () => {
+  const theme = useTheme();
+  const { viewType } = useSettings();
+  const { connected, walletAddress, poolSubmit, txStatus, txType, createTrustline, isLoading } =
+    useWallet();
+
+  const poolId = '';
+  const assetId = '';
+
+  const poolData = useStore((state) => state.pools.get(poolId));
+  const userPoolData = useStore((state) => state.userPoolData.get(poolId));
+  const userAccount = useStore((state) => state.account);
+
+  const [toBorrow, setToBorrow] = useState<string>('');
   const [collateralRatio, setCollateralRatio] = useState<number>(200);
-  const [xlmAmount, setXlmAmount] = useState<string>('');
-  const [oUsdAmount, setOUsdAmount] = useState<string>('');
-  const conversionRate = 0.005481; // 1 XLM = 0.005481 oUSD
+  const [collateralAmount, setCollateralAmount] = useState<string>('0');
+  const [simResponse, setSimResponse] = useState<SorobanRpc.Api.SimulateTransactionResponse>();
+  const [parsedSimResult, setParsedSimResult] = useState<UserPositions>();
+  const [loadingEstimate, setLoadingEstimate] = useState<boolean>(false);
+  const loading = isLoading || loadingEstimate;
 
-  const handleCollateralRatioChange = (event: Event, newValue: number | number[]) => {
-    setCollateralRatio(newValue as number);
-  };
-
-  const handleXlmChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setXlmAmount(value);
-    setOUsdAmount((parseFloat(value || '0') * conversionRate).toFixed(2));
-  };
-
-  const handleOUsdChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setOUsdAmount(value);
-    setXlmAmount((parseFloat(value || '0') / conversionRate).toFixed(2));
-  };
+  const reserve = poolData?.reserves.get(assetId);
+  const assetToBase = reserve?.oraclePrice ?? 1;
+  const decimals = reserve?.config.decimals ?? 7;
+  const symbol = reserve?.tokenMetadata?.symbol ?? '';
 
   const isAmountFilled = xlmAmount !== '' && oUsdAmount !== '';
+
+  useEffect(() => {
+    if (txStatus === TxStatus.SUCCESS && txType === TxType.CONTRACT && Number(toBorrow) != 0) {
+      setToBorrow('');
+    }
+  }, [txStatus, txType, toBorrow]);
+
+  useDebouncedState(toBorrow, RPC_DEBOUNCE_DELAY, txType, async () => {
+    setSimResponse(undefined);
+    setParsedSimResult(undefined);
+    let response = await handleSubmitTransaction(true);
+    if (response) {
+      setSimResponse(response);
+      if (SorobanRpc.Api.isSimulationSuccess(response)) {
+        setParsedSimResult(parseResult(response, PoolContract.parsers.submit));
+      }
+    }
+    setLoadingEstimate(false);
+  });
+
+  const newPositionEstimate = useMemo(() => {
+    return poolData && parsedSimResult
+      ? PositionEstimates.build(poolData, parsedSimResult)
+      : undefined;
+  }, [poolData, parsedSimResult]);
+
+  const { isSubmitDisabled, isMaxDisabled, reason, disabledType, extraContent, isError } =
+    useMemo(() => {
+      const hasTokenTrustline = !requiresTrustline(userAccount, reserve?.tokenMetadata?.asset);
+      if (!hasTokenTrustline) {
+        return {
+          isSubmitDisabled: true,
+          isError: true,
+          isMaxDisabled: true,
+          reason: 'You need a trustline for this asset in order to borrow it.',
+          disabledType: 'warning',
+        };
+      } else {
+        return getErrorFromSim(toBorrow, decimals, loading, simResponse, undefined);
+      }
+    }, [toBorrow, simResponse, userPoolData?.positionEstimates, userAccount, reserve, theme]);
+
+  const handleBorrowMax = () => {
+    if (reserve && userPoolData) {
+      let to_bounded_hf =
+        (userPoolData.positionEstimates.totalEffectiveCollateral -
+          userPoolData.positionEstimates.totalEffectiveLiabilities * 1.02) /
+        1.02;
+      let to_borrow = Math.min(
+        to_bounded_hf / (assetToBase * reserve.getLiabilityFactor()),
+        reserve.estimates.supplied * (reserve.config.max_util / 1e7 - 0.01) -
+          reserve.estimates.borrowed
+      );
+      setToBorrow(Math.max(to_borrow, 0).toFixed(7));
+      setLoadingEstimate(true);
+    }
+  };
+
+  const handleSubmitTransaction = async (sim: boolean) => {
+    if (toBorrow && connected && reserve) {
+      let submitArgs: SubmitArgs = {
+        from: walletAddress,
+        to: walletAddress,
+        spender: walletAddress,
+        requests: [
+          {
+            amount: scaleInputToBigInt(toBorrow, reserve.config.decimals),
+            address: reserve.assetId,
+            request_type: RequestType.Borrow,
+          },
+          {
+            amount: scaleInputToBigInt(toBorrow, reserve.config.decimals),
+            request_type: RequestType.SupplyCollateral,
+            address: reserve.assetId,
+          },
+        ],
+      };
+      return await poolSubmit(poolId, submitArgs, sim);
+    }
+  };
+
+  const handleAddAssetTrustline = async () => {
+    if (connected && reserve?.tokenMetadata?.asset) {
+      await createTrustline(reserve.tokenMetadata.asset);
+    }
+  };
+
+  const handleCollateralChange = (event: Event, value: number | number[]) => {
+    if (typeof value === 'number') {
+      setCollateralRatio(value);
+      const newCollateralAmount = ((Number(toBorrow) * value) / 100).toFixed(2);
+      setCollateralAmount(newCollateralAmount);
+    }
+  };
 
   return (
     <StyledCard sx={{ display: 'flex', width: '680px', background: '#030615', p: 4, pb: 0 }}>
@@ -148,13 +265,20 @@ const BorrowAnvil: React.FC = () => {
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-                  <DynamicWidthInput value={xlmAmount} onChange={handleXlmChange} placeholder="0" />
+                  <DynamicWidthInput
+                    value={toBorrow}
+                    onChange={(e) => {
+                      setToBorrow(e.target.value);
+                      setLoadingEstimate(true);
+                    }}
+                    placeholder="0"
+                  />
                   <Typography variant="h4" color="white" sx={{ ml: 1 }}>
-                    XLM
+                    {symbol}
                   </Typography>
                 </Box>
                 <Select
-                  value="XLM"
+                  value={symbol}
                   sx={{
                     mt: 1,
                     color: 'white',
@@ -163,7 +287,7 @@ const BorrowAnvil: React.FC = () => {
                     },
                   }}
                 >
-                  <MenuItem value="XLM">Stellar Lumen (XLM)</MenuItem>
+                  <MenuItem value={symbol}>{symbol}</MenuItem>
                 </Select>
               </Box>
 
@@ -180,8 +304,8 @@ const BorrowAnvil: React.FC = () => {
               >
                 <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
                   <DynamicWidthInput
-                    value={oUsdAmount}
-                    onChange={handleOUsdChange}
+                    value={(Number(toBorrow) * assetToBase).toFixed(2)}
+                    onChange={() => {}}
                     placeholder="0"
                   />
                   <Typography variant="h4" color="white" sx={{ ml: 1 }}>
@@ -212,18 +336,18 @@ const BorrowAnvil: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Slider
                 value={collateralRatio}
-                onChange={handleCollateralRatioChange}
+                onChange={handleCollateralChange}
                 aria-labelledby="collateral-ratio-slider"
                 valueLabelDisplay="auto"
                 step={1}
                 marks={[
-                  { value: 135, label: '135%' },
+                  { value: 110, label: '110%' },
                   { value: 200, label: '200%' },
-                  { value: 250, label: '250%' },
                   { value: 300, label: '300%' },
+                  { value: 500, label: '500%' },
                 ]}
-                min={135}
-                max={300}
+                min={110}
+                max={500}
                 sx={{
                   color: '#96FD02',
                   '& .MuiSlider-thumb': {
@@ -315,7 +439,8 @@ const BorrowAnvil: React.FC = () => {
         <Button
           variant="contained"
           fullWidth
-          disabled={!isAmountFilled}
+          disabled={isSubmitDisabled}
+          onClick={() => handleSubmitTransaction(false)}
           sx={{
             mt: 2,
             padding: '16px 8px',
@@ -331,7 +456,7 @@ const BorrowAnvil: React.FC = () => {
             borderRadius: '7px',
           }}
         >
-          Submit Transaction
+          Borrow
         </Button>
       </CardContent>
     </StyledCard>

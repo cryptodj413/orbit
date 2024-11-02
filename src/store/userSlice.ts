@@ -31,12 +31,16 @@ export const createUserSlice: StateCreator<DataStore, [], [], UserSlice> = (set,
       const rpc = get().rpcServer();
       const networkPassphrase = network.passphrase;
 
+      console.log(network, rpc, networkPassphrase);
+
       if (get().latestLedgerTimestamp == 0) {
-        await get().loadBlendData(true, 'CBYCVLEHLOVGH6XYYOMXNXWC3AVSYSRUXK3MHWKVIQSDF7JQ2YNEF2FN');
+        await get().loadBlendData(true, 'CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV');
       }
 
       const backstop = get().backstop;
+      console.log('bs', backstop);
       const pools = get().pools;
+      console.log('pools', pools);
 
       if (backstop == undefined || pools.size == 0) {
         throw new Error('Unable to fetch backstop or pool data');
@@ -55,6 +59,7 @@ export const createUserSlice: StateCreator<DataStore, [], [], UserSlice> = (set,
       }
 
       // load user data for backstop
+      console.log('NETWORK/ID', network, id);
       let backstop_user = await backstop.loadUser(network, id);
 
       // load pool data for user for each tracked pool

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
 import { useRouter } from 'next/router';
 import NavItem from './NavItem';
+import { WalletMenu } from './WalletMenu';
 
 const NavBar: React.FC = () => {
   const router = useRouter();
@@ -74,6 +75,11 @@ const NavBar: React.FC = () => {
             ...getHighlightStyle(),
           }}
         />
+      </Box>
+      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'end' }}>
+        <Box sx={{ width: '70%' }}>
+          <WalletMenu />
+        </Box>
       </Box>
     </Box>
   );

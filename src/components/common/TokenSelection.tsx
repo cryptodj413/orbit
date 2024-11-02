@@ -5,6 +5,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 interface Token {
   name: string;
   icon: string;
+  decimals: number;
 }
 
 interface TokenSelectionProps {
@@ -14,7 +15,8 @@ interface TokenSelectionProps {
   balance: string;
   amount: string;
   onAmountChange: (amount: string) => void;
-  alignment?: 'start' | 'end'; // New prop for alignment
+  alignment?: 'start' | 'end';
+  decimals: number;
 }
 
 const TokenSelection: React.FC<TokenSelectionProps> = ({
@@ -24,7 +26,8 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
   balance,
   amount,
   onAmountChange,
-  alignment = 'start', // Default to 'start' if not specified
+  alignment = 'start',
+  decimals,
 }) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
@@ -41,14 +44,29 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
     handleClose();
   };
 
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers and one decimal point
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      // Prevent more decimal places than the token allows
+      if (value.includes('.')) {
+        const [, decimal] = value.split('.');
+        if (decimal && decimal.length > decimals) {
+          return;
+        }
+      }
+      onAmountChange(value);
+    }
+  };
+
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
         gap: '10px',
-        alignItems: alignment, // Use the alignment prop here
-        width: '100%', // Ensure the box takes full width for proper alignment
+        alignItems: alignment,
+        width: '100%',
       }}
     >
       <Box
@@ -106,7 +124,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
       </Typography>
       <TextField
         value={amount}
-        onChange={(e) => onAmountChange(e.target.value)}
+        onChange={handleAmountChange}
         variant="standard"
         InputProps={{
           disableUnderline: true,
@@ -114,8 +132,9 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         }}
         sx={{
           input: { color: 'white', textAlign: alignment },
-          width: '100%', // Ensure the TextField takes full width
+          width: '100%',
         }}
+        placeholder="0.0"
       />
     </Box>
   );
