@@ -68,7 +68,7 @@ export default function ContextProvider({ children }: { children: React.ReactNod
         case 'mainnet':
           protocols = protocols.filter(
             (protocol) =>
-              protocol.key == Protocol.SOROSWAP || protocol.key == PlatformType.STELLAR_CLASSIC
+              protocol.key == Protocol.SOROSWAP || protocol.key == PlatformType.STELLAR_CLASSIC,
           );
           break;
       }
@@ -81,10 +81,8 @@ export default function ContextProvider({ children }: { children: React.ReactNod
 
   return (
     <AppContext.Provider value={appContextValues}>
-      <DefaultLayout>
-        {children}
-        <Analytics />
-      </DefaultLayout>
+      {children}
+      <Analytics />
     </AppContext.Provider>
   );
 }

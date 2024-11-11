@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useReducer } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -8,21 +8,18 @@ import {
   Grid,
   CircularProgress,
   Modal,
+  useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import BigNumber from 'bignumber.js';
 import SwapIcon from '../components/icons/SwapIcon';
 import TokenSelection from '../components/common/TokenSelection';
 import { NextPage } from 'next';
-import { useRouter } from 'next/router';
 import { useWallet } from '../contexts/wallet';
 import { useSwapCallback } from '../hooks/useSwapCallback';
 import { InterfaceTrade, PlatformType, TradeState } from '../state/routing/types';
 import { TradeType } from 'soroswap-router-sdk';
-import swapReducer, { SwapState, initialState as initialSwapState } from '../state/swap/reducer';
 import { formatTokenAmount, parseUnits } from '../helpers/format';
 import { useStore } from '../store/store';
-import { TokenType } from 'interfaces';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: theme.palette.background.paper,
@@ -55,7 +52,7 @@ const TOKENS = {
 };
 
 const Swap: NextPage = () => {
-  const router = useRouter();
+  const theme = useTheme();
   const { connected, walletAddress } = useWallet();
   const [fromToken, setFromToken] = useState(tokens[0]);
   const [toToken, setToToken] = useState(tokens[1]);
@@ -234,17 +231,44 @@ const Swap: NextPage = () => {
   };
 
   return (
-    <StyledCard>
-      <CardContent sx={{ padding: 0, width: '100%', pb: '0px !important' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', padding: '0px !important' }}>
-          <Typography gutterBottom color="white" sx={{ padding: '0px 6px', opacity: 0.7 }}>
+    <Card
+      sx={{
+        backgroundColor: '#0A0B0D', // Dark background
+        borderRadius: '24px',
+        minWidth: '480px',
+        maxWidth: '100%',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+      }}
+    >
+      <CardContent sx={{ padding: theme.spacing(3), width: '100%' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            mb: 2,
+          }}
+        >
+          <Typography
+            sx={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '16px',
+              fontWeight: 400,
+            }}
+          >
             You swap
           </Typography>
-          <Typography gutterBottom color="white" sx={{ padding: '0px 6px', opacity: 0.7 }}>
-            To receive
+          <Typography
+            sx={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '16px',
+              fontWeight: 400,
+            }}
+          >
+            to receive
           </Typography>
         </Box>
-        <Box sx={{ position: 'relative', mb: 2 }}>
+
+        <Box sx={{ position: 'relative', mb: theme.spacing(2) }}>
           <SwapIcon />
           <Box
             sx={{
@@ -256,10 +280,10 @@ const Swap: NextPage = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '16px',
+              p: theme.spacing(2),
             }}
           >
-            <Grid container spacing={2}>
+            <Grid container spacing={theme.spacing(2)}>
               <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'start' }}>
                 <TokenSelection
                   tokens={tokens}
@@ -287,84 +311,114 @@ const Swap: NextPage = () => {
             </Grid>
           </Box>
         </Box>
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 1 }}>
-            Slippage: {calculateSlippage()}
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body1" color="text.primary">
-              1 {toToken.name} = {(1 / 10).toFixed(5)} {fromToken.name}
-            </Typography>
-            <Typography variant="body1" color="text.primary">
-              Price Impact: {calculatePriceImpact()}
-            </Typography>
-          </Box>
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            onClick={handleSwap}
-            disabled={isMainButtonDisabled()}
+
+        {/* Slippage and Rate Information */}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            align="center"
             sx={{
-              background: isLoading ? '#83868F' : '#83868F',
-              opacity: isLoading ? 0.5 : 1,
-              borderRadius: '7px',
-              height: '55px',
+              color: 'rgba(255, 255, 255, 0.7)',
+              mb: 2,
             }}
           >
-            {isLoading ? <CircularProgress size={24} /> : getMainButtonText()}
-          </Button>
-        </Box>
-
-        <Modal
-          open={swapState.showConfirm}
-          onClose={handleConfirmDismiss}
-          aria-labelledby="confirm-swap-modal"
-        >
-          <Box sx={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px' }}>
-            <Typography variant="h6">Confirm Swap</Typography>
-            <Typography>
-              {fromAmount} {fromToken.name} → {toAmount} {toToken.name}
-            </Typography>
-            <Typography>Slippage: {calculateSlippage()}</Typography>
-            <Typography>Price Impact: {calculatePriceImpact()}</Typography>
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-              <Button onClick={handleConfirmDismiss} variant="outlined">
-                Cancel
-              </Button>
-              <Button onClick={handleSwap} variant="contained" disabled={isLoading}>
-                {isLoading ? <CircularProgress size={24} /> : 'Confirm Swap'}
-              </Button>
+            Slippage: 3%
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              color: 'rgba(255, 255, 255, 0.7)',
+            }}
+          >
+            <Typography>1 oUSD = 0.09214 XLM</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <img src="/icons/tag.svg" style={{ width: 16, height: 16 }} />
+              <Typography>0.5% = 154.12 XLM</Typography>
             </Box>
           </Box>
-        </Modal>
+        </Box>
 
-        {swapState.swapError && (
-          <Modal
-            open={Boolean(swapState.swapError)}
-            onClose={handleConfirmDismiss}
-            aria-labelledby="error-modal"
+        {/* Transaction Overview */}
+        {fromAmount && parseFloat(fromAmount) > 0 && (
+          <Box
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '16px',
+              p: 2,
+              mb: 3,
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+            }}
           >
-            <Box sx={{ padding: '20px', backgroundColor: '#fff', borderRadius: '8px' }}>
-              <Typography variant="h6" color="error">
-                Error
-              </Typography>
-              <Typography>{swapState.swapError.message}</Typography>
-              <Button
-                onClick={handleConfirmDismiss}
-                sx={{ mt: 2 }}
-                variant="contained"
-                color="error"
-              >
-                Close
-              </Button>
+            <Typography
+              sx={{
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: 500,
+                mb: 2,
+              }}
+            >
+              Transaction Overview
+            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>You Swap</Typography>
+              <Typography sx={{ color: 'white' }}>{fromAmount} oUSD</Typography>
             </Box>
-          </Modal>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>You Receive</Typography>
+              <Typography sx={{ color: 'white' }}>{toAmount} XLM</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Gas:</Typography>
+              <Typography sx={{ color: 'white' }}>0.03 XLM</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Platform Fee:</Typography>
+              <Typography sx={{ color: 'white' }}>0.5%</Typography>
+            </Box>
+          </Box>
         )}
+
+        {/* Advanced Options Button */}
+        <Button
+          fullWidth
+          sx={{
+            color: 'white',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: '16px',
+            mb: 2,
+            py: 2,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            '&:hover': {
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            },
+          }}
+        >
+          Advanced Options
+        </Button>
+
+        {/* Submit Transaction Button */}
+        <Button
+          fullWidth
+          disabled={isMainButtonDisabled()}
+          onClick={handleSwap}
+          sx={{
+            backgroundColor: isMainButtonDisabled() ? 'rgba(255, 255, 255, 0.1)' : '#0215D3',
+            color: 'white',
+            borderRadius: '16px',
+            py: 2,
+            fontSize: '16px',
+            '&:hover': {
+              backgroundColor: isMainButtonDisabled() ? 'rgba(255, 255, 255, 0.1)' : '#0313A9',
+            },
+            '&:disabled': {
+              color: 'rgba(255, 255, 255, 0.5)',
+            },
+          }}
+        >
+          {isLoading ? <CircularProgress size={24} /> : getMainButtonText()}
+        </Button>
       </CardContent>
-    </StyledCard>
+    </Card>
   );
 };
 

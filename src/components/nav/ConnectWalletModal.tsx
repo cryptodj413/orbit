@@ -5,7 +5,7 @@ import { Connector } from '@soroban-react/types';
 import { AppContext } from '../../contexts';
 import Image from 'next/image';
 import { walletConnectors } from '../../soroban/MySorobanReactProvider';
-import { Box, CircularProgress, Modal, styled, useMediaQuery, useTheme } from 'soroswap-ui';
+import { Box, CircularProgress, Modal, styled, useMediaQuery, useTheme } from '@mui/material';
 import ModalBox from './ModalBox';
 
 const Title = styled('div')`
@@ -120,7 +120,7 @@ const ConnectWalletContent = ({
   };
   const handleClick = async (
     wallet: Connector,
-    walletStatus: { name: string; isInstalled: boolean; isLoading: boolean } | undefined
+    walletStatus: { name: string; isInstalled: boolean; isLoading: boolean } | undefined,
   ) => {
     if (!walletStatus) return;
     if (walletStatus.isLoading) return;
@@ -163,7 +163,7 @@ const ConnectWalletContent = ({
           </Subtitle>
           {wallets?.map((wallet, index) => {
             const walletStatus = walletsStatus.find(
-              (walletStatus) => walletStatus.name === wallet.id
+              (walletStatus) => walletStatus.name === wallet.id,
             );
             let walletIconUrl = wallet.iconUrl as string;
 
