@@ -1,5 +1,5 @@
 import '/public/fonts/satoshi-variable.css';
-import '../components/landing/styles.css';
+// import '../components/landing/styles.css';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { AppProps } from 'next/app';
