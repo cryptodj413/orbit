@@ -1,17 +1,12 @@
 import React from 'react';
 import { Box, Typography, IconButton, Menu, MenuItem, TextField } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-
-interface Token {
-  name: string;
-  icon: string;
-  decimals: number;
-}
+import { TokenType } from '../../interfaces';
 
 interface TokenSelectionProps {
-  tokens: Token[];
-  selectedToken: Token;
-  onTokenSelect: (token: Token) => void;
+  tokens: TokenType[];
+  selectedToken: TokenType;
+  onTokenSelect: (token: TokenType) => void;
   balance: string;
   amount: string;
   onAmountChange: (amount: string) => void;
@@ -39,16 +34,14 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
     setAnchorEl(null);
   };
 
-  const handleTokenSelect = (token: Token) => {
+  const handleTokenSelect = (token: TokenType) => {
     onTokenSelect(token);
     handleClose();
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Only allow numbers and one decimal point
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      // Prevent more decimal places than the token allows
       if (value.includes('.')) {
         const [, decimal] = value.split('.');
         if (decimal && decimal.length > decimals) {
@@ -82,9 +75,9 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         style={{ cursor: 'pointer' }}
       >
         <Box display="flex" alignItems="center" gap={1}>
-          <img src={selectedToken.icon} alt={selectedToken.name} width="20" height="20" />
+          <img src={selectedToken.icon} alt={selectedToken.code} width="20" height="20" />
           <Typography variant="body2" color="white">
-            {selectedToken.name}
+            {selectedToken.code}
           </Typography>
         </Box>
         <IconButton size="small" sx={{ color: 'white' }}>
@@ -105,22 +98,22 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         }}
       >
         {tokens.map((token) => (
-          <MenuItem key={token.name} onClick={() => handleTokenSelect(token)}>
+          <MenuItem key={token.contract} onClick={() => handleTokenSelect(token)}>
             <Box display="flex" alignItems="center" gap={1}>
               <img
                 src={token.icon}
-                alt={token.name}
+                alt={token.code}
                 width="20"
                 height="20"
                 style={{ borderRadius: '100px' }}
               />
-              <Typography variant="body2">{token.name}</Typography>
+              <Typography variant="body2">{token.code}</Typography>
             </Box>
           </MenuItem>
         ))}
       </Menu>
       <Typography variant="body2" color="white" sx={{ textAlign: alignment }}>
-        Balance: {balance} {selectedToken.name}
+        Balance: {balance} {selectedToken.code}
       </Typography>
       <TextField
         value={amount}

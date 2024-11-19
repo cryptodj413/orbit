@@ -81,7 +81,7 @@ export default function ContextProvider({ children }: { children: React.ReactNod
 
   return (
     <AppContext.Provider value={appContextValues}>
-      {children}
+      <DefaultLayout>{children}</DefaultLayout>
       <Analytics />
     </AppContext.Provider>
   );

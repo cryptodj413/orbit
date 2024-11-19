@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { NextPage } from 'next';
-import SwapAnvil from '../components/swap/SwapAnvil';
+import SwapAnvil from '../components/Swap/SwapAnvil';
 import BorrowAnvil from '../components/borrow/BorrowAnvil';
 import Dashboard from '../components/dashboard/PositionOverview';
 

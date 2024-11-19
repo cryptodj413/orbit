@@ -1,8 +1,8 @@
 import { Network } from '@blend-capital/blend-sdk';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { SorobanRpc } from '@stellar/stellar-sdk';
+import { useLocalStorageState } from 'hooks/useLocalStorageState';
 import React, { useContext, useState } from 'react';
-import { useLocalStorageState } from '../hooks';
 
 const DEFAULT_RPC = process.env.NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';
 const DEFAULT_HORIZON =
@@ -56,7 +56,7 @@ export const SettingsProvider = ({ children = null as any }) => {
   const [showJoinPool, setShowJoinPool] = useState<boolean>(true);
   const [trackedPoolsString, setTrackedPoolsString] = useLocalStorageState(
     'trackedPools',
-    undefined
+    undefined,
   );
 
   const trackedPools = JSON.parse(trackedPoolsString || '[]') as TrackedPool[];
@@ -69,7 +69,7 @@ export const SettingsProvider = ({ children = null as any }) => {
   function handleSetNetwork(
     newRpcUrl: string,
     newHorizonUrl: string,
-    opts?: SorobanRpc.Server.Options
+    opts?: SorobanRpc.Server.Options,
   ) {
     setNetwork({ rpc: newRpcUrl, passphrase: DEFAULT_PASSPHRASE, opts, horizonUrl: newHorizonUrl });
   }

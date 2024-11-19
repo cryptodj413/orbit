@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 /** @dev @TODO check if is useful or not (why would you want both state and ls unless it affects renders) */
 export const useLocalStorageState = (
   key: string,
-  defaultState: string | undefined
+  defaultState: string | undefined,
 ): [string | undefined, (newState: string) => void] => {
   const [state, setState] = useState<string | undefined>(defaultState);
 
@@ -26,7 +26,7 @@ export const useLocalStorageState = (
         localStorage.setItem(key, JSON.stringify(newState));
       }
     },
-    [state, key]
+    [state, key],
   );
 
   return [state, setLocalStorageState];

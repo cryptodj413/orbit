@@ -42,7 +42,7 @@ const revalidateKeysCondition = (key: any) => {
 const logTransactionResult = (
   method: RouterMethod,
   result: TxResponse,
-  args?: StellarSdk.xdr.ScVal[]
+  args?: StellarSdk.xdr.ScVal[],
 ) => {
   try {
     // Log structured transaction data
@@ -54,9 +54,6 @@ const logTransactionResult = (
       args: args?.map((arg) => arg.toXDR('base64')), // Convert args to readable format
       rawResult: result,
     };
-
-    console.group('Router Transaction Result');
-    console.log(JSON.stringify(txInfo, null, 2));
 
     if (result?.status !== StellarSdk.SorobanRpc.Api.GetTransactionStatus.SUCCESS) {
       console.warn('Transaction not successful:', result);
@@ -81,7 +78,6 @@ export function useRouterCallback() {
   return useCallback(
     async (method: RouterMethod, args?: StellarSdk.xdr.ScVal[], signAndSend?: boolean) => {
       try {
-        console.log('args', args);
         const result = (await contractInvoke({
           contractAddress: router_address as string,
           method: method,
@@ -124,6 +120,6 @@ export function useRouterCallback() {
         throw error;
       }
     },
-    [router_address, sorobanContext, mutate]
+    [router_address, sorobanContext, mutate],
   );
 }

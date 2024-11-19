@@ -32,9 +32,9 @@ import {
   xdr,
 } from '@stellar/stellar-sdk';
 import React, { useContext, useEffect, useState } from 'react';
-import { useLocalStorageState } from '../hooks';
 import { useStore } from '../store/store';
 import { CometClient, CometLiquidityArgs, CometSingleSidedDepositArgs } from '../utils/comet';
+import { useLocalStorageState } from 'hooks/useLocalStorageState';
 
 export interface IWalletContext {
   connected: boolean;
@@ -53,47 +53,47 @@ export interface IWalletContext {
   poolSubmit: (
     poolId: string,
     submitArgs: SubmitArgs,
-    sim: boolean
+    sim: boolean,
   ) => Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   poolClaim: (
     poolId: string,
     claimArgs: PoolClaimArgs,
-    sim: boolean
+    sim: boolean,
   ) => Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   backstopDeposit(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   backstopWithdraw(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   backstopQueueWithdrawal(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   backstopDequeueWithdrawal(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   backstopClaim(
     args: BackstopClaimArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   cometSingleSidedDeposit(
     cometPoolId: string,
     args: CometSingleSidedDepositArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   cometJoin(
     cometPoolId: string,
     args: CometLiquidityArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   cometExit(
     cometPoolId: string,
     args: CometLiquidityArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
   faucet(): Promise<undefined>;
   createTrustline(asset: Asset): Promise<void>;
@@ -294,7 +294,7 @@ export const WalletProvider = ({ children = null as any }) => {
   }
 
   async function simulateOperation(
-    operation: xdr.Operation
+    operation: xdr.Operation,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse> {
     try {
       setLoading(true);
@@ -361,7 +361,7 @@ export const WalletProvider = ({ children = null as any }) => {
   async function poolSubmit(
     poolId: string,
     submitArgs: SubmitArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const pool = new PoolContract(poolId);
@@ -383,7 +383,7 @@ export const WalletProvider = ({ children = null as any }) => {
   async function poolClaim(
     poolId: string,
     claimArgs: PoolClaimArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const pool = new PoolContract(poolId);
@@ -405,7 +405,7 @@ export const WalletProvider = ({ children = null as any }) => {
    */
   async function backstopDeposit(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
       let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
@@ -425,7 +425,7 @@ export const WalletProvider = ({ children = null as any }) => {
    */
   async function backstopWithdraw(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
       let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
@@ -445,7 +445,7 @@ export const WalletProvider = ({ children = null as any }) => {
    */
   async function backstopQueueWithdrawal(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
       let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
@@ -465,7 +465,7 @@ export const WalletProvider = ({ children = null as any }) => {
    */
   async function backstopDequeueWithdrawal(
     args: PoolBackstopActionArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
       let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
@@ -485,7 +485,7 @@ export const WalletProvider = ({ children = null as any }) => {
    */
   async function backstopClaim(
     claimArgs: BackstopClaimArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
       let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
@@ -507,7 +507,7 @@ export const WalletProvider = ({ children = null as any }) => {
   async function cometSingleSidedDeposit(
     cometPoolId: string,
     args: CometSingleSidedDepositArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     try {
       if (connected) {
@@ -526,7 +526,7 @@ export const WalletProvider = ({ children = null as any }) => {
   async function cometJoin(
     cometPoolId: string,
     args: CometLiquidityArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     try {
       if (connected) {
@@ -545,7 +545,7 @@ export const WalletProvider = ({ children = null as any }) => {
   async function cometExit(
     cometPoolId: string,
     args: CometLiquidityArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
     try {
       if (connected) {
@@ -570,7 +570,7 @@ export const WalletProvider = ({ children = null as any }) => {
         const txEnvelopeXDR = await resp.text();
         let transaction = new Transaction(
           xdr.TransactionEnvelope.fromXDR(txEnvelopeXDR, 'base64'),
-          network.passphrase
+          network.passphrase,
         );
 
         let signedTx = new Transaction(await sign(transaction.toXDR()), network.passphrase);
