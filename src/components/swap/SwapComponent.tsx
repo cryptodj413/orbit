@@ -296,7 +296,6 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
   return (
     <Card
       sx={{
-        backgroundColor: '#0A0B0D',
         borderRadius: '24px',
         minWidth: '480px',
         maxWidth: '100%',
