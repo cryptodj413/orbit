@@ -21,39 +21,39 @@ const colors = {
 
 // Typography definitions based on the design system
 const typography: TypographyOptions = {
-  fontFamily: 'Roboto, Gendy, Arial, sans-serif',
+  fontFamily: 'Roboto, sans-serif',
   h1: {
-    fontFamily: 'Satoshi Bold',
+    fontFamily: 'Roboto, sans-serif',
     fontSize: '61px',
     lineHeight: '76.25px',
     letterSpacing: '2%',
   },
   h2: {
-    fontFamily: 'Roboto',
+    fontFamily: 'Roboto, sans-serif',
     fontSize: '39px',
     lineHeight: 'auto',
     letterSpacing: '2%',
   },
   h3: {
-    fontFamily: 'Roboto',
+    fontFamily: 'Roboto, sans-serif',
     fontSize: '31px',
     lineHeight: 'auto',
     letterSpacing: '2%',
   },
   h4: {
-    fontFamily: 'Roboto',
+    fontFamily: 'Roboto, sans-serif',
     fontSize: '25px',
     lineHeight: 'auto',
     letterSpacing: '2%',
   },
   body1: {
-    fontFamily: 'Roboto',
+    fontFamily: 'Roboto, sans-serif',
     fontSize: '20px',
     lineHeight: 'auto',
     letterSpacing: '2%',
   },
   body2: {
-    fontFamily: 'Roboto',
+    fontFamily: 'Roboto, sans-serif',
     fontSize: '16px',
     lineHeight: 'auto',
     letterSpacing: '0',
@@ -81,14 +81,14 @@ const theme = createTheme({
         root: {
           borderRadius: 8,
           textTransform: 'none',
-          fontFamily: 'Roboto',
+          fontFamily: 'Roboto, sans-serif',
         },
       },
     },
     MuiTextField: {
       styleOverrides: {
         root: {
-          fontFamily: 'Roboto',
+          fontFamily: 'Roboto, sans-serif',
         },
       },
     },

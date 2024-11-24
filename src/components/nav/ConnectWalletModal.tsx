@@ -5,17 +5,40 @@ import { Connector } from '@soroban-react/types';
 import { AppContext } from '../../contexts';
 import Image from 'next/image';
 import { walletConnectors } from '../../soroban/MySorobanReactProvider';
-import { Box, CircularProgress, Modal, styled, useMediaQuery, useTheme } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  createTheme,
+  Modal,
+  styled,
+  ThemeProvider,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+
+const modalTheme = createTheme({
+  typography: {
+    fontFamily: 'Roboto, sans-serif',
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        '*': {
+          fontFamily: 'Roboto, sans-serif',
+        },
+      },
+    },
+  },
+});
 
 const ContentWrapper = styled('div')<{ isMobile: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 24px;
-  font-family: Inter;
   text-align: ${({ isMobile }) => (isMobile ? 'center' : 'left')};
 `;
 
-const ModalBox = styled('div')`
+const ModalBox = styled(Box)`
   position: absolute;
   top: 50%;
   left: 50%;
@@ -28,13 +51,13 @@ const ModalBox = styled('div')`
   color: white;
 `;
 
-const Title = styled('div')`
+const Title = styled(Box)`
   font-size: 24px;
   font-weight: 500;
   color: white;
 `;
 
-const Subtitle = styled('div')`
+const Subtitle = styled(Box)`
   font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.7);
@@ -43,7 +66,7 @@ const Subtitle = styled('div')`
   }
 `;
 
-const Text = styled('div')`
+const Text = styled(Box)`
   font-size: 12px;
   font-weight: 300;
   textwrap: wrap;
@@ -53,7 +76,7 @@ const Text = styled('div')`
   }
 `;
 
-const Info = styled('div')`
+const Info = styled(Box)`
   font-size: 10px;
   font-weight: 100;
   textwrap: wrap;
@@ -63,7 +86,7 @@ const Info = styled('div')`
   }
 `;
 
-const WalletBox = styled('div')`
+const WalletBox = styled(Box)`
   cursor: pointer;
   display: flex;
   border-radius: 12px;
@@ -82,7 +105,7 @@ const WalletBox = styled('div')`
   }
 `;
 
-const FooterText = styled('div')<{ isMobile: boolean }>`
+const FooterText = styled(Box)<{ isMobile: boolean }>`
   opacity: 0.5;
   font-size: 12px;
   font-weight: 600;
@@ -108,6 +131,16 @@ const buildWalletsStatus = () => {
     connector: w,
   }));
 };
+
+const WalletItem = styled(Box)`
+  display: flex;
+  gap: 16px;
+  align-items: center;
+`;
+
+const WalletName = styled(Box)`
+  color: white;
+`;
 
 const ConnectWalletContent = ({
   isMobile,
@@ -195,16 +228,16 @@ const ConnectWalletContent = ({
 
             return (
               <WalletBox key={index} onClick={() => handleClick(wallet, walletStatus)}>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <WalletItem>
                   <Image src={walletIconUrl} width={24} height={24} alt={wallet.name + ' Wallet'} />
-                  <span>{wallet.name} Wallet</span>
-                </div>
+                  <WalletName>{wallet.name} Wallet</WalletName>
+                </WalletItem>
                 {walletStatus?.isInstalled ? (
-                  <span>Detected</span>
+                  <Box component="span">Detected</Box>
                 ) : walletStatus?.isLoading ? (
                   <CircularProgress size={16} />
                 ) : (
-                  <span>Install</span>
+                  <Box component="span">Install</Box>
                 )}
               </WalletBox>
             );
@@ -267,35 +300,37 @@ export default function ConnectWalletModal() {
   };
 
   return (
-    <Modal
-      open={isConnectWalletModalOpen}
-      onClose={() => {
-        setConnectWalletModalOpen(false);
-        setErrorMessage(null);
-      }}
-      aria-labelledby="modal-wallet-connect"
-      aria-describedby="modal-wallet-disconnect"
-      BackdropProps={{
-        sx: {
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        },
-      }}
-    >
-      <div>
-        {errorMessage ? (
-          <ErrorContent
-            isMobile={isMobile}
-            handleClick={() => setErrorMessage(null)}
-            errorMessage={errorMessage}
-          />
-        ) : (
-          <ConnectWalletContent
-            isMobile={isMobile}
-            wallets={supportedWallets}
-            onError={handleError}
-          />
-        )}
-      </div>
-    </Modal>
+    <ThemeProvider theme={modalTheme}>
+      <Modal
+        open={isConnectWalletModalOpen}
+        onClose={() => {
+          setConnectWalletModalOpen(false);
+          setErrorMessage(null);
+        }}
+        aria-labelledby="modal-wallet-connect"
+        aria-describedby="modal-wallet-disconnect"
+        BackdropProps={{
+          sx: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          },
+        }}
+      >
+        <Box component="div">
+          {errorMessage ? (
+            <ErrorContent
+              isMobile={isMobile}
+              handleClick={() => setErrorMessage(null)}
+              errorMessage={errorMessage}
+            />
+          ) : (
+            <ConnectWalletContent
+              isMobile={isMobile}
+              wallets={supportedWallets}
+              onError={handleError}
+            />
+          )}
+        </Box>
+      </Modal>
+    </ThemeProvider>
   );
 }
