@@ -14,7 +14,7 @@ import { SorobanRpc } from '@stellar/stellar-sdk';
 import {
   parseResult,
   PoolContract,
-  PositionsEstimate,
+  PositionEstimates,
   Positions,
   RequestType,
   SubmitArgs,
@@ -23,191 +23,188 @@ import {
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import { useHorizonAccount, usePool, usePoolOracle, usePoolUser } from '../hooks/api';
 import { useSettings } from '../contexts';
+import useGetMyBalances from 'hooks/useGetMyBalances';
 
 const POOL_ID = 'CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV';
+const XLM_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
 const Borrow: NextPage = () => {
   const [collateralRatio, setCollateralRatio] = useState<number>(200);
   const [xlmAmount, setXlmAmount] = useState<string>('');
   const [oUsdAmount, setOUsdAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [simResponse, setSimResponse] = useState<SorobanRpc.Api.SimulateTransactionResponse>();
+  const [parsedSimResult, setParsedSimResult] = useState<Positions>();
 
   const theme = useTheme();
   const { viewType } = useSettings();
-
   const { connected, walletAddress, poolSubmit, txStatus, txType, createTrustline } = useWallet();
 
+  // Data fetching hooks
+  const poolData = useStore((state) =>
+    state.pools.get('CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV'),
+  );
   const { data: pool } = usePool(POOL_ID);
   const { data: poolOracle } = usePoolOracle(pool);
-  const { data: poolUser } = usePoolUser(pool);
-  const reserve = pool?.reserves.get('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC');
-  const decimals = reserve?.config.decimals ?? 7;
-  const symbol = reserve?.tokenMetadata.symbol ?? 'token';
+  const poolUser = useStore((state) =>
+    state.userPoolData.get('CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV'),
+  );
   const { data: horizonAccount } = useHorizonAccount();
 
-  const [toBorrow, setToBorrow] = useState<string>('');
-  const [simResponse, setSimResponse] = useState<SorobanRpc.Api.SimulateTransactionResponse>();
-  const [parsedSimResult, setParsedSimResult] = useState<Positions>();
-  const [loadingEstimate, setLoadingEstimate] = useState<boolean>(false);
-  const loading = isLoading || loadingEstimate;
+  // Get reserve data
+  const reserve = pool?.reserves.get(XLM_ADDRESS);
+  const decimals = reserve?.config.decimals ?? 7;
+  const symbol = reserve?.tokenMetadata?.symbol ?? 'XLM';
 
-  if (txStatus === TxStatus.SUCCESS && txType === TxType.CONTRACT && Number(toBorrow) != 0) {
-    setToBorrow('');
+  // Reset amounts on successful transaction
+  if (txStatus === TxStatus.SUCCESS && txType === TxType.CONTRACT && Number(xlmAmount) !== 0) {
+    setXlmAmount('');
+    setOUsdAmount('');
   }
 
+  // Calculate position estimates
+  const curPositionEstimate = useMemo(() => {
+    // if (pool && poolOracle && poolUser) {
+    //   return PositionEstimates.build(pool, poolOracle, poolUser.positions);
+    // }
+    return undefined;
+  }, [pool, poolOracle, poolUser]);
+
+  const newPositionEstimate = useMemo(() => {
+    if (poolData && parsedSimResult) {
+      return PositionEstimates.build(poolData, parsedSimResult);
+    }
+    return undefined;
+  }, [pool, poolOracle, parsedSimResult]);
+
+  // Calculate asset values
+  const assetToBase = poolOracle?.getPriceFloat(XLM_ADDRESS) ?? 1;
+  const assetToEffectiveLiability = assetToBase * (reserve?.getLiabilityFactor() ?? 1);
+
+  // Calculate borrow caps and limits
+  // const curBorrowCap =
+  //   curPositionEstimate && assetToEffectiveLiability
+  //     ? curPositionEstimate.borrowCap / assetToEffectiveLiability
+  //     : 0;
+
+  // const nextBorrowCap =
+  //   newPositionEstimate && assetToEffectiveLiability
+  //     ? newPositionEstimate.borrowCap / assetToEffectiveLiability
+  //     : 0;
+
+  // const curBorrowLimit = curPositionEstimate?.borrowLimit ?? 0;
+  // const nextBorrowLimit = newPositionEstimate?.borrowLimit ?? 0;
+
+  // Handle input changes
   const handleCollateralRatioChange = (event: Event, newValue: number | number[]) => {
-    setCollateralRatio(Array.isArray(newValue) ? newValue[0] : newValue);
+    const value = Array.isArray(newValue) ? newValue[0] : newValue;
+    setCollateralRatio(value);
+    if (xlmAmount) {
+      const newOUsdAmount = (Number(xlmAmount) * (value / 100)).toString();
+      setOUsdAmount(newOUsdAmount);
+    }
   };
 
   const handleXlmChange = (value: string) => {
     setXlmAmount(value);
+    const newOUsdAmount = (Number(value) * (collateralRatio / 100)).toString();
+    setOUsdAmount(newOUsdAmount);
   };
 
   const handleOUsdChange = (value: string) => {
     setOUsdAmount(value);
+    const newXlmAmount = (Number(value) / (collateralRatio / 100)).toString();
+    setXlmAmount(newXlmAmount);
   };
 
+  // Simulate transaction
+  const simulateTransaction = async (amount: string) => {
+    if (!amount || !connected || !reserve) return;
+
+    const submitArgs: SubmitArgs = {
+      from: walletAddress,
+      to: walletAddress,
+      spender: walletAddress,
+      requests: [
+        {
+          amount: scaleInputToBigInt(amount, reserve.config.decimals),
+          address: reserve.assetId,
+          request_type: RequestType.Borrow,
+        },
+        {
+          amount: scaleInputToBigInt(amount, reserve.config.decimals),
+          request_type: RequestType.SupplyCollateral,
+          address: reserve.assetId,
+        },
+      ],
+    };
+
+    return await poolSubmit(POOL_ID, submitArgs, true);
+  };
+
+  // Debounced simulation
   useDebouncedState(xlmAmount, RPC_DEBOUNCE_DELAY, txType, async () => {
     setSimResponse(undefined);
     setParsedSimResult(undefined);
-    let response = await simulateTransaction(xlmAmount);
+    setIsLoading(true);
+
+    const response = await simulateTransaction(xlmAmount);
     if (response) {
       setSimResponse(response);
       if (SorobanRpc.Api.isSimulationSuccess(response)) {
         setParsedSimResult(parseResult(response, PoolContract.parsers.submit));
       }
     }
+
     setIsLoading(false);
   });
 
-  const simulateTransaction = async (amount: string) => {
-    setIsLoading(true);
-
-    if (amount && connected && reserve) {
-      let submitArgs: SubmitArgs = {
-        from: walletAddress,
-        to: walletAddress,
-        spender: walletAddress,
-        requests: [
-          {
-            amount: scaleInputToBigInt(amount, reserve.config.decimals),
-            address: reserve.assetId,
-            request_type: RequestType.Borrow,
-          },
-          {
-            amount: scaleInputToBigInt(amount, reserve.config.decimals),
-            request_type: RequestType.SupplyCollateral,
-            address: reserve.assetId,
-          },
-        ],
-      };
-      return await poolSubmit(POOL_ID, submitArgs, true); // Replace with actual pool ID
-    }
-  };
-
-  const curPositionEstimate =
-    pool && poolOracle && poolUser
-      ? PositionsEstimate.build(pool, poolOracle, poolUser.positions)
-      : undefined;
-  const newPoolUser = parsedSimResult && new PoolUser(walletAddress, parsedSimResult, new Map());
-  const newPositionEstimate =
-    pool && poolOracle && parsedSimResult
-      ? PositionsEstimate.build(pool, poolOracle, parsedSimResult)
-      : undefined;
-
-  const assetToBase = poolOracle?.getPriceFloat(
-    'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC'
-  );
-
-  const assetToEffectiveLiability = assetToBase
-    ? assetToBase * reserve.getLiabilityFactor()
-    : undefined;
-  const curBorrowCap =
-    curPositionEstimate && assetToEffectiveLiability
-      ? curPositionEstimate.borrowCap / assetToEffectiveLiability
-      : undefined;
-  const nextBorrowCap =
-    newPositionEstimate && assetToEffectiveLiability
-      ? newPositionEstimate.borrowCap / assetToEffectiveLiability
-      : undefined;
-  const curBorrowLimit =
-    curPositionEstimate && Number.isFinite(curPositionEstimate.borrowLimit)
-      ? curPositionEstimate.borrowLimit
-      : 0;
-  const nextBorrowLimit =
-    newPositionEstimate && Number.isFinite(newPositionEstimate?.borrowLimit)
-      ? newPositionEstimate?.borrowLimit
-      : 0;
-
+  // Handle transaction submission
   const handleSubmitTransaction = async () => {
-    console.log(
-      {
-        amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
-        address: reserve.assetId,
-        request_type: RequestType.Borrow,
-      },
-      {
-        amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
-        request_type: RequestType.SupplyCollateral,
-        address: reserve.assetId,
-      }
-    );
-    if (xlmAmount && connected && reserve) {
-      let submitArgs: SubmitArgs = {
-        from: walletAddress,
-        to: walletAddress,
-        spender: walletAddress,
-        requests: [
-          {
-            amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
-            request_type: RequestType.SupplyCollateral,
-            address: reserve.assetId,
-          },
-          // {
-          //   amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
-          //   address: reserve.assetId,
-          //   request_type: RequestType.Borrow,
-          // },
-        ],
-      };
-      await poolSubmit(POOL_ID, submitArgs, false); // Replace with actual pool ID
-      submitArgs = {
-        from: walletAddress,
-        to: walletAddress,
-        spender: walletAddress,
-        requests: [
-          // {
-          //   amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
-          //   request_type: RequestType.SupplyCollateral,
-          //   address: reserve.assetId,
-          // },
-          {
-            amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
-            address: reserve.assetId,
-            request_type: RequestType.Borrow,
-          },
-        ],
-      };
-      await poolSubmit(POOL_ID, submitArgs, false);
-    } else {
-      console.log(xlmAmount, connected, reserve);
+    if (!xlmAmount || !connected || !reserve) {
+      console.log('Missing required data:', { xlmAmount, connected, reserve });
+      return;
     }
+
+    // First supply collateral
+    const supplyArgs: SubmitArgs = {
+      from: walletAddress,
+      to: walletAddress,
+      spender: walletAddress,
+      requests: [
+        {
+          amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
+          request_type: RequestType.SupplyCollateral,
+          address: reserve.assetId,
+        },
+      ],
+    };
+    await poolSubmit(POOL_ID, supplyArgs, false);
+
+    // Then borrow
+    const borrowArgs: SubmitArgs = {
+      from: walletAddress,
+      to: walletAddress,
+      spender: walletAddress,
+      requests: [
+        {
+          amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
+          address: reserve.assetId,
+          request_type: RequestType.Borrow,
+        },
+      ],
+    };
+    await poolSubmit(POOL_ID, borrowArgs, false);
   };
 
-  if (txStatus === TxStatus.SUCCESS && txType === TxType.CONTRACT && Number(xlmAmount) != 0) {
-    setXlmAmount('');
-    setOUsdAmount('');
-  }
-
+  // Your existing JSX return remains unchanged
   return (
     <>
       <StyledGrid>
-        {/* First row */}
         <Grid item xs={3}>
           <Box sx={{ textAlign: 'center', color: 'white' }}>
             <Typography variant="subtitle2">Borrow APY</Typography>
-            {/* <Typography variant="h6">{toPercentage(reserve?.estimates.borrowApy ?? 0)}</Typography> */}
-            <Typography variant="h6">3%</Typography>
+            <Typography variant="h6">{toPercentage(0)}</Typography>
           </Box>
         </Grid>
         <Grid item xs={6}>
@@ -220,12 +217,11 @@ const Borrow: NextPage = () => {
           <Box sx={{ textAlign: 'center', color: 'white' }}>
             <Typography variant="subtitle2">Total Borrowed</Typography>
             <Typography variant="h6">
-              {/* {toBalance(reserve?.estimates.borrowed ?? 0, decimals)} */}
+              {toBalance(reserve?.estimates.borrowed ?? 0, decimals)}
             </Typography>
           </Box>
         </Grid>
 
-        {/* Second row */}
         <Grid item xs={12} sx={{ borderRight: '0px !important' }}>
           <BorrowForm
             xlmAmount={xlmAmount}
@@ -235,24 +231,22 @@ const Borrow: NextPage = () => {
           />
         </Grid>
 
-        {/* Third row */}
         <Grid item xs={12} sx={{ borderRight: '0px !important' }}>
           <CollateralRatioSlider value={collateralRatio} onChange={handleCollateralRatioChange} />
         </Grid>
 
-        {/* Fourth row */}
         {xlmAmount !== '' && (
           <Grid item xs={12} sx={{ padding: '0px !important' }}>
             <TransactionOverview
               amount={xlmAmount}
-              symbol={reserve?.tokenMetadata?.symbol ?? ''}
+              symbol={symbol}
               collateralRatio={collateralRatio}
               collateralAmount={xlmAmount}
               assetToBase={assetToBase}
               decimals={decimals}
               userPoolData={poolUser}
               newPositionEstimate={newPositionEstimate}
-              assetId={'your_asset_id'} // Replace with actual asset ID
+              assetId={XLM_ADDRESS}
               simResponse={simResponse}
               isLoading={isLoading}
             />
@@ -264,7 +258,7 @@ const Borrow: NextPage = () => {
         variant="contained"
         fullWidth
         onClick={handleSubmitTransaction}
-        disabled={false}
+        disabled={!connected || !xlmAmount || isLoading}
         sx={{
           mt: 2,
           padding: '16px 8px',

@@ -20,10 +20,13 @@ import { useWallet } from '../../contexts/wallet';
 import * as formatter from '../../utils/formatter';
 import { CustomButton } from '../common/CustomButton';
 import { WalletButton } from './WalletButton';
+import { useSorobanReact } from '@soroban-react/core';
 
 export const WalletMenu = () => {
   const theme = useTheme();
   const { connect, disconnect, connected, walletAddress, isLoading } = useWallet();
+  const sorobanContext = useSorobanReact();
+  const isSorobanConnected = Boolean(sorobanContext.activeConnector);
 
   // snackbars
   const [openCon, setOpenCon] = React.useState(false);
@@ -40,7 +43,9 @@ export const WalletMenu = () => {
   };
 
   const handleDisconnectWallet = () => {
+    // Disconnect both wallet and Soroban
     disconnect();
+    sorobanContext.disconnect();
     setOpenDis(true);
   };
 
@@ -72,41 +77,58 @@ export const WalletMenu = () => {
     setAnchorElDropdown(null);
   };
 
+  // Show connected state only when both wallet and Soroban are connected
+  const fullyConnected = connected && isSorobanConnected;
+
   return (
     <>
-      {connected ? (
+      {fullyConnected ? (
         <CustomButton
           id="wallet-dropdown-button"
           onClick={handleClickDropdown}
           sx={{
             width: '100%',
-            height: '100%',
+            height: '44px',
             color: theme.palette.text.secondary,
             background: '#030615',
+            borderRadius: '8px',
           }}
         >
           <WalletIcon />
-          <Typography variant="body1" color={theme.palette.text.primary}>
+          <Typography variant="body1" color="white">
             {formatter.toCompactAddress(walletAddress)}
           </Typography>
-          <ArrowDropDownIcon sx={{ color: theme.palette.text.secondary }} />
+          <ArrowDropDownIcon sx={{ color: 'white' }} />
         </CustomButton>
       ) : (
-        <Box>
-          <Button
-            id="connect-wallet-dropdown-button"
-            variant="contained"
-            color="primary"
-            endIcon={<ArrowDropDownIcon />}
-            onClick={handleClickConnect}
-            disabled={isLoading}
-            sx={{ width: '100%' }}
-          >
-            Connect Wallet
-          </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {!connected && (
+            <Button
+              id="connect-wallet-dropdown-button"
+              variant="contained"
+              onClick={handleClickConnect}
+              disabled={isLoading}
+              sx={{
+                height: '44px',
+                backgroundColor: '',
+                color: 'white',
+                borderRadius: '8px',
+                '&:hover': {
+                  backgroundColor: '#1565c0',
+                },
+                '&:disabled': {
+                  backgroundColor: '#1a2847',
+                  color: 'rgba(255, 255, 255, 0.3)',
+                },
+              }}
+            >
+              Connect Wallet
+            </Button>
+          )}
           <WalletButton />
         </Box>
       )}
+
       <Menu
         id="wallet-dropdown-menu"
         anchorEl={anchorElDropdown}
@@ -114,23 +136,29 @@ export const WalletMenu = () => {
         onClose={handleClose}
         MenuListProps={{
           'aria-labelledby': 'wallet-dropdown-button',
-          sx: { width: anchorElDropdown && anchorElDropdown.offsetWidth },
+          sx: {
+            width: anchorElDropdown && anchorElDropdown.offsetWidth,
+            backgroundColor: '#030615',
+            color: 'white',
+          },
         }}
-        PaperProps={
-          {
-            // @ts-ignore - TODO: Figure out why typing is broken
-          }
-        }
+        PaperProps={{
+          sx: {
+            backgroundColor: '#030615',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          },
+        }}
       >
         <MenuItem
           onClick={() => {
             handleClose();
             handleCopyAddress();
           }}
+          sx={{ color: 'white' }}
         >
           <ListItemText>Copy address</ListItemText>
           <ListItemIcon>
-            <ContentCopyIcon />
+            <ContentCopyIcon sx={{ color: 'white' }} />
           </ListItemIcon>
         </MenuItem>
         <MenuItem

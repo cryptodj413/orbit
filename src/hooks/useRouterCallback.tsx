@@ -86,7 +86,6 @@ export function useRouterCallback() {
           signAndSend: signAndSend,
           reconnectAfterTx: false,
         })) as TxResponse;
-        console.log('2');
 
         // Log the result with structured data
         const txInfo = logTransactionResult(method, result, args);

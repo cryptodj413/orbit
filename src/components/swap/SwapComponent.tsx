@@ -160,6 +160,38 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
     [decimals, dependentField, independentField, trade?.expectedAmount, typedValue],
   );
 
+  const {
+    tokenBalancesResponse,
+    availableNativeBalance,
+    isLoading: isLoadingMyBalances,
+  } = useGetMyBalances();
+
+  // Initialize with default tokens (XLM and USDC)
+  useEffect(() => {
+    if (!currencies[Field.INPUT] || !currencies[Field.OUTPUT]) {
+      const xlmToken = tokens.find((t) => t.code === 'XLM');
+      const usdcToken = tokens.find((t) => t.code === 'USDC');
+      if (xlmToken && !currencies[Field.INPUT]) {
+        onCurrencySelection(Field.INPUT, xlmToken);
+      }
+      if (usdcToken && !currencies[Field.OUTPUT]) {
+        onCurrencySelection(Field.OUTPUT, usdcToken);
+      }
+    }
+  }, []);
+
+  // Function to get balance for a specific token
+  const getTokenBalance = useCallback(
+    (token: TokenType) => {
+      if (!tokenBalancesResponse?.balances) return '0';
+      const tokenBalance = tokenBalancesResponse.balances.find(
+        (b) => b.contract === token.contract,
+      );
+      return tokenBalance?.balance || '0';
+    },
+    [tokenBalancesResponse],
+  );
+
   /**
    * Handles selection of input token
    * @param {TokenType} token - The selected input token
@@ -299,26 +331,24 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
             }}
           >
             <Grid container spacing={2}>
-              {/* Input Token Selection */}
               <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'start' }}>
                 <TokenSelection
                   tokens={tokens}
                   selectedToken={currencies[Field.INPUT] ?? tokens[0]}
                   onTokenSelect={handleInputSelect}
-                  balance={'10'}
+                  balance={getTokenBalance(currencies[Field.INPUT] ?? tokens[0]).toString()}
                   amount={formattedAmounts[Field.INPUT]}
                   onAmountChange={handleTypeInput}
                   alignment="start"
                   decimals={currencies[Field.INPUT]?.decimals ?? 7}
                 />
               </Grid>
-              {/* Output Token Selection */}
               <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'end' }}>
                 <TokenSelection
                   tokens={tokens}
                   selectedToken={currencies[Field.OUTPUT] ?? tokens[1]}
                   onTokenSelect={handleOutputSelect}
-                  balance={'10'}
+                  balance={getTokenBalance(currencies[Field.OUTPUT] ?? tokens[1]).toString()}
                   amount={formattedAmounts[Field.OUTPUT]}
                   onAmountChange={handleTypeOutput}
                   alignment="end"
@@ -349,7 +379,7 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
                   {currencies[Field.OUTPUT]?.code}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <img src="/icons/tag.svg" style={{ width: 16, height: 16 }} />
+                  <img src="/icons/tokens/xlm.svg" style={{ width: 16, height: 16 }} />
                   <Typography>Fee: {networkFees} XLM</Typography>
                 </Box>
               </>

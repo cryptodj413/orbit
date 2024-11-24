@@ -30,11 +30,11 @@ const WithdrawButton = (): JSX.Element => {
           fontSize: '1.25rem',
           lineHeight: 'normal',
           letterSpacing: '-0.8px',
+          color: 'white',
         }}
       >
         Withdraw
       </Typography>
-      {/* <AddIcon sx={{ fontSize: '24px' }} /> */}
     </Button>
   );
 };
@@ -64,28 +64,36 @@ const RepayButton = (): JSX.Element => {
           fontSize: '1.25rem',
           lineHeight: 'normal',
           letterSpacing: '-0.8px',
+          color: 'white',
         }}
       >
         Repay
       </Typography>
-      {/* <AddIcon sx={{ fontSize: '24px' }} /> */}
     </Button>
   );
 };
 
 const InfoSection = ({ title, items }) => (
   <Grid item xs={6}>
-    <Typography variant="h5" gutterBottom>
+    <Typography variant="h5" gutterBottom sx={{ color: 'white' }}>
       {title}
     </Typography>
     {items.map((item, index) => (
       <Typography
         key={index}
         variant="body1"
-        sx={{ display: 'flex', justifyContent: 'space-between' }}
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          color: 'rgba(255, 255, 255, 0.7)',
+          '.value': {
+            color: 'white',
+            fontWeight: 'bold',
+          },
+        }}
       >
         <span>{item.label}:</span>
-        <span style={{ fontWeight: 'bold' }}>{item.value}</span>
+        <span className="value">{item.value}</span>
       </Typography>
     ))}
   </Grid>
@@ -117,8 +125,12 @@ const Dashboard: NextPage = () => {
         <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <FlameIcon />
           <Box>
-            <Typography variant="body1">Claim Pool Emissions</Typography>
-            <Typography variant="subtitle1">0 BLEND</Typography>
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              Claim Pool Emissions
+            </Typography>
+            <Typography variant="subtitle1" sx={{ color: 'white' }}>
+              0 BLEND
+            </Typography>
           </Box>
           <RightArrowIcon />
         </Grid>
@@ -126,7 +138,9 @@ const Dashboard: NextPage = () => {
 
       <Grid container item spacing={4}>
         <Grid item xs={3}>
-          <Typography variant="body1">Asset</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            Asset
+          </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <img
               src={'/icons/tokens/xlm.svg'}
@@ -135,16 +149,26 @@ const Dashboard: NextPage = () => {
               height="30px"
               style={{ borderRadius: '100px' }}
             />
-            <Typography variant="subtitle1">XLM</Typography>
+            <Typography variant="subtitle1" sx={{ color: 'white' }}>
+              XLM
+            </Typography>
           </Box>
         </Grid>
         <Grid item xs={3}>
-          <Typography variant="body1">Balance</Typography>
-          <Typography variant="subtitle1">3.06k</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            Balance
+          </Typography>
+          <Typography variant="subtitle1" sx={{ color: 'white' }}>
+            3.06k
+          </Typography>
         </Grid>
         <Grid item xs={3}>
-          <Typography variant="body1">APR</Typography>
-          <Typography variant="subtitle1">151.09%</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            APR
+          </Typography>
+          <Typography variant="subtitle1" sx={{ color: 'white' }}>
+            151.09%
+          </Typography>
         </Grid>
         <Grid item xs={3}>
           <WithdrawButton />
@@ -152,7 +176,9 @@ const Dashboard: NextPage = () => {
       </Grid>
       <Grid container item spacing={4}>
         <Grid item xs={3}>
-          <Typography variant="body1">Asset</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            Asset
+          </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
             <img
               src={'/icons/tokens/xlm.svg'}
@@ -161,16 +187,26 @@ const Dashboard: NextPage = () => {
               height="30px"
               style={{ borderRadius: '100px' }}
             />
-            <Typography variant="subtitle1">XLM</Typography>
+            <Typography variant="subtitle1" sx={{ color: 'white' }}>
+              XLM
+            </Typography>
           </Box>
         </Grid>
         <Grid item xs={3}>
-          <Typography variant="body1">Balance</Typography>
-          <Typography variant="subtitle1">3.06k</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            Balance
+          </Typography>
+          <Typography variant="subtitle1" sx={{ color: 'white' }}>
+            3.06k
+          </Typography>
         </Grid>
         <Grid item xs={3}>
-          <Typography variant="body1">APR</Typography>
-          <Typography variant="subtitle1">151.09%</Typography>
+          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+            APR
+          </Typography>
+          <Typography variant="subtitle1" sx={{ color: 'white' }}>
+            151.09%
+          </Typography>
         </Grid>
         <Grid item xs={3}>
           <RepayButton />

@@ -156,6 +156,7 @@ export function useSwapCallback(
 
         try {
           console.log(routerMethod, args, !simulation);
+
           const result = (await routerCallback(
             routerMethod,
             args,
@@ -173,9 +174,9 @@ export function useSwapCallback(
           const currencyA = switchValues?.[0];
           const currencyB = switchValues?.[switchValues?.length - 1];
 
-          const notificationMessage = `${formatTokenAmount(currencyA ?? '0')} ${
-            trade?.inputAmount?.currency.code
-          } for ${formatTokenAmount(currencyB ?? '0')} ${trade?.outputAmount?.currency.code}`;
+          const notificationMessage = `${formatTokenAmount(currencyA ?? '0')} ${trade?.inputAmount
+            ?.currency.code} for ${formatTokenAmount(currencyB ?? '0')} ${trade?.outputAmount
+            ?.currency.code}`;
 
           return { ...result, switchValues };
         } catch (error) {
@@ -224,9 +225,9 @@ export function useSwapCallback(
             currencyB += Number(values[values.length - 1]);
           }
 
-          const notificationMessage = `${formatTokenAmount(currencyA ?? '0')} ${
-            trade?.inputAmount?.currency.code
-          } for ${formatTokenAmount(currencyB ?? '0')} ${trade?.outputAmount?.currency.code}`;
+          const notificationMessage = `${formatTokenAmount(currencyA ?? '0')} ${trade?.inputAmount
+            ?.currency.code} for ${formatTokenAmount(currencyB ?? '0')} ${trade?.outputAmount
+            ?.currency.code}`;
 
           return { ...result, switchValues };
         } catch (error) {

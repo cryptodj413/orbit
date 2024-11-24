@@ -1,19 +1,35 @@
 import { Button } from '@mui/material';
-
 import { AppContext } from '../../contexts';
 import React, { useContext } from 'react';
 
 export function WalletButton({ style, light }: { style?: React.CSSProperties; light?: boolean }) {
   const { ConnectWalletModal } = useContext(AppContext);
-  const { isConnectWalletModalOpen, setConnectWalletModalOpen } = ConnectWalletModal;
+  const { setConnectWalletModalOpen } = ConnectWalletModal;
 
   const handleClick = () => {
     setConnectWalletModalOpen(true);
   };
 
   return (
-    <>
-      <Button onClick={handleClick}>Connect Wallet</Button>
-    </>
+    <Button
+      id="connect-wallet-dropdown-button"
+      variant="contained"
+      onClick={handleClick}
+      sx={{
+        height: '44px',
+        backgroundColor: '',
+        color: 'white',
+        borderRadius: '8px',
+        '&:hover': {
+          backgroundColor: '#1565c0',
+        },
+        '&:disabled': {
+          backgroundColor: '#1a2847',
+          color: 'rgba(255, 255, 255, 0.3)',
+        },
+      }}
+    >
+      Connect Wallet
+    </Button>
   );
 }

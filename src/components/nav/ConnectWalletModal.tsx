@@ -6,15 +6,38 @@ import { AppContext } from '../../contexts';
 import Image from 'next/image';
 import { walletConnectors } from '../../soroban/MySorobanReactProvider';
 import { Box, CircularProgress, Modal, styled, useMediaQuery, useTheme } from '@mui/material';
-import ModalBox from './ModalBox';
+
+const ContentWrapper = styled('div')<{ isMobile: boolean }>`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: Inter;
+  text-align: ${({ isMobile }) => (isMobile ? 'center' : 'left')};
+`;
+
+const ModalBox = styled('div')`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  background: #030615;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 32px;
+  color: white;
+`;
 
 const Title = styled('div')`
   font-size: 24px;
   font-weight: 500;
+  color: white;
 `;
+
 const Subtitle = styled('div')`
   font-size: 14px;
   font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
   & > span {
     display: block;
   }
@@ -24,25 +47,20 @@ const Text = styled('div')`
   font-size: 12px;
   font-weight: 300;
   textwrap: wrap;
-  & > span {
-    display: block;
-  }
-`;
-const Info = styled('div')`
-  font-size: 10px;
-  font-weight: 100;
-  textwrap: wrap;
+  color: rgba(255, 255, 255, 0.7);
   & > span {
     display: block;
   }
 `;
 
-const ContentWrapper = styled('div')<{ isMobile: boolean }>`
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  font-family: Inter;
-  text-align: ${({ isMobile }) => (isMobile ? 'center' : 'left')};
+const Info = styled('div')`
+  font-size: 10px;
+  font-weight: 100;
+  textwrap: wrap;
+  color: rgba(255, 255, 255, 0.7);
+  & > span {
+    display: block;
+  }
 `;
 
 const WalletBox = styled('div')`
@@ -55,6 +73,13 @@ const WalletBox = styled('div')`
   align-items: center;
   gap: 10px;
   align-self: stretch;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
 `;
 
 const FooterText = styled('div')<{ isMobile: boolean }>`
@@ -62,6 +87,7 @@ const FooterText = styled('div')<{ isMobile: boolean }>`
   font-size: 12px;
   font-weight: 600;
   text-align: ${({ isMobile }) => (isMobile ? 'center' : 'left')};
+  color: rgba(255, 255, 255, 0.7);
 `;
 
 export const ConnectWalletStyles = {
@@ -249,6 +275,11 @@ export default function ConnectWalletModal() {
       }}
       aria-labelledby="modal-wallet-connect"
       aria-describedby="modal-wallet-disconnect"
+      BackdropProps={{
+        sx: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        },
+      }}
     >
       <div>
         {errorMessage ? (

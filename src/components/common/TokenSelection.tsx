@@ -52,6 +52,9 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
     }
   };
 
+  // Format the balance to a maximum of 7 decimal places
+  const formattedBalance = Number(balance).toFixed(7);
+
   return (
     <Box
       sx={{
@@ -113,7 +116,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         ))}
       </Menu>
       <Typography variant="body2" color="white" sx={{ textAlign: alignment }}>
-        Balance: {balance} {selectedToken.code}
+        Balance: {formattedBalance} {selectedToken.code}
       </Typography>
       <TextField
         value={amount}

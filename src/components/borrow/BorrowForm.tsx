@@ -15,30 +15,19 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
   onXlmChange,
   onOUsdChange,
 }) => {
-  const conversionRate = 0.005481; // 1 XLM = 0.005481 oUSD
-
-  const handleXlmChange = (value: string) => {
-    onXlmChange(value);
-    onOUsdChange((parseFloat(value || '0') * conversionRate).toFixed(2));
-  };
-
-  const handleOUsdChange = (value: string) => {
-    onOUsdChange(value);
-    onXlmChange((parseFloat(value || '0') / conversionRate).toFixed(2));
-  };
-
+  // The parent component now handles the conversion calculations
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <CurrencyInput
         value={xlmAmount}
-        onChange={handleXlmChange}
+        onChange={onXlmChange}
         currency="XLM"
         label="Stellar Lumen (XLM)"
       />
       <Box sx={{ color: 'white', fontSize: 24 }}>↔</Box>
       <CurrencyInput
         value={oUsdAmount}
-        onChange={handleOUsdChange}
+        onChange={onOUsdChange}
         currency="oUSD"
         label="Orbital Dollar (oUSD)"
       />
@@ -53,34 +42,44 @@ interface CurrencyInputProps {
   label: string;
 }
 
-const CurrencyInput: React.FC<CurrencyInputProps> = ({ value, onChange, currency, label }) => (
-  <Box
-    sx={{
-      width: '45%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-    }}
-  >
-    <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-      <DynamicWidthInput value={value} onChange={(e) => onChange(e.target.value)} placeholder="0" />
-      <Typography variant="h4" color="white" sx={{ ml: 1 }}>
-        {currency}
-      </Typography>
-    </Box>
-    <Select
-      value={currency}
+const CurrencyInput: React.FC<CurrencyInputProps> = ({ value, onChange, currency, label }) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow numbers and decimal points
+    const newValue = e.target.value;
+    if (newValue === '' || /^\d*\.?\d*$/.test(newValue)) {
+      onChange(newValue);
+    }
+  };
+
+  return (
+    <Box
       sx={{
-        mt: 1,
-        color: 'white',
-        '& .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'rgba(255, 255, 255, 0.23)',
-        },
+        width: '45%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
       }}
     >
-      <MenuItem value={currency}>{label}</MenuItem>
-    </Select>
-  </Box>
-);
+      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
+        <DynamicWidthInput value={value} onChange={handleInputChange} placeholder="0" />
+        <Typography variant="h4" color="white" sx={{ ml: 1 }}>
+          {currency}
+        </Typography>
+      </Box>
+      <Select
+        value={currency}
+        sx={{
+          mt: 1,
+          color: 'white',
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255, 255, 255, 0.23)',
+          },
+        }}
+      >
+        <MenuItem value={currency}>{label}</MenuItem>
+      </Select>
+    </Box>
+  );
+};
 
 export default BorrowForm;

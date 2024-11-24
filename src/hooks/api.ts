@@ -109,7 +109,7 @@ export function usePool(poolId: string, enabled: boolean = true): UseQueryResult
  */
 export function usePoolOracle(
   pool: Pool | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<PoolOracle, Error> {
   return useQuery({
     staleTime: DEFAULT_STALE_TIME,
@@ -131,7 +131,7 @@ export function usePoolOracle(
  */
 export function usePoolUser(
   pool: Pool | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<PoolUser, Error> {
   const { walletAddress, connected } = useWallet();
   return useQuery({
@@ -141,7 +141,7 @@ export function usePoolUser(
     placeholderData: new PoolUser(
       walletAddress,
       new Positions(new Map(), new Map(), new Map()),
-      new Map()
+      new Map(),
     ),
     queryFn: async () => {
       if (pool !== undefined && walletAddress !== '') {
@@ -178,7 +178,7 @@ export function useBackstop(enabled: boolean = true): UseQueryResult<Backstop, E
  */
 export function useBackstopPool(
   poolId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<BackstopPool, Error> {
   const { network } = useSettings();
   return useQuery({
@@ -199,7 +199,7 @@ export function useBackstopPool(
  */
 export function useBackstopPoolUser(
   poolId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<BackstopPoolUser, Error> {
   const { network } = useSettings();
   const { walletAddress, connected } = useWallet();
@@ -211,7 +211,7 @@ export function useBackstopPoolUser(
       walletAddress,
       poolId,
       new UserBalance(BigInt(0), [], BigInt(0), BigInt(0)),
-      undefined
+      undefined,
     ),
     queryFn: async () => {
       if (walletAddress !== '') {
@@ -229,7 +229,7 @@ export function useBackstopPoolUser(
  * @returns Query result with the account data.
  */
 export function useHorizonAccount(
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<Horizon.AccountResponse> {
   const { walletAddress, connected } = useWallet();
   const { network } = useSettings();
@@ -260,7 +260,7 @@ export function useTokenBalance(
   tokenId: string | undefined,
   asset: Asset | undefined,
   account: Horizon.AccountResponse | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<bigint> {
   const { walletAddress, connected } = useWallet();
   const { network } = useSettings();
@@ -309,7 +309,7 @@ export function useTokenBalance(
  */
 export function useTokenMetadataFromToml(
   reserve: Reserve,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<StellarTokenMetadata, Error> {
   const { network } = useSettings();
   return useQuery({
