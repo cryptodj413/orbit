@@ -1,83 +1,60 @@
 import React from 'react';
-import { Box, Typography, Select, MenuItem } from '@mui/material';
-import DynamicWidthInput from '../common/DynamicWidthInput';
+import { Box } from '@mui/material';
+import TokenSelection from '../common/TokenSelection';
+import { TokenType } from '../../interfaces';
 
 interface BorrowFormProps {
-  xlmAmount: string;
-  oUsdAmount: string;
-  onXlmChange: (value: string) => void;
-  onOUsdChange: (value: string) => void;
+  tokens: TokenType[];
+  collateralToken: TokenType;
+  debtToken: TokenType;
+  collateralAmount: string;
+  debtAmount: string; // This should reflect the actual converted amount
+  onCollateralTokenSelect: (token: TokenType) => void;
+  onDebtTokenSelect: (token: TokenType) => void;
+  onCollateralAmountChange: (value: string) => void;
+  onDebtAmountChange: (value: string) => void;
+  getTokenBalance: (token: TokenType) => string;
 }
 
 const BorrowForm: React.FC<BorrowFormProps> = ({
-  xlmAmount,
-  oUsdAmount,
-  onXlmChange,
-  onOUsdChange,
+  tokens,
+  collateralToken,
+  debtToken,
+  collateralAmount,
+  debtAmount, // This will now be the properly converted amount
+  onCollateralTokenSelect,
+  onDebtTokenSelect,
+  onCollateralAmountChange,
+  onDebtAmountChange,
+  getTokenBalance,
 }) => {
-  // The parent component now handles the conversion calculations
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <CurrencyInput
-        value={xlmAmount}
-        onChange={onXlmChange}
-        currency="XLM"
-        label="Stellar Lumen (XLM)"
-      />
-      <Box sx={{ color: 'white', fontSize: 24 }}>↔</Box>
-      <CurrencyInput
-        value={oUsdAmount}
-        onChange={onOUsdChange}
-        currency="oUSD"
-        label="Orbital Dollar (oUSD)"
-      />
-    </Box>
-  );
-};
-
-interface CurrencyInputProps {
-  value: string;
-  onChange: (value: string) => void;
-  currency: string;
-  label: string;
-}
-
-const CurrencyInput: React.FC<CurrencyInputProps> = ({ value, onChange, currency, label }) => {
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow numbers and decimal points
-    const newValue = e.target.value;
-    if (newValue === '' || /^\d*\.?\d*$/.test(newValue)) {
-      onChange(newValue);
-    }
-  };
-
-  return (
-    <Box
-      sx={{
-        width: '45%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-        <DynamicWidthInput value={value} onChange={handleInputChange} placeholder="0" />
-        <Typography variant="h4" color="white" sx={{ ml: 1 }}>
-          {currency}
-        </Typography>
+      <Box sx={{ width: '45%' }}>
+        <TokenSelection
+          tokens={tokens}
+          selectedToken={collateralToken}
+          onTokenSelect={onCollateralTokenSelect}
+          balance={getTokenBalance(collateralToken)}
+          amount={collateralAmount}
+          onAmountChange={onCollateralAmountChange}
+          alignment="start"
+          decimals={3}
+        />
       </Box>
-      <Select
-        value={currency}
-        sx={{
-          mt: 1,
-          color: 'white',
-          '& .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'rgba(255, 255, 255, 0.23)',
-          },
-        }}
-      >
-        <MenuItem value={currency}>{label}</MenuItem>
-      </Select>
+      <Box sx={{ color: 'white', fontSize: 24 }}>↔</Box>
+      <Box sx={{ width: '45%' }}>
+        <TokenSelection
+          tokens={tokens}
+          selectedToken={debtToken}
+          onTokenSelect={onDebtTokenSelect}
+          balance={getTokenBalance(debtToken)}
+          amount={debtAmount} // This will now show the correct converted amount
+          onAmountChange={onDebtAmountChange}
+          alignment="end"
+          decimals={3}
+        />
+      </Box>
     </Box>
   );
 };

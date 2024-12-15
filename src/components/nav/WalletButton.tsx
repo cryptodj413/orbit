@@ -17,6 +17,7 @@ export function WalletButton({ style, light }: { style?: React.CSSProperties; li
       onClick={handleClick}
       sx={{
         height: '44px',
+        width: '100%',
         backgroundColor: '',
         color: 'white',
         borderRadius: '8px',

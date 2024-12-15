@@ -77,17 +77,7 @@ const Borrow: NextPage = () => {
     }
   }, [txStatus, txType]);
 
-  const getDecimals = (reserve: any): number => {
-    return reserve?.config?.decimals ?? 7;
-  };
-
-  // // Calculate position estimates
-  // const curPositionEstimate = useMemo(() => {
-  //   if (pool && poolOracle && poolUser) {
-  //     return PositionEstimates.build(pool, poolOracle, poolUser.positions);
-  //   }
-  //   return undefined;
-  // }, [pool, poolOracle, poolUser]);
+  // Calculate position estimates
 
   const newPositionEstimate = useMemo(() => {
     if (poolData && parsedSimResult) {
@@ -107,6 +97,10 @@ const Borrow: NextPage = () => {
     },
     [tokenBalancesResponse],
   );
+
+  const getDecimals = (reserve: any): number => {
+    return reserve?.config?.decimals ?? 7;
+  };
 
   // Handle token selection
   const handleCollateralTokenSelect = (token: TokenType) => {
@@ -170,12 +164,12 @@ const Borrow: NextPage = () => {
       spender: address,
       requests: [
         {
-          amount: scaleInputToBigInt(amount, getDecimals(reserve)),
+          amount: scaleInputToBigInt(amount, getDecimals(collateralToken.decimals)),
           address: collateralToken.contract,
           request_type: RequestType.SupplyCollateral,
         },
         {
-          amount: scaleInputToBigInt(amount, getDecimals(reserve)),
+          amount: scaleInputToBigInt(amount, getDecimals(debtToken.decimals)),
           address: debtToken.contract,
           request_type: RequestType.Borrow,
         },
@@ -218,7 +212,7 @@ const Borrow: NextPage = () => {
         spender: address,
         requests: [
           {
-            amount: scaleInputToBigInt(collateralAmount, getDecimals(reserve)),
+            amount: scaleInputToBigInt(collateralAmount, getDecimals(collateralToken.decimals)),
             request_type: RequestType.SupplyCollateral,
             address: collateralToken.contract,
           },
@@ -233,7 +227,7 @@ const Borrow: NextPage = () => {
         spender: address,
         requests: [
           {
-            amount: scaleInputToBigInt(debtAmount, getDecimals(reserve)),
+            amount: scaleInputToBigInt(debtAmount, getDecimals(debtToken.decimals)),
             address: debtToken.contract,
             request_type: RequestType.Borrow,
           },

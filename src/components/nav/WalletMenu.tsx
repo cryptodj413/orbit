@@ -44,7 +44,6 @@ export const WalletMenu = () => {
 
   const handleDisconnectWallet = () => {
     // Disconnect both wallet and Soroban
-    disconnect();
     sorobanContext.disconnect();
     setOpenDis(true);
   };
@@ -68,17 +67,13 @@ export const WalletMenu = () => {
     setAnchorElDropdown(event.currentTarget);
   };
 
-  const handleClickConnect = () => {
-    connect(handleConnectWallet);
-  };
-
   const handleClose = () => {
     handleSnackClose();
     setAnchorElDropdown(null);
   };
 
   // Show connected state only when both wallet and Soroban are connected
-  const fullyConnected = connected && isSorobanConnected;
+  const fullyConnected = sorobanContext.address != undefined;
 
   return (
     <>
@@ -96,37 +91,12 @@ export const WalletMenu = () => {
         >
           <WalletIcon />
           <Typography variant="body1" color="white">
-            {formatter.toCompactAddress(walletAddress)}
+            {formatter.toCompactAddress(sorobanContext.address)}
           </Typography>
           <ArrowDropDownIcon sx={{ color: 'white' }} />
         </CustomButton>
       ) : (
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          {!connected && (
-            <Button
-              id="connect-wallet-dropdown-button"
-              variant="contained"
-              onClick={handleClickConnect}
-              disabled={isLoading}
-              sx={{
-                height: '44px',
-                backgroundColor: '',
-                color: 'white',
-                borderRadius: '8px',
-                '&:hover': {
-                  backgroundColor: '#1565c0',
-                },
-                '&:disabled': {
-                  backgroundColor: '#1a2847',
-                  color: 'rgba(255, 255, 255, 0.3)',
-                },
-              }}
-            >
-              Connect Wallet
-            </Button>
-          )}
-          <WalletButton />
-        </Box>
+        <WalletButton />
       )}
 
       <Menu
