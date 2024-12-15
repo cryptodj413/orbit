@@ -6,6 +6,7 @@ import store from '../../state';
 import { SorobanContextType } from '@soroban-react/core';
 import ContextProvider from './ContextProvider';
 import InkathonProvider from '../../inkathon/InkathonProvider';
+import { WalletProvider } from 'contexts/wallet';
 
 export default function Providers({
   children,
@@ -21,7 +22,7 @@ export default function Providers({
         setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
       },
     }),
-    []
+    [],
   );
 
   return (
@@ -29,7 +30,9 @@ export default function Providers({
       <InkathonProvider>
         <ColorModeContext.Provider value={colorMode}>
           <MySorobanReactProvider {...sorobanReactProviderProps}>
-            <ContextProvider>{children}</ContextProvider>
+            <WalletProvider>
+              <ContextProvider>{children}</ContextProvider>
+            </WalletProvider>
           </MySorobanReactProvider>
         </ColorModeContext.Provider>
       </InkathonProvider>

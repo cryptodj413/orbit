@@ -24,8 +24,9 @@ import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import { useHorizonAccount, usePool, usePoolOracle, usePoolUser } from '../hooks/api';
 import { useSettings } from '../contexts';
 import useGetMyBalances from 'hooks/useGetMyBalances';
+import { useSorobanReact } from '@soroban-react/core';
 
-const POOL_ID = 'CCEVW3EEW4GRUZTZRTAMJAXD6XIF5IG7YQJMEEMKMVVGFPESTRXY2ZAV';
+const POOL_ID = 'CD2OM6AQMIXPS6ODWAYDEKLLFX5376ZHUFCMSSQJ5ACPVKMTK5NOQC5D';
 const XLM_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
 const Borrow: NextPage = () => {
@@ -35,9 +36,7 @@ const Borrow: NextPage = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [simResponse, setSimResponse] = useState<SorobanRpc.Api.SimulateTransactionResponse>();
   const [parsedSimResult, setParsedSimResult] = useState<Positions>();
-
-  const theme = useTheme();
-  const { viewType } = useSettings();
+  const { address } = useSorobanReact();
   const { connected, walletAddress, poolSubmit, txStatus, txType, createTrustline } = useWallet();
 
   // Data fetching hooks
@@ -116,15 +115,16 @@ const Borrow: NextPage = () => {
     const newXlmAmount = (Number(value) / (collateralRatio / 100)).toString();
     setXlmAmount(newXlmAmount);
   };
+  //GBRC7D3G4W6ZX6CZSS57DNNWZ242SVKECSOQEU3FID3AFYBBOLB2CYSM
 
   // Simulate transaction
   const simulateTransaction = async (amount: string) => {
-    if (!amount || !connected || !reserve) return;
+    if (!amount || !reserve) return;
 
     const submitArgs: SubmitArgs = {
-      from: walletAddress,
-      to: walletAddress,
-      spender: walletAddress,
+      from: address!,
+      to: address!,
+      spender: address!,
       requests: [
         {
           amount: scaleInputToBigInt(amount, reserve.config.decimals),
@@ -161,16 +161,16 @@ const Borrow: NextPage = () => {
 
   // Handle transaction submission
   const handleSubmitTransaction = async () => {
-    if (!xlmAmount || !connected || !reserve) {
+    if (!xlmAmount || !reserve || !address) {
       console.log('Missing required data:', { xlmAmount, connected, reserve });
       return;
     }
 
     // First supply collateral
     const supplyArgs: SubmitArgs = {
-      from: walletAddress,
-      to: walletAddress,
-      spender: walletAddress,
+      from: address,
+      to: address,
+      spender: address,
       requests: [
         {
           amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
@@ -183,9 +183,9 @@ const Borrow: NextPage = () => {
 
     // Then borrow
     const borrowArgs: SubmitArgs = {
-      from: walletAddress,
-      to: walletAddress,
-      spender: walletAddress,
+      from: address,
+      to: address,
+      spender: address,
       requests: [
         {
           amount: scaleInputToBigInt(xlmAmount, reserve.config.decimals),
@@ -258,7 +258,7 @@ const Borrow: NextPage = () => {
         variant="contained"
         fullWidth
         onClick={handleSubmitTransaction}
-        disabled={!connected || !xlmAmount || isLoading}
+        disabled={!xlmAmount || isLoading}
         sx={{
           mt: 2,
           padding: '16px 8px',

@@ -106,15 +106,12 @@ export function useSwapCallback(
   // allowedSlippage: Percent, // in bips
   // permitSignature: PermitSignature | undefined
 ) {
-  const { SnackbarContext } = useContext(AppContext);
   const sorobanContext = useSorobanReact();
   const { activeChain, address, activeConnector } = sorobanContext;
   const routerCallback = useRouterCallback();
   const aggregatorCallback = useAggregatorCallback();
   const allowedSlippage = useUserSlippageToleranceWithDefault(1);
   const isUsingAggregator = hasDistribution(trade);
-
-  const { mutate } = useSWRConfig();
 
   const doSwap = async (
     simulation?: boolean,
@@ -139,11 +136,8 @@ export function useSwapCallback(
     switch (trade.platform) {
       case PlatformType.ROUTER:
         const path = trade.path?.map((address) => new StellarSdk.Address(address));
-        console.log(path);
         const pathScVal = StellarSdk.nativeToScVal(path);
 
-        console.log(pathScVal, address);
-        console.log('addr', address);
         const args = [
           amount0ScVal,
           amount1ScVal,
@@ -152,11 +146,7 @@ export function useSwapCallback(
           bigNumberToU64(BigNumber(getCurrentTimePlusOneHour())),
         ];
 
-        console.log('Args:', args);
-
         try {
-          console.log(routerMethod, args, !simulation);
-
           const result = (await routerCallback(
             routerMethod,
             args,

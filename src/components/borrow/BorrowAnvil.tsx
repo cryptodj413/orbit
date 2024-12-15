@@ -184,7 +184,7 @@ const BorrowAnvil: React.FC = () => {
       let to_borrow = Math.min(
         to_bounded_hf / (assetToBase * reserve.getLiabilityFactor()),
         reserve.estimates.supplied * (reserve.config.max_util / 1e7 - 0.01) -
-          reserve.estimates.borrowed
+          reserve.estimates.borrowed,
       );
       setToBorrow(Math.max(to_borrow, 0).toFixed(7));
       setLoadingEstimate(true);

@@ -23,12 +23,10 @@ export default function MyApp(props: AppProps) {
       <ThemeProvider theme={theme}>
         <QueryClientProvider client={queryClient}>
           <SettingsProvider>
-            <WalletProvider>
-              <CssBaseline />
-              <Providers>
-                <Component {...pageProps} />
-              </Providers>
-            </WalletProvider>
+            <CssBaseline />
+            <Providers>
+              <Component {...pageProps} />
+            </Providers>
           </SettingsProvider>
         </QueryClientProvider>
       </ThemeProvider>

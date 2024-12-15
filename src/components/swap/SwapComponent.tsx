@@ -96,9 +96,6 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
   handleDoSwap,
 }) => {
   // Context and state initialization
-  const sorobanContext = useSorobanReact();
-  const { refetch } = useGetMyBalances();
-  const { SnackbarContext } = useContext(AppContext);
   const [txError, setTxError] = useState<boolean>(false);
   const [txErrorMessage, setTxErrorMessage] = useState<string>();
 

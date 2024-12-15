@@ -31,10 +31,14 @@ import {
   TransactionBuilder,
   xdr,
 } from '@stellar/stellar-sdk';
+import * as StellarSdk from '@stellar/stellar-sdk';
+
 import React, { useContext, useEffect, useState } from 'react';
 import { useStore } from '../store/store';
 import { CometClient, CometLiquidityArgs, CometSingleSidedDepositArgs } from '../utils/comet';
 import { useLocalStorageState } from 'hooks/useLocalStorageState';
+import { SorobanContext, useSorobanReact } from '@soroban-react/core';
+import { sendTx, SignAndSendArgs, Tx, TxResponse } from '@soroban-react/contracts';
 
 export interface IWalletContext {
   connected: boolean;
@@ -125,6 +129,7 @@ export const WalletProvider = ({ children = null as any }) => {
   const loadUserData = useStore((state) => state.loadUserData);
   const clearUserData = useStore((state) => state.clearUserData);
 
+  const sorobanContext = useSorobanReact();
   const [connected, setConnected] = useState<boolean>(false);
   const [autoConnect, setAutoConnect] = useLocalStorageState('autoConnectWallet', 'false');
   const [loading, setLoading] = useState<boolean>(false);
@@ -243,7 +248,7 @@ export const WalletProvider = ({ children = null as any }) => {
   }
 
   async function restore(sim: SorobanRpc.Api.SimulateTransactionRestoreResponse): Promise<void> {
-    let account = await rpc.getAccount(walletAddress);
+    let account = await rpc.getAccount(sorobanContext.address!);
     setTxStatus(TxStatus.BUILDING);
     let fee = parseInt(sim.restorePreamble.minResourceFee) + parseInt(BASE_FEE);
     let restore_tx = new TransactionBuilder(account, { fee: fee.toString() })
@@ -298,7 +303,7 @@ export const WalletProvider = ({ children = null as any }) => {
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse> {
     try {
       setLoading(true);
-      const account = await rpc.getAccount(walletAddress);
+      const account = await rpc.getAccount(sorobanContext.address!);
       const tx_builder = new TransactionBuilder(account, {
         networkPassphrase: network.passphrase,
         fee: BASE_FEE,
@@ -314,20 +319,96 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
+  async function signAndSendTransaction({
+    txn,
+    secretKey,
+    skipAddingFootprint = false,
+    sorobanContext,
+    timeoutSeconds = 20,
+  }: SignAndSendArgs): Promise<TxResponse> {
+    let networkPassphrase = sorobanContext.activeChain?.networkPassphrase;
+    let server = sorobanContext.server;
+
+    if (!secretKey && !sorobanContext.activeConnector)
+      throw Error('signAndSend: no secretKey neither activeConnector');
+    if (!server) throw Error('signAndSend: no server');
+    if (!networkPassphrase) throw Error('signAndSend: no networkPassphrase');
+
+    // preflight and add the footprint !
+    if (!skipAddingFootprint) {
+      txn = await server.prepareTransaction(txn);
+      if (!txn) {
+        throw new Error('No transaction after adding footprint');
+      }
+    }
+
+    // // is it possible for `auths` to be present but empty? Probably not, but let's be safe.
+    // const auths = simulated.results?.[0]?.auth;
+    // let auth_len = auths?.length ?? 0;
+
+    // if (auth_len > 1) {
+    //   throw new NotImplementedError("Multiple auths not yet supported");
+    // } else if (auth_len == 1) {
+    //   // TODO: figure out how to fix with new StellarSdk
+    //   // const auth = StellarSdk.xdr.SorobanAuthorizationEntry.fromXDR(auths![0]!, 'base64')
+    //   // if (auth.addressWithNonce() !== undefined) {
+    //   //   throw new NotImplementedError(
+    //   //     `This transaction needs to be signed by ${auth.addressWithNonce()
+    //   //     }; Not yet supported`
+    //   //   )
+    //   // }
+    // }
+
+    let signed = '';
+    if (secretKey) {
+      // User as set a secretKey, txn will be signed using the secretKey
+      const keypair = StellarSdk.Keypair.fromSecret(secretKey);
+      txn.sign(keypair);
+      signed = txn.toXDR();
+    } else if (sorobanContext.activeConnector) {
+      // User has not set a secretKey, txn will be signed using the Connector (wallet) provided in the sorobanContext
+      console.log('TRANSACTION SIGN AND SEND OPTS', {
+        networkPassphrase,
+        network: sorobanContext.activeChain?.id,
+        accountToSign: sorobanContext.address,
+      });
+      signed = await sorobanContext.activeConnector.signTransaction(txn.toXDR(), {
+        networkPassphrase,
+        network: sorobanContext.activeChain?.id,
+        accountToSign: sorobanContext.address,
+      });
+      console.log('Wallet has signed: ', signed);
+    } else {
+      throw new Error('signAndSendTransaction: no secretKey, neither active Connector');
+    }
+
+    const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(signed, networkPassphrase);
+
+    let tx = transactionToSubmit as Tx;
+    let secondsToWait = timeoutSeconds;
+
+    const raw = await sendTx({ tx, secondsToWait, server });
+
+    return raw;
+  }
+
   async function invokeSorobanOperation<T>(operation: xdr.Operation, poolId?: string | undefined) {
     try {
-      const account = await rpc.getAccount(walletAddress);
+      const account = await rpc.getAccount(sorobanContext.address!);
+
       const tx_builder = new TransactionBuilder(account, {
         networkPassphrase: network.passphrase,
         fee: BASE_FEE,
         timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 5 * 60 * 1000 },
       }).addOperation(operation);
+
       const transaction = tx_builder.build();
+
       const simResponse = await simulateOperation(operation);
       const assembled_tx = SorobanRpc.assembleTransaction(transaction, simResponse).build();
-      const signedTx = await sign(assembled_tx.toXDR());
-      const tx = new Transaction(signedTx, network.passphrase);
-      const result = await sendTransaction(tx);
+      // const signedTx = await sign(assembled_tx.toXDR());
+      // const tx = new Transaction(signedTx, network.passphrase);
+      const result = await signAndSendTransaction({ txn: transaction, sorobanContext });
       if (result) {
         try {
           await loadBlendData(true, poolId, walletAddress);
@@ -363,14 +444,12 @@ export const WalletProvider = ({ children = null as any }) => {
     submitArgs: SubmitArgs,
     sim: boolean,
   ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    if (connected) {
-      const pool = new PoolContract(poolId);
-      const operation = xdr.Operation.fromXDR(pool.submit(submitArgs), 'base64');
-      if (sim) {
-        return await simulateOperation(operation);
-      }
-      await invokeSorobanOperation<Positions>(operation, poolId);
+    const pool = new PoolContract(poolId);
+    const operation = xdr.Operation.fromXDR(pool.submit(submitArgs), 'base64');
+    if (sim) {
+      return await simulateOperation(operation);
     }
+    await invokeSorobanOperation<Positions>(operation, poolId);
   }
 
   /**
@@ -596,11 +675,11 @@ export const WalletProvider = ({ children = null as any }) => {
 
   async function createTrustline(asset: Asset) {
     try {
-      if (connected) {
+      if (sorobanContext.address) {
         const trustlineOperation = Operation.changeTrust({
           asset: asset,
         });
-        const account = await rpc.getAccount(walletAddress);
+        const account = await rpc.getAccount(sorobanContext.address);
         const tx_builder = new TransactionBuilder(account, {
           networkPassphrase: network.passphrase,
           fee: BASE_FEE,
