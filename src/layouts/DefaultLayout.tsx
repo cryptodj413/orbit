@@ -21,13 +21,6 @@ const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [contentHeight, setContentHeight] = useState<number | undefined>(undefined);
   const router = useRouter();
 
-  const updateHeight = () => {
-    if (contentRef.current) {
-      const newHeight = contentRef.current.scrollHeight;
-      setContentHeight(newHeight);
-    }
-  };
-
   useEffect(() => {
     const handleRouteChange = () => {
       // Reset height when route changes
@@ -63,10 +56,28 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
         minHeight: '100vh',
         width: '100vw',
         overflow: 'hidden',
-        background: `url(${bg.src})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        position: 'relative', // Add this
+        '&::before': {
+          // Add overlay
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          background: `url(${bg.src})`,
+          backgroundColor: 'black',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          filter: 'brightness(0.4)', // Adjust value between 0-1
+          zIndex: 0,
+        },
+        '& > *': {
+          // Make children appear above overlay
+          position: 'relative',
+          zIndex: 1,
+        },
       }}
     >
       <Box

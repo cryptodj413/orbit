@@ -15,14 +15,41 @@ import { useSorobanReact } from '@soroban-react/core';
 import { useSwapCallback } from '../../hooks/useSwapCallback';
 import { useDerivedSwapInfo, useSwapActionHandlers } from '../../state/swap/hooks';
 import { Field } from '../../state/swap/actions';
-import swapReducer, { SwapState, initialState as initialSwapState } from 'state/swap/reducer';
-import useSwapNetworkFees from 'hooks/useSwapNetworkFees';
-import useSwapMainButton from 'hooks/useSwapMainButton';
-import useGetMyBalances from 'hooks/useGetMyBalances';
-import { AppContext } from 'contexts';
-import { formatTokenAmount } from 'helpers/format';
-import { InterfaceTrade } from 'state/types';
-import { TokenType } from 'interfaces';
+import swapReducer, { SwapState, initialState as initialSwapState } from '../../state/swap/reducer';
+import useSwapNetworkFees from '../../hooks/useSwapNetworkFees';
+import useSwapMainButton from '../../hooks/useSwapMainButton';
+import useGetMyBalances from '../../hooks/useGetMyBalances';
+import { AppContext } from '../../contexts';
+import { formatTokenAmount } from '../../helpers/format';
+import { InterfaceTrade } from '../../state/types';
+import { TokenType } from '../../interfaces';
+
+const OverviewItem = ({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+}) => (
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+      {icon && <Box sx={{ mr: 1 }}>{icon}</Box>}
+      {label}
+    </Typography>
+    <Typography sx={{ fontSize: '13px', fontWeight: '600' }}>{value}</Typography>
+  </Box>
+);
+
+const GasIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M22 17H19V10C19 9.73478 18.8946 9.48043 18.7071 9.29289C18.5196 9.10536 18.2652 9 18 9H16C15.7348 9 15.4804 9.10536 15.2929 9.29289C15.1054 9.48043 15 9.73478 15 10V17H2C1.73478 17 1.48043 17.1054 1.29289 17.2929C1.10536 17.4804 1 17.7348 1 18V21C1 21.2652 1.10536 21.5196 1.29289 21.7071C1.48043 21.8946 1.73478 22 2 22H22C22.2652 22 22.5196 21.8946 22.7071 21.7071C22.8946 21.5196 23 21.2652 23 21V18C23 17.7348 22.8946 17.4804 22.7071 17.2929C22.5196 17.1054 22.2652 17 22 17ZM13 5V3C13 2.73478 12.8946 2.48043 12.7071 2.29289C12.5196 2.10536 12.2652 2 12 2H4C3.73478 2 3.48043 2.10536 3.29289 2.29289C3.10536 2.48043 3 2.73478 3 3V15H13V5Z"
+      fill="currentColor"
+    />
+  </svg>
+);
 
 /**
  * Interface defining the props for the SwapComponent
@@ -387,40 +414,52 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
         {formattedAmounts[Field.INPUT] && parseFloat(formattedAmounts[Field.INPUT]) > 0 && (
           <Box
             sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              p: 3,
+              color: 'white',
+              background:
+                'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
               borderRadius: '16px',
-              p: 2,
               mb: 3,
-              border: '1px solid rgba(255, 255, 255, 0.1)',
             }}
           >
-            <Typography sx={{ color: 'white', fontSize: '18px', fontWeight: 500, mb: 2 }}>
+            <Typography variant="subtitle2" align="center" gutterBottom>
               Transaction Overview
             </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>You Swap</Typography>
-              <Typography sx={{ color: 'white' }}>
-                {formattedAmounts[Field.INPUT]} {currencies[Field.INPUT]?.code}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>You Receive</Typography>
-              <Typography sx={{ color: 'white' }}>
-                {formattedAmounts[Field.OUTPUT]} {currencies[Field.OUTPUT]?.code}
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Network Fee:</Typography>
-              <Typography sx={{ color: 'white' }}>{networkFees} XLM</Typography>
-            </Box>
-            {trade?.priceImpact && (
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Price Impact:</Typography>
-                <Typography sx={{ color: 'white' }}>
-                  {/* {formatTokenAmount(trade.priceImpact, 2)}% */}
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Swap Details
                 </Typography>
-              </Box>
-            )}
+                <OverviewItem
+                  label="You Swap:"
+                  value={`${formattedAmounts[Field.INPUT]} ${currencies[Field.INPUT]?.code}`}
+                />
+                <OverviewItem
+                  label="You Receive:"
+                  value={`${formattedAmounts[Field.OUTPUT]} ${currencies[Field.OUTPUT]?.code}`}
+                />
+                {trade?.priceImpact && (
+                  <OverviewItem label="Price Impact:" value={`${trade.priceImpact.toFixed(2)}%`} />
+                )}
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Network Details
+                </Typography>
+                <OverviewItem
+                  label="Network Fee:"
+                  value={`${networkFees} XLM`}
+                  icon={<GasIcon />}
+                />
+                <OverviewItem
+                  label="Rate:"
+                  value={`1 ${currencies[Field.INPUT]?.code} = ${formatTokenAmount(
+                    trade?.executionPrice,
+                    currencies[Field.OUTPUT]?.decimals,
+                  )} ${currencies[Field.OUTPUT]?.code}`}
+                />
+              </Grid>
+            </Grid>
           </Box>
         )}
 

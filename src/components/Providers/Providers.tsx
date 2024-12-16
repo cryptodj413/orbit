@@ -6,7 +6,7 @@ import store from '../../state';
 import { SorobanContextType } from '@soroban-react/core';
 import ContextProvider from './ContextProvider';
 import InkathonProvider from '../../inkathon/InkathonProvider';
-import { WalletProvider } from 'contexts/wallet';
+import { WalletProvider } from '../../contexts/wallet';
 
 export default function Providers({
   children,

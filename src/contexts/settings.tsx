@@ -1,7 +1,7 @@
 import { Network } from '@blend-capital/blend-sdk';
 import { useMediaQuery, useTheme } from '@mui/material';
 import { SorobanRpc } from '@stellar/stellar-sdk';
-import { useLocalStorageState } from 'hooks/useLocalStorageState';
+import { useLocalStorageState } from '../hooks/useLocalStorageState';
 import React, { useContext, useState } from 'react';
 
 const DEFAULT_RPC = process.env.NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';

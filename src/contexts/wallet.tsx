@@ -36,7 +36,7 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import React, { useContext, useEffect, useState } from 'react';
 import { useStore } from '../store/store';
 import { CometClient, CometLiquidityArgs, CometSingleSidedDepositArgs } from '../utils/comet';
-import { useLocalStorageState } from 'hooks/useLocalStorageState';
+import { useLocalStorageState } from '../hooks/useLocalStorageState';
 import { SorobanContext, useSorobanReact } from '@soroban-react/core';
 import { sendTx, SignAndSendArgs, Tx, TxResponse } from '@soroban-react/contracts';
 
@@ -291,8 +291,6 @@ export const WalletProvider = ({ children = null as any }) => {
       return true;
     } else {
       console.log('Failed Transaction Hash: ', hash);
-      let error = parseError(get_tx_response);
-      setFailureMessage(ContractErrorType[error.type]);
       setTxStatus(TxStatus.FAIL);
       return false;
     }
@@ -404,10 +402,6 @@ export const WalletProvider = ({ children = null as any }) => {
 
       const transaction = tx_builder.build();
 
-      const simResponse = await simulateOperation(operation);
-      const assembled_tx = SorobanRpc.assembleTransaction(transaction, simResponse).build();
-      // const signedTx = await sign(assembled_tx.toXDR());
-      // const tx = new Transaction(signedTx, network.passphrase);
       const result = await signAndSendTransaction({ txn: transaction, sorobanContext });
       if (result) {
         try {

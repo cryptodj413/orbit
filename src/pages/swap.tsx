@@ -1,10 +1,10 @@
 import { useSorobanReact } from '@soroban-react/core';
-import SEO from 'components/SEO';
+import SEO from '../components/SEO';
 import SwapComponent from '../components/Swap/SwapComponent';
-import { xlmTokenList } from 'constants/xlmToken';
+import { xlmTokenList } from '../constants/xlmToken';
 import { useEffect, useState } from 'react';
-import { Field } from 'state/swap/actions';
-import { SwapState } from 'state/swap/reducer';
+import { Field } from '../state/swap/actions';
+import { SwapState } from '../state/swap/reducer';
 import { NextPage } from 'next';
 
 const SwapPage: NextPage = () => {

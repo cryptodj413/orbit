@@ -2,10 +2,9 @@ import * as StellarSdk from '@stellar/stellar-sdk';
 import { useSorobanReact, SorobanContextType } from '@soroban-react/core';
 import { contractTransaction } from '@soroban-react/contracts';
 import axios from 'axios';
-import { fetchRouter } from 'services/router';
-import { useSwapCallback } from 'hooks/useSwapCallback';
-import { InterfaceTrade, PlatformType } from 'state/routing/types';
-import { RouterMethod, useRouterCallback } from 'hooks/useRouterCallback';
+import { fetchRouter } from '../services/router';
+import { InterfaceTrade, PlatformType } from '../state/routing/types';
+import { RouterMethod, useRouterCallback } from '../hooks/useRouterCallback';
 
 const getCurrentTimePlusOneHour = (): number => {
   // Get the current time in milliseconds
