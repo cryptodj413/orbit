@@ -1,26 +1,48 @@
 import React from 'react';
 import { Typography, Grid, Box, Button } from '@mui/material';
-import { NextPage } from 'next';
-import { Icon } from '../components/common/Icon';
+import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
+import { toBalance, toPercentage } from '../utils/formatter';
 import { FlameIcon } from '../components/common/FlameIcon';
 import { RightArrowIcon } from '../components/common/RightArrowIcon';
+import { TokenType } from '../interfaces';
 
-const WithdrawButton = (): JSX.Element => {
+const tokens: TokenType[] = [
+  {
+    code: 'XLM',
+    contract: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+    icon: '/icons/tokens/xlm.svg',
+    decimals: 7,
+  },
+  {
+    code: 'USDC',
+    contract: 'CAAFIHB4I7WQMJMKC22CZVQNNX7EONWSOMT6SUXK6I3G3F6J4XFRWNDI',
+    icon: '/icons/tokens/ousd.svg',
+    decimals: 7,
+  },
+  {
+    code: 'SLP',
+    contract: 'YOUR_SLP_CONTRACT_ADDRESS',
+    icon: '/icons/tokens/slp.svg',
+    decimals: 7,
+  },
+];
+
+const ActionButton = ({ variant = 'withdraw', onClick }) => {
+  const getButtonStyles = () => ({
+    background: variant === 'withdraw' ? 'rgba(150, 253, 2, 0.16)' : 'rgba(253, 2, 213, 0.16)',
+    borderRadius: '8px',
+    color: 'white',
+    padding: '8px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    '&:hover': {
+      backgroundColor: variant === 'withdraw' ? '#96fd0252' : '#fd02d552',
+    },
+  });
+
   return (
-    <Button
-      sx={{
-        background: 'rgba(150, 253, 2, 0.16)',
-        borderRadius: '8px',
-        color: 'white',
-        padding: '8px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        '&:hover': {
-          backgroundColor: '#96fd0252',
-        },
-      }}
-    >
+    <Button sx={getButtonStyles()} onClick={onClick}>
       <Typography
         variant="h6"
         component="span"
@@ -33,41 +55,7 @@ const WithdrawButton = (): JSX.Element => {
           color: 'white',
         }}
       >
-        Withdraw
-      </Typography>
-    </Button>
-  );
-};
-
-const RepayButton = (): JSX.Element => {
-  return (
-    <Button
-      sx={{
-        background: 'rgba(253, 2, 213, 0.16)',
-        borderRadius: '8px',
-        color: 'white',
-        padding: '8px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        '&:hover': {
-          backgroundColor: '#96fd0252',
-        },
-      }}
-    >
-      <Typography
-        variant="h6"
-        component="span"
-        sx={{
-          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
-          fontWeight: 'bold',
-          fontSize: '1.25rem',
-          lineHeight: 'normal',
-          letterSpacing: '-0.8px',
-          color: 'white',
-        }}
-      >
-        Repay
+        {variant === 'withdraw' ? 'Withdraw' : 'Repay'}
       </Typography>
     </Button>
   );
@@ -99,20 +87,116 @@ const InfoSection = ({ title, items }) => (
   </Grid>
 );
 
-const Dashboard: NextPage = () => {
-  const riskValue = 20; // Example risk value (0-100)
+const getTokenInfo = (contractId: string): TokenType | undefined => {
+  return tokens.find((token) => token.contract === contractId);
+};
+
+const Dashboard = () => {
+  const poolId = process.env.NEXT_PUBLIC_BLND_POOL;
+  const { data: pool } = usePool(poolId);
+  const { data: poolOracle } = usePoolOracle(pool);
+  const { data: userPoolData } = usePoolUser(pool);
+
+  const { emissions, claimedTokens } = React.useMemo(() => {
+    if (!userPoolData || !pool) {
+      return { emissions: 0, claimedTokens: [] };
+    }
+    return userPoolData.estimateEmissions(pool);
+  }, [userPoolData, pool]);
+
+  const positionEstimates = React.useMemo(() => {
+    if (!poolOracle || !pool || !userPoolData) {
+      return null;
+    }
+
+    let totalCollateral = 0;
+    let totalLiabilities = 0;
+
+    // Calculate total collateral and liabilities
+    pool.reserves.forEach((reserve, assetId) => {
+      const collateralAmount = userPoolData.getCollateralFloat(reserve);
+      const liabilityAmount = userPoolData.getLiabilitiesFloat(reserve);
+      const price = poolOracle.getPriceFloat(assetId) || 0;
+
+      totalCollateral += collateralAmount * price;
+      totalLiabilities += liabilityAmount * price;
+    });
+
+    return {
+      totalCollateral,
+      totalLiabilities,
+    };
+  }, [pool, poolOracle, userPoolData]);
 
   const overviewData = [
-    { label: 'Total Collateral Deposited', value: '315.16USD' },
-    { label: 'Total Debt Outstanding', value: '20.15%' },
+    {
+      label: 'Total Collateral Deposited',
+      value: `$${toBalance(positionEstimates?.totalCollateral || 0)}`,
+    },
+    {
+      label: 'Total Debt Outstanding',
+      value: `$${toBalance(positionEstimates?.totalLiabilities || 0)}`,
+    },
   ];
 
-  const positionsData = [{ label: 'Total Collateral Deposited', value: '315.16USD' }];
-
-  const balancesData = [
-    { label: 'Stellar Lumens', value: '1,562 XLM' },
-    { label: 'Orbital US Dollar', value: '102.78 oUSD' },
+  const positionsData = [
+    {
+      label: 'Total Collateral',
+      value: `$${toBalance(positionEstimates?.totalCollateral || 0)}`,
+    },
+    {
+      label: 'Total Liabilities',
+      value: `$${toBalance(positionEstimates?.totalLiabilities || 0)}`,
+    },
   ];
+
+  const balancesData = React.useMemo(() => {
+    if (!pool || !userPoolData) return [];
+
+    const balances = [];
+    pool.reserves.forEach((reserve, assetId) => {
+      const collateral = userPoolData.getCollateralFloat(reserve);
+      const supply = userPoolData.getSupplyFloat(reserve);
+      if (collateral > 0 || supply > 0) {
+        const tokenInfo = getTokenInfo(assetId);
+        balances.push({
+          label: tokenInfo?.code || assetId,
+          value: `${toBalance(collateral + supply)} ${tokenInfo?.code || assetId}`,
+        });
+      }
+    });
+    return balances;
+  }, [pool, userPoolData]);
+
+  const positions = React.useMemo(() => {
+    if (!pool || !userPoolData || !poolOracle) return [];
+
+    const positionsList = [];
+    pool.reserves.forEach((reserve, assetId) => {
+      const collateral = userPoolData.getCollateralFloat(reserve);
+      const supply = userPoolData.getSupplyFloat(reserve);
+      const liabilities = userPoolData.getLiabilitiesFloat(reserve);
+
+      if (collateral > 0 || supply > 0 || liabilities > 0) {
+        const tokenInfo = getTokenInfo(assetId);
+        positionsList.push({
+          token: assetId,
+          tokenCode: tokenInfo?.code || assetId,
+          tokenIcon: tokenInfo?.icon || `/icons/tokens/default.svg`,
+          amount: collateral + supply - liabilities,
+          price: poolOracle.getPriceFloat(assetId) || 0,
+        });
+      }
+    });
+    return positionsList;
+  }, [pool, userPoolData, poolOracle]);
+
+  const handleClaim = async () => {
+    if (claimedTokens.length > 0) {
+      // Implement claim logic here
+      console.log('Claiming tokens:', claimedTokens);
+    }
+  };
 
   return (
     <Grid container spacing={4}>
@@ -120,98 +204,70 @@ const Dashboard: NextPage = () => {
         <InfoSection title="Overview" items={overviewData} />
         <InfoSection title="My Positions" items={positionsData} />
       </Grid>
+
       <Grid container item spacing={4}>
         <InfoSection title="Balances" items={balancesData} />
         <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <FlameIcon />
-          <Box>
+          <Box onClick={handleClaim} sx={{ cursor: 'pointer' }}>
             <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
               Claim Pool Emissions
             </Typography>
             <Typography variant="subtitle1" sx={{ color: 'white' }}>
-              0 BLEND
+              {toBalance(emissions)} BLEND
             </Typography>
           </Box>
           <RightArrowIcon />
         </Grid>
       </Grid>
 
-      <Grid container item spacing={4}>
-        <Grid item xs={3}>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            Asset
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <img
-              src={'/icons/tokens/xlm.svg'}
-              alt={'XLM'}
-              width="30px"
-              height="30px"
-              style={{ borderRadius: '100px' }}
-            />
-            <Typography variant="subtitle1" sx={{ color: 'white' }}>
-              XLM
+      {positions.map((position, index) => (
+        <Grid container item spacing={4} key={position.token}>
+          <Grid item xs={3}>
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              Asset
             </Typography>
-          </Box>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            Balance
-          </Typography>
-          <Typography variant="subtitle1" sx={{ color: 'white' }}>
-            3.06k
-          </Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            APR
-          </Typography>
-          <Typography variant="subtitle1" sx={{ color: 'white' }}>
-            151.09%
-          </Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <WithdrawButton />
-        </Grid>
-      </Grid>
-      <Grid container item spacing={4}>
-        <Grid item xs={3}>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            Asset
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <img
-              src={'/icons/tokens/xlm.svg'}
-              alt={'XLM'}
-              width="30px"
-              height="30px"
-              style={{ borderRadius: '100px' }}
-            />
-            <Typography variant="subtitle1" sx={{ color: 'white' }}>
-              XLM
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <img
+                src={position.tokenIcon}
+                alt={position.tokenCode}
+                width="30px"
+                height="30px"
+                style={{ borderRadius: '100px' }}
+              />
+              <Typography variant="subtitle1" sx={{ color: 'white' }}>
+                {position.tokenCode}
+              </Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={3}>
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              Balance
             </Typography>
-          </Box>
+            <Typography variant="subtitle1" sx={{ color: 'white' }}>
+              {toBalance(position.amount)}
+            </Typography>
+          </Grid>
+          <Grid item xs={3}>
+            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              Value
+            </Typography>
+            <Typography variant="subtitle1" sx={{ color: 'white' }}>
+              ${toBalance(position.amount * position.price)}
+            </Typography>
+          </Grid>
+          <Grid item xs={3}>
+            <ActionButton
+              variant={position.amount >= 0 ? 'withdraw' : 'repay'}
+              onClick={() =>
+                console.log(
+                  `${position.amount >= 0 ? 'Withdrawing' : 'Repaying'} ${position.tokenCode}`,
+                )
+              }
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={3}>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            Balance
-          </Typography>
-          <Typography variant="subtitle1" sx={{ color: 'white' }}>
-            3.06k
-          </Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-            APR
-          </Typography>
-          <Typography variant="subtitle1" sx={{ color: 'white' }}>
-            151.09%
-          </Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <RepayButton />
-        </Grid>
-      </Grid>
+      ))}
     </Grid>
   );
 };

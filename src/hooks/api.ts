@@ -15,6 +15,7 @@ import { useSettings } from '../contexts';
 import { useWallet } from '../contexts/wallet';
 import { getTokenMetadataFromTOML, StellarTokenMetadata } from '../external/stellar-toml';
 import { getTokenBalance } from '../external/token';
+import { useSorobanReact } from '@soroban-react/core';
 
 const DEFAULT_STALE_TIME = 30 * 1000;
 const USER_STALE_TIME = 60 * 1000;
@@ -133,19 +134,19 @@ export function usePoolUser(
   pool: Pool | undefined,
   enabled: boolean = true,
 ): UseQueryResult<PoolUser, Error> {
-  const { walletAddress, connected } = useWallet();
+  const { address } = useSorobanReact();
   return useQuery({
     staleTime: USER_STALE_TIME,
-    queryKey: ['poolPositions', pool?.id, walletAddress],
-    enabled: enabled && pool !== undefined && connected,
+    queryKey: ['poolPositions', pool?.id, address],
+    enabled: true,
     placeholderData: new PoolUser(
-      walletAddress,
+      address,
       new Positions(new Map(), new Map(), new Map()),
       new Map(),
     ),
     queryFn: async () => {
-      if (pool !== undefined && walletAddress !== '') {
-        return await pool.loadUser(walletAddress);
+      if (pool !== undefined && address !== '') {
+        return await pool.loadUser(address);
       }
     },
   });
