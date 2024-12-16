@@ -5,6 +5,7 @@ import { toBalance, toPercentage } from '../utils/formatter';
 import { FlameIcon } from '../components/common/FlameIcon';
 import { RightArrowIcon } from '../components/common/RightArrowIcon';
 import { TokenType } from '../interfaces';
+import { useSorobanReact } from '@soroban-react/core';
 
 const tokens: TokenType[] = [
   {
@@ -91,7 +92,70 @@ const getTokenInfo = (contractId: string): TokenType | undefined => {
   return tokens.find((token) => token.contract === contractId);
 };
 
+const ConnectWallet = () => {
+  const { connect } = useSorobanReact();
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '60vh',
+        gap: 3,
+        padding: 4,
+      }}
+    >
+      <Typography
+        variant="h4"
+        sx={{
+          color: 'white',
+          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
+          fontWeight: 'bold',
+          letterSpacing: '-0.8px',
+        }}
+      >
+        Connect Your Wallet
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          color: 'rgba(255, 255, 255, 0.7)',
+          textAlign: 'center',
+          maxWidth: '460px',
+          marginBottom: 2,
+        }}
+      >
+        Connect your wallet to view your positions, manage your assets, and interact with the
+        protocol
+      </Typography>
+      <Button
+        onClick={connect}
+        sx={{
+          background: 'rgba(150, 253, 2, 0.16)',
+          borderRadius: '8px',
+          color: 'white',
+          padding: '12px 24px',
+          '&:hover': {
+            backgroundColor: '#96fd0252',
+          },
+          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
+          fontWeight: 'bold',
+          fontSize: '1.1rem',
+        }}
+      >
+        Connect Wallet
+      </Button>
+    </Box>
+  );
+};
+
 const Dashboard = () => {
+  const { address } = useSorobanReact();
+  if (!address) {
+    return <ConnectWallet />;
+  }
   const poolId = process.env.NEXT_PUBLIC_BLND_POOL;
   const { data: pool } = usePool(poolId);
   const { data: poolOracle } = usePoolOracle(pool);
@@ -207,7 +271,7 @@ const Dashboard = () => {
 
       <Grid container item spacing={4}>
         <InfoSection title="Balances" items={balancesData} />
-        <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <FlameIcon />
           <Box onClick={handleClaim} sx={{ cursor: 'pointer' }}>
             <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
@@ -218,7 +282,7 @@ const Dashboard = () => {
             </Typography>
           </Box>
           <RightArrowIcon />
-        </Grid>
+        </Grid> */}
       </Grid>
 
       {positions.map((position, index) => (
