@@ -51,9 +51,9 @@ const StyledGrid = styled(Grid)(({ theme }) => ({
     borderRight: 'none',
   },
   '& > .MuiGrid-item:nth-last-of-type(-n+3):not(:nth-of-type(1), :nth-of-type(2), :nth-of-type(3))':
-    {
-      borderBottom: 'none',
-    },
+  {
+    borderBottom: 'none',
+  },
   borderRadius: '17px',
   border: '1px solid rgba(255, 255, 255, 0.32)',
 }));
@@ -184,7 +184,7 @@ const BorrowAnvil: React.FC = () => {
       let to_borrow = Math.min(
         to_bounded_hf / (assetToBase * reserve.getLiabilityFactor()),
         reserve.estimates.supplied * (reserve.config.max_util / 1e7 - 0.01) -
-          reserve.estimates.borrowed,
+        reserve.estimates.borrowed,
       );
       setToBorrow(Math.max(to_borrow, 0).toFixed(7));
       setLoadingEstimate(true);
@@ -305,7 +305,7 @@ const BorrowAnvil: React.FC = () => {
                 <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
                   <DynamicWidthInput
                     value={(Number(toBorrow) * assetToBase).toFixed(2)}
-                    onChange={() => {}}
+                    onChange={() => { }}
                     placeholder="0"
                   />
                   <Typography variant="h4" color="white" sx={{ ml: 1 }}>

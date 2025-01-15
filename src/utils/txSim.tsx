@@ -1,30 +1,37 @@
 import { ContractErrorType, parseError } from '@blend-capital/blend-sdk';
-import { AlertColor, Button } from '@mui/material';
-import { SorobanRpc } from '@stellar/stellar-sdk';
+import { AlertColor } from '@mui/material';
+import { rpc } from '@stellar/stellar-sdk';
+import { OpaqueButton } from '../components/common/OpaqueButton';
 import { useWallet } from '../contexts/wallet';
 import theme from '../theme';
+
 export function RestoreButton({
   simResponse,
 }: {
-  simResponse: SorobanRpc.Api.SimulateTransactionResponse;
+  simResponse: rpc.Api.SimulateTransactionResponse;
 }) {
   const { restore } = useWallet();
   function handleRestore() {
-    if (simResponse && SorobanRpc.Api.isSimulationRestore(simResponse)) {
+    if (simResponse && rpc.Api.isSimulationRestore(simResponse)) {
       restore(simResponse);
     }
   }
   return (
-    <Button onClick={handleRestore} sx={{ padding: '6px 24px', margin: '12px auto' }}>
+    <OpaqueButton
+      onClick={handleRestore}
+      palette={theme.palette.warning}
+      sx={{ padding: '6px 24px', margin: '12px auto' }}
+    >
       Restore
-    </Button>
+    </OpaqueButton>
   );
 }
+
 export function getErrorFromSim(
   input: string | undefined,
   decimals: number,
   loading: boolean,
-  simulationResult: SorobanRpc.Api.SimulateTransactionResponse | undefined,
+  simulationResult: rpc.Api.SimulateTransactionResponse | undefined,
   extraValidations?: () => Partial<SubmitError>
 ): SubmitError {
   let errorProps: SubmitError = {
@@ -65,17 +72,17 @@ export function getErrorFromSim(
       return errorProps;
     }
   }
-  if (simulationResult && SorobanRpc.Api.isSimulationRestore(simulationResult)) {
+  if (simulationResult && rpc.Api.isSimulationRestore(simulationResult)) {
     errorProps.isError = true;
     errorProps.extraContent = <RestoreButton simResponse={simulationResult} />;
     errorProps.isSubmitDisabled = true;
     errorProps.isMaxDisabled = false;
     errorProps.disabledType = 'warning';
     errorProps.reason =
-      'This transaction ran into expired entries that need to be restored before proceeding.';
+      'This transaction ran into expired entries which need to be restored before proceeding.';
     return errorProps;
   }
-  if (simulationResult && SorobanRpc.Api.isSimulationError(simulationResult)) {
+  if (simulationResult && rpc.Api.isSimulationError(simulationResult)) {
     const error = parseError(simulationResult);
     errorProps.isError = true;
     errorProps.isSubmitDisabled = true;

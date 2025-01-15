@@ -1,107 +1,169 @@
-import { createTheme } from '@mui/material/styles';
-import { TypographyOptions } from '@mui/material/styles/createTypography';
+import { createTheme, Theme } from '@mui/material';
 
-// Color definitions from the design system
-const colors = {
-  // Primary palette
-  primary: {
-    main: '#0215D3', // Medium Blue
-    light: '#C1C8E3', // Periwinkle
-    dark: '#030615', // Rich Black
-    contrastText: '#FAFBFF', // Ghost White
-  },
-  // Secondary palette
-  secondary: {
-    main: '#96FD02', // Spring Bud
-    light: '#D3C002', // Citrine
-    dark: '#0211A9', // Zaffer
-    contrastText: '#E2E2E2', // Platinum
-  },
-} as const;
+declare module '@mui/material/styles/createPalette' {
+  interface SimplePaletteColorOptions {
+    opaque?: string;
+  }
 
-// Typography definitions based on the design system
-const typography: TypographyOptions = {
-  fontFamily: 'Roboto, sans-serif',
-  h1: {
-    fontFamily: 'Roboto, sans-serif',
-    fontSize: '61px',
-    lineHeight: '76.25px',
-    letterSpacing: '2%',
-  },
-  h2: {
-    fontFamily: 'Roboto, sans-serif',
-    fontSize: '39px',
-    lineHeight: 'auto',
-    letterSpacing: '2%',
-  },
-  h3: {
-    fontFamily: 'Roboto, sans-serif',
-    fontSize: '31px',
-    lineHeight: 'auto',
-    letterSpacing: '2%',
-  },
-  h4: {
-    fontFamily: 'Roboto, sans-serif',
-    fontSize: '25px',
-    lineHeight: 'auto',
-    letterSpacing: '2%',
-  },
-  body1: {
-    fontFamily: 'Roboto, sans-serif',
-    fontSize: '20px',
-    lineHeight: 'auto',
-    letterSpacing: '2%',
-  },
-  body2: {
-    fontFamily: 'Roboto, sans-serif',
-    fontSize: '16px',
-    lineHeight: 'auto',
-    letterSpacing: '0',
-  },
+  interface PaletteColor {
+    opaque: string;
+  }
+
+  interface PaletteOptions {
+    lend?: PaletteColorOptions;
+    borrow?: PaletteColorOptions;
+    backstop?: PaletteColorOptions;
+    menu?: PaletteColorOptions;
+    positive?: PaletteColorOptions;
+    accent?: PaletteColorOptions;
+  }
+
+  interface Palette {
+    lend: PaletteColor;
+    borrow: PaletteColor;
+    backstop: PaletteColor;
+    menu: PaletteColor;
+    positive: PaletteColor;
+    accent: PaletteColor;
+  }
+}
+
+declare module '@mui/material/Button' {
+  interface ButtonPropsColorOverrides {
+    lend: true;
+    borrow: true;
+    backstop: true;
+    positive: true;
+    accent: true;
+    menu: false;
+  }
+}
+
+const FONT: string = '"DM Sans", Roboto';
+
+const pxToRem = (px: number) => {
+  const remVal = px / 16;
+  return `${remVal.toFixed(3)}rem`;
 };
 
-// Create and export the theme
-const theme = createTheme({
+const theme: Theme = createTheme({
   palette: {
-    primary: colors.primary,
-    secondary: colors.secondary,
+    mode: 'dark',
+    tonalOffset: 0,
     background: {
-      default: colors.primary.contrastText,
-      paper: '#030615',
+      default: '#191B1F',
+      paper: '#212429E5',
+    },
+    primary: {
+      main: '#36B04A',
+      opaque: '#36B04A26',
+      contrastText: 'white',
+    },
+    secondary: {
+      main: '#ff3366',
+      opaque: '#ff336626',
+    },
+    lend: {
+      main: '#00C4EF',
+      opaque: '#00C4EF26',
+    },
+    borrow: {
+      main: '#FF8A00',
+      opaque: '#FF8A0026',
+    },
+    backstop: {
+      main: '#E16BFF',
+      opaque: '#E16BFF26',
+    },
+    positive: {
+      main: '#2775C9',
+      opaque: '#2775C930',
+    },
+    accent: {
+      main: '#191B1F',
+      opaque: '#191B1F',
+    },
+    menu: {
+      main: '#2E3138',
+      light: '#2E313893',
     },
     text: {
-      primary: colors.primary.dark,
-      secondary: colors.primary.light,
+      primary: '#FFFFFF',
+      secondary: '#979797',
+    },
+    warning: {
+      main: '#FFCB00',
+      opaque: '#FFCB0026',
+    },
+    error: {
+      main: '#FF3366',
+      opaque: '#FF336626',
     },
   },
-  typography,
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
-          fontFamily: 'Roboto, sans-serif',
-        },
-      },
+  typography: {
+    fontFamily: FONT,
+    h1: {
+      fontFamily: FONT,
+      fontWeight: 700,
+      fontSize: pxToRem(20),
+      lineHeight: 1.6,
     },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          fontFamily: 'Roboto, sans-serif',
-        },
-      },
+    h2: {
+      fontFamily: FONT,
+      fontWeight: 700,
+      fontSize: pxToRem(18),
+      lineHeight: 1.473,
     },
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.08)',
-        },
-      },
+    h3: {
+      fontFamily: FONT,
+      fontWeight: 500,
+      fontSize: pxToRem(18),
+      lineHeight: 1.473,
+    },
+    h4: {
+      fontFamily: FONT,
+      fontWeight: 700,
+      fontSize: pxToRem(16),
+      lineHeight: 1.3125,
+    },
+    h5: {
+      fontFamily: FONT,
+      fontWeight: 400,
+      fontSize: pxToRem(16),
+      lineHeight: 1.3125,
+    },
+    h6: undefined,
+    subtitle1: undefined,
+    subtitle2: undefined,
+    body1: {
+      fontFamily: FONT,
+      fontWeight: 500,
+      fontSize: pxToRem(16),
+      lineHeight: 1.3125,
+    },
+    body2: {
+      fontFamily: FONT,
+      fontWeight: 400,
+      fontSize: pxToRem(14),
+      lineHeight: 1.125,
+    },
+    button: {
+      textTransform: 'none',
+      fontFamily: FONT,
+      fontWeight: 500,
+      fontSize: pxToRem(16),
+      lineHeight: 1.3125,
     },
   },
-  spacing: 8, // Base spacing unit of 8px
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 420, // marker for the mobile layout requirement
+      md: 640,
+      lg: 850, // marker for compact layout requirements
+      xl: 1024,
+    },
+  },
 });
 
 export default theme;

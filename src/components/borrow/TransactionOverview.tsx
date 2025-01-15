@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, Grid, CircularProgress } from '@mui/material';
 import { toBalance, toPercentage } from '../../utils/formatter';
-import { SorobanRpc } from '@stellar/stellar-sdk';
-import { PositionEstimates } from '@blend-capital/blend-sdk';
+import { rpc } from '@stellar/stellar-sdk';
+import { PositionsEstimate } from '@blend-capital/blend-sdk';
 
 interface TransactionOverviewProps {
   amount: string;
@@ -12,9 +12,9 @@ interface TransactionOverviewProps {
   assetToBase: number;
   decimals: number;
   userPoolData: any;
-  newPositionEstimate: PositionEstimates | undefined;
+  newPositionEstimate: PositionsEstimate | undefined;
   assetId: string;
-  simResponse: SorobanRpc.Api.SimulateTransactionResponse | undefined;
+  simResponse: rpc.Api.SimulateTransactionResponse | undefined;
   isLoading: boolean;
 }
 

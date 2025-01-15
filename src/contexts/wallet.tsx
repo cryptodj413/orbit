@@ -19,26 +19,24 @@ import {
   WalletNetwork,
   XBULL_ID,
   xBullModule,
-} from '@creit.tech/stellar-wallets-kit/build/index';
+} from '@creit.tech/stellar-wallets-kit';
 import { getNetworkDetails as getFreighterNetwork } from '@stellar/freighter-api';
 import {
   Asset,
   BASE_FEE,
   Networks,
   Operation,
-  SorobanRpc,
+  rpc,
   Transaction,
   TransactionBuilder,
   xdr,
 } from '@stellar/stellar-sdk';
 import * as StellarSdk from '@stellar/stellar-sdk';
-
 import React, { useContext, useEffect, useState } from 'react';
-import { useStore } from '../store/store';
-import { CometClient, CometLiquidityArgs, CometSingleSidedDepositArgs } from '../utils/comet';
-import { useLocalStorageState } from '../hooks/useLocalStorageState';
-import { SorobanContext, useSorobanReact } from '@soroban-react/core';
-import { sendTx, SignAndSendArgs, Tx, TxResponse } from '@soroban-react/contracts';
+import { useSettings } from './settings';
+import { useQueryClientCacheCleaner } from '../hooks/api';
+import { RouterContract, RouterGetAmountInArgs, RouterGetAmountOutArgs, RouterPairForArgs, RouterSwapExactTokensForTokensArgs, RouterSwapTokensForExactTokensArgs } from '../external/router';
+
 
 export interface IWalletContext {
   connected: boolean;
@@ -53,54 +51,40 @@ export interface IWalletContext {
   connect: (handleSuccess: (success: boolean) => void) => Promise<void>;
   disconnect: () => void;
   clearLastTx: () => void;
-  restore: (sim: SorobanRpc.Api.SimulateTransactionRestoreResponse) => Promise<void>;
+  restore: (sim: rpc.Api.SimulateTransactionRestoreResponse) => Promise<void>;
   poolSubmit: (
     poolId: string,
     submitArgs: SubmitArgs,
     sim: boolean,
-  ) => Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
+  ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
+  swapExactTokensForTokens: (
+    routerId: string,
+    swapArgs: RouterSwapExactTokensForTokensArgs,
+    sim: boolean,
+  ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
+  swapTokensforExactTokens: (
+    routerId: string,
+    swapArgs: RouterSwapTokensForExactTokensArgs,
+    sim: boolean,
+  ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
+  routerGetAmountIn: (
+    routerId: string,
+    routerGetAmountInArgs: RouterGetAmountInArgs,
+  ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
+  routerGetAmountOut: (
+    routerId: string,
+    routerGetAmountOutArgs: RouterGetAmountOutArgs,
+  ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
+  routerPairFor: (
+    routerId: string,
+    routerPairForArgs: RouterPairForArgs,
+  ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
   poolClaim: (
     poolId: string,
     claimArgs: PoolClaimArgs,
     sim: boolean,
-  ) => Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  backstopDeposit(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  backstopWithdraw(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  backstopQueueWithdrawal(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  backstopDequeueWithdrawal(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  backstopClaim(
-    args: BackstopClaimArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  cometSingleSidedDeposit(
-    cometPoolId: string,
-    args: CometSingleSidedDepositArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  cometJoin(
-    cometPoolId: string,
-    args: CometLiquidityArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  cometExit(
-    cometPoolId: string,
-    args: CometLiquidityArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined>;
-  faucet(): Promise<undefined>;
-  createTrustline(asset: Asset): Promise<void>;
+  ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
+  createTrustlines(assets: Asset[]): Promise<void>;
   getNetworkDetails(): Promise<Network & { horizonUrl: string }>;
 }
 
@@ -120,18 +104,23 @@ export enum TxType {
   PREREQ,
 }
 
+const walletKit: StellarWalletsKit = new StellarWalletsKit({
+  network: (process.env.NEXT_PUBLIC_PASSPHRASE ?? WalletNetwork.TESTNET) as WalletNetwork,
+  selectedWalletId: XBULL_ID,
+  modules: [new xBullModule(), new FreighterModule(), new LobstrModule(), new AlbedoModule()],
+});
+
 const WalletContext = React.createContext<IWalletContext | undefined>(undefined);
 
 export const WalletProvider = ({ children = null as any }) => {
-  const network = useStore((state) => state.network);
-  const rpc = useStore((state) => state.rpcServer());
-  const loadBlendData = useStore((state) => state.loadBlendData);
-  const loadUserData = useStore((state) => state.loadUserData);
-  const clearUserData = useStore((state) => state.clearUserData);
+  const { network } = useSettings();
 
-  const sorobanContext = useSorobanReact();
+  const { cleanWalletCache, cleanBackstopCache, cleanPoolCache, cleanBackstopPoolCache } =
+    useQueryClientCacheCleaner();
+
+  const stellarRpc = new rpc.Server(network.rpc, network.opts);
+
   const [connected, setConnected] = useState<boolean>(false);
-  const [autoConnect, setAutoConnect] = useLocalStorageState('autoConnectWallet', 'false');
   const [loading, setLoading] = useState<boolean>(false);
   const [txStatus, setTxStatus] = useState<TxStatus>(TxStatus.NONE);
   const [txHash, setTxHash] = useState<string | undefined>(undefined);
@@ -140,45 +129,30 @@ export const WalletProvider = ({ children = null as any }) => {
   // wallet state
   const [walletAddress, setWalletAddress] = useState<string>('');
 
-  const walletKit: StellarWalletsKit = new StellarWalletsKit({
-    network: network.passphrase as WalletNetwork,
-    selectedWalletId: autoConnect !== undefined && autoConnect !== 'false' ? autoConnect : XBULL_ID,
-    modules: [new xBullModule(), new FreighterModule(), new LobstrModule(), new AlbedoModule()],
-  });
-
-  useEffect(() => {
-    if (!connected && autoConnect !== 'false') {
-      // @dev: timeout ensures chrome has the ability to load extensions
-      setTimeout(() => {
-        handleSetWalletAddress();
-      }, 750);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoConnect]);
-
   function setFailureMessage(message: string | undefined) {
     if (message) {
       // some contract failures include diagnostic information. If so, try and remove it.
       let substrings = message.split('Event log (newest first):');
       if (substrings.length > 1) {
-        setTxFailure(substrings[0].trimEnd());
+        setTxFailure(`Contract Error: ${substrings[0].trimEnd()}`);
+      } else {
+        setTxFailure(`Stellar Error: ${message}`);
       }
     }
   }
 
   /**
-   * Connect a wallet to the application via the walletKit
-   */
+  * Connect a wallet to the application via the walletKit
+  */
   async function handleSetWalletAddress(): Promise<boolean> {
     try {
-      const publicKey = await walletKit.getPublicKey();
+      const { address: publicKey } = await walletKit.getAddress();
       if (publicKey === '' || publicKey == undefined) {
         console.error('Unable to load wallet key: ', publicKey);
         return false;
       }
       setWalletAddress(publicKey);
       setConnected(true);
-      await loadUserData(publicKey);
       return true;
     } catch (e: any) {
       console.error('Unable to load wallet information: ', e);
@@ -195,7 +169,6 @@ export const WalletProvider = ({ children = null as any }) => {
       await walletKit.openModal({
         onWalletSelected: async (option: ISupportedWallet) => {
           walletKit.setWallet(option.id);
-          setAutoConnect(option.id);
           let result = await handleSetWalletAddress();
           handleSuccess(result);
         },
@@ -209,10 +182,9 @@ export const WalletProvider = ({ children = null as any }) => {
   }
 
   function disconnect() {
-    clearUserData();
     setWalletAddress('');
     setConnected(false);
-    setAutoConnect('false');
+    cleanWalletCache();
   }
 
   /**
@@ -225,13 +197,12 @@ export const WalletProvider = ({ children = null as any }) => {
     if (connected) {
       setTxStatus(TxStatus.SIGNING);
       try {
-        let { result } = await walletKit.signTx({
-          xdr: xdr,
-          publicKeys: [walletAddress],
-          network: network.passphrase as WalletNetwork,
+        let { signedTxXdr } = await walletKit.signTransaction(xdr, {
+          address: walletAddress,
+          networkPassphrase: network.passphrase as WalletNetwork,
         });
         setTxStatus(TxStatus.SUBMITTING);
-        return result;
+        return signedTxXdr;
       } catch (e: any) {
         if (e === 'User declined access') {
           setTxFailure('Transaction rejected by wallet.');
@@ -247,8 +218,8 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  async function restore(sim: SorobanRpc.Api.SimulateTransactionRestoreResponse): Promise<void> {
-    let account = await rpc.getAccount(sorobanContext.address!);
+  async function restore(sim: rpc.Api.SimulateTransactionRestoreResponse): Promise<void> {
+    let account = await stellarRpc.getAccount(walletAddress);
     setTxStatus(TxStatus.BUILDING);
     let fee = parseInt(sim.restorePreamble.minResourceFee) + parseInt(BASE_FEE);
     let restore_tx = new TransactionBuilder(account, { fee: fee.toString() })
@@ -263,52 +234,58 @@ export const WalletProvider = ({ children = null as any }) => {
   }
 
   async function sendTransaction(transaction: Transaction): Promise<boolean> {
-    let send_tx_response = await rpc.sendTransaction(transaction);
+    let send_tx_response = await stellarRpc.sendTransaction(transaction);
     let curr_time = Date.now();
 
     // Attempt to send the transaction and poll for the result
     while (send_tx_response.status !== 'PENDING' && Date.now() - curr_time < 5000) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      send_tx_response = await rpc.sendTransaction(transaction);
+      send_tx_response = await stellarRpc.sendTransaction(transaction);
     }
     if (send_tx_response.status !== 'PENDING') {
       let error = parseError(send_tx_response);
+      console.error('Failed to send transaction: ', send_tx_response.hash, error);
       setFailureMessage(ContractErrorType[error.type]);
       setTxStatus(TxStatus.FAIL);
+      return false;
     }
 
-    let get_tx_response = await rpc.getTransaction(send_tx_response.hash);
+    let get_tx_response = await stellarRpc.getTransaction(send_tx_response.hash);
     while (get_tx_response.status === 'NOT_FOUND') {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      get_tx_response = await rpc.getTransaction(send_tx_response.hash);
+      get_tx_response = await stellarRpc.getTransaction(send_tx_response.hash);
     }
 
     let hash = transaction.hash().toString('hex');
     setTxHash(hash);
     if (get_tx_response.status === 'SUCCESS') {
       console.log('Successfully submitted transaction: ', hash);
+      // stall for a bit to ensure data propagates to horizon
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setTxStatus(TxStatus.SUCCESS);
       return true;
     } else {
-      console.log('Failed Transaction Hash: ', hash);
+      let error = parseError(get_tx_response);
+      console.error(`Transaction failed: `, hash, error);
+      setFailureMessage(ContractErrorType[error.type]);
       setTxStatus(TxStatus.FAIL);
       return false;
     }
   }
 
   async function simulateOperation(
-    operation: xdr.Operation,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse> {
+    operation: xdr.Operation
+  ): Promise<rpc.Api.SimulateTransactionResponse> {
     try {
       setLoading(true);
-      const account = await rpc.getAccount(sorobanContext.address!);
+      const account = await stellarRpc.getAccount(walletAddress);
       const tx_builder = new TransactionBuilder(account, {
         networkPassphrase: network.passphrase,
         fee: BASE_FEE,
         timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 5 * 60 * 1000 },
       }).addOperation(operation);
       const transaction = tx_builder.build();
-      const simulation = await rpc.simulateTransaction(transaction);
+      const simulation = await stellarRpc.simulateTransaction(transaction);
       setLoading(false);
       return simulation;
     } catch (e) {
@@ -317,101 +294,23 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  async function signAndSendTransaction({
-    txn,
-    secretKey,
-    skipAddingFootprint = false,
-    sorobanContext,
-    timeoutSeconds = 20,
-  }: SignAndSendArgs): Promise<TxResponse> {
-    let networkPassphrase = sorobanContext.activeChain?.networkPassphrase;
-    let server = sorobanContext.server;
-
-    if (!secretKey && !sorobanContext.activeConnector)
-      throw Error('signAndSend: no secretKey neither activeConnector');
-    if (!server) throw Error('signAndSend: no server');
-    if (!networkPassphrase) throw Error('signAndSend: no networkPassphrase');
-
-    // preflight and add the footprint !
-    if (!skipAddingFootprint) {
-      txn = await server.prepareTransaction(txn);
-      if (!txn) {
-        throw new Error('No transaction after adding footprint');
-      }
-    }
-
-    // // is it possible for `auths` to be present but empty? Probably not, but let's be safe.
-    // const auths = simulated.results?.[0]?.auth;
-    // let auth_len = auths?.length ?? 0;
-
-    // if (auth_len > 1) {
-    //   throw new NotImplementedError("Multiple auths not yet supported");
-    // } else if (auth_len == 1) {
-    //   // TODO: figure out how to fix with new StellarSdk
-    //   // const auth = StellarSdk.xdr.SorobanAuthorizationEntry.fromXDR(auths![0]!, 'base64')
-    //   // if (auth.addressWithNonce() !== undefined) {
-    //   //   throw new NotImplementedError(
-    //   //     `This transaction needs to be signed by ${auth.addressWithNonce()
-    //   //     }; Not yet supported`
-    //   //   )
-    //   // }
-    // }
-
-    let signed = '';
-    if (secretKey) {
-      // User as set a secretKey, txn will be signed using the secretKey
-      const keypair = StellarSdk.Keypair.fromSecret(secretKey);
-      txn.sign(keypair);
-      signed = txn.toXDR();
-    } else if (sorobanContext.activeConnector) {
-      // User has not set a secretKey, txn will be signed using the Connector (wallet) provided in the sorobanContext
-      console.log('TRANSACTION SIGN AND SEND OPTS', {
-        networkPassphrase,
-        network: sorobanContext.activeChain?.id,
-        accountToSign: sorobanContext.address,
-      });
-      signed = await sorobanContext.activeConnector.signTransaction(txn.toXDR(), {
-        networkPassphrase,
-        network: sorobanContext.activeChain?.id,
-        accountToSign: sorobanContext.address,
-      });
-      console.log('Wallet has signed: ', signed);
-    } else {
-      throw new Error('signAndSendTransaction: no secretKey, neither active Connector');
-    }
-
-    const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(signed, networkPassphrase);
-
-    let tx = transactionToSubmit as Tx;
-    let secondsToWait = timeoutSeconds;
-
-    const raw = await sendTx({ tx, secondsToWait, server });
-
-    return raw;
-  }
-
   async function invokeSorobanOperation<T>(operation: xdr.Operation, poolId?: string | undefined) {
     try {
-      const account = await rpc.getAccount(sorobanContext.address!);
-
+      const account = await stellarRpc.getAccount(walletAddress);
       const tx_builder = new TransactionBuilder(account, {
         networkPassphrase: network.passphrase,
         fee: BASE_FEE,
         timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 5 * 60 * 1000 },
       }).addOperation(operation);
-
       const transaction = tx_builder.build();
-
-      const result = await signAndSendTransaction({ txn: transaction, sorobanContext });
-      if (result) {
-        try {
-          await loadBlendData(true, poolId, walletAddress);
-        } catch {
-          console.error('Failed reloading blend data for account: ', walletAddress);
-        }
-      }
+      console.log(transaction.toXDR());
+      const simResponse = await simulateOperation(operation);
+      const assembled_tx = rpc.assembleTransaction(transaction, simResponse).build();
+      const signedTx = await sign(assembled_tx.toXDR());
+      const tx = new Transaction(signedTx, network.passphrase);
+      await sendTransaction(tx);
     } catch (e: any) {
-      console.error('Failed submitting transaction: ', e);
+      console.error('Unknown error submitting transaction: ', e);
       setFailureMessage(e?.message);
       setTxStatus(TxStatus.FAIL);
     }
@@ -423,6 +322,67 @@ export const WalletProvider = ({ children = null as any }) => {
     setTxFailure(undefined);
     setTxType(TxType.CONTRACT);
   }
+
+  async function swapExactTokensForTokens(routerId: string, swapArgs: RouterSwapExactTokensForTokensArgs, sim: boolean): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+    if (connected) {
+      const router = new RouterContract(routerId);
+      const xdrSwap = router.swapExactTokensForTokens(swapArgs);
+      const operation = xdr.Operation.fromXDR(xdrSwap, 'base64');
+      console.log('Submitting xdr: ', xdrSwap);
+      console.log('Submitting operation: ', operation);
+      if (sim) {
+        return await simulateOperation(operation);
+      }
+      await invokeSorobanOperation(operation);
+      cleanWalletCache();
+    }
+  }
+
+  async function swapTokensforExactTokens(routerId: string, swapArgs: RouterSwapTokensForExactTokensArgs, sim: boolean): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+    if (connected) {
+      const router = new RouterContract(routerId);
+      const xdrSwap = router.swapTokensForExactTokens(swapArgs);
+      const operation = xdr.Operation.fromXDR(xdrSwap, 'base64');
+      console.log('Submitting xdr: ', xdrSwap);
+      console.log('Submitting operation: ', operation);
+      if (sim) {
+        return await simulateOperation(operation);
+      }
+      await invokeSorobanOperation(operation);
+      cleanWalletCache();
+    }
+  }
+
+  async function routerGetAmountIn(routerId: string, routerGetAmountInArgs: RouterGetAmountInArgs): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+    if (connected) {
+      const router = new RouterContract(routerId);
+      const xdrGetAmountIn = router.routerGetAmountsIn(routerGetAmountInArgs);
+      const operation = xdr.Operation.fromXDR(xdrGetAmountIn, 'base64');
+      console.log('Submitting xdr: ', xdrGetAmountIn);
+      console.log('Submitting operation: ', operation);
+      return await simulateOperation(operation);
+    }
+  }
+
+  async function routerGetAmountOut(routerId: string, routerGetAmountOutArgs: RouterGetAmountOutArgs): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+    if (connected) {
+      const router = new RouterContract(routerId);
+      const xdrGetAmountOut = router.routerGetAmountsOut(routerGetAmountOutArgs);
+      const operation = xdr.Operation.fromXDR(xdrGetAmountOut, 'base64');
+      console.log('Submitting xdr: ', xdrGetAmountOut);
+      console.log('Submitting operation: ', operation);
+      return await simulateOperation(operation);
+    }
+  }
+
+  async function routerPairFor(router: string, routerPairForArgs: RouterPairForArgs): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+    if (connected) {
+      const routerContract = new RouterContract(router);
+      const operation = xdr.Operation.fromXDR(routerContract.routerPairFor(routerPairForArgs), 'base64');
+      return await simulateOperation(operation);
+    }
+  }
+
 
   //********** Pool Functions ***********/
 
@@ -436,14 +396,21 @@ export const WalletProvider = ({ children = null as any }) => {
   async function poolSubmit(
     poolId: string,
     submitArgs: SubmitArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    const pool = new PoolContract(poolId);
-    const operation = xdr.Operation.fromXDR(pool.submit(submitArgs), 'base64');
-    if (sim) {
-      return await simulateOperation(operation);
+    sim: boolean
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+    if (connected) {
+      const pool = new PoolContract(poolId);
+      const xdrSubmit = pool.submit(submitArgs);
+      const operation = xdr.Operation.fromXDR(xdrSubmit, 'base64');
+      console.log('Submitting xdr: ', xdrSubmit);
+      console.log('Submitting operation: ', operation);
+      if (sim) {
+        return await simulateOperation(operation);
+      }
+      await invokeSorobanOperation<Positions>(operation, poolId);
+      cleanPoolCache(poolId);
+      cleanWalletCache();
     }
-    await invokeSorobanOperation<Positions>(operation, poolId);
   }
 
   /**
@@ -456,8 +423,8 @@ export const WalletProvider = ({ children = null as any }) => {
   async function poolClaim(
     poolId: string,
     claimArgs: PoolClaimArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
+    sim: boolean
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const pool = new PoolContract(poolId);
       const operation = xdr.Operation.fromXDR(pool.claim(claimArgs), 'base64');
@@ -465,235 +432,39 @@ export const WalletProvider = ({ children = null as any }) => {
         return await simulateOperation(operation);
       }
       await invokeSorobanOperation(operation, poolId);
+      cleanPoolCache(poolId);
+      cleanWalletCache();
     }
   }
 
-  //********** Backstop Functions ***********/
-
-  /**
-   * Execute an deposit against the backstop
-   * @param args - The args of the deposit
-   * @param sim - "true" if simulating the transaction, "false" if submitting
-   * @returns The Positions, or undefined
-   */
-  async function backstopDeposit(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
-      let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
-      let operation = xdr.Operation.fromXDR(backstop.deposit(args), 'base64');
-      if (sim) {
-        return await simulateOperation(operation);
-      }
-      await invokeSorobanOperation(operation);
-    }
-  }
-
-  /**
-   * Execute an withdraw against the backstop
-   * @param args - The args of the withdraw
-   * @param sim - "true" if simulating the transaction, "false" if submitting
-   * @returns The Positions, or undefined
-   */
-  async function backstopWithdraw(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
-      let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
-      let operation = xdr.Operation.fromXDR(backstop.withdraw(args), 'base64');
-      if (sim) {
-        return await simulateOperation(operation);
-      }
-      await invokeSorobanOperation(operation);
-    }
-  }
-
-  /**
-   * Execute an queue withdrawal against the backstop
-   * @param args - The args of the queue withdrawal
-   * @param sim - "true" if simulating the transaction, "false" if submitting
-   * @returns The Positions, or undefined
-   */
-  async function backstopQueueWithdrawal(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
-      let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
-      let operation = xdr.Operation.fromXDR(backstop.queueWithdrawal(args), 'base64');
-      if (sim) {
-        return await simulateOperation(operation);
-      }
-      await invokeSorobanOperation(operation);
-    }
-  }
-
-  /**
-   * Execute an dequeue withdrawal against the backstop
-   * @param args - The args of the queue withdrawal
-   * @param sim - "true" if simulating the transaction, "false" if submitting
-   * @returns The Positions, or undefined
-   */
-  async function backstopDequeueWithdrawal(
-    args: PoolBackstopActionArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
-      let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
-      let operation = xdr.Operation.fromXDR(backstop.dequeueWithdrawal(args), 'base64');
-      if (sim) {
-        return await simulateOperation(operation);
-      }
-      await invokeSorobanOperation(operation);
-    }
-  }
-
-  /**
-   * Claim emissions from the backstop
-   * @param claimArgs - The "claim" function args
-   * @param sim - "true" if simulating the transaction, "false" if submitting
-   * @returns The claimed amount
-   */
-  async function backstopClaim(
-    claimArgs: BackstopClaimArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    if (connected && process.env.NEXT_PUBLIC_BACKSTOP) {
-      let backstop = new BackstopContract(process.env.NEXT_PUBLIC_BACKSTOP);
-      let operation = xdr.Operation.fromXDR(backstop.claim(claimArgs), 'base64');
-      if (sim) {
-        return await simulateOperation(operation);
-      }
-      await invokeSorobanOperation(operation);
-    }
-  }
-
-  /**
-   * Execute a single sided deposit against a comet pool
-   * @param cometPoolId - The comet pool id
-   * @param args - The args of the deposit
-   * @param sim - "true" if simulating the transaction, "false" if submitting
-   * @returns The simulated transaction response, or undefined
-   */
-  async function cometSingleSidedDeposit(
-    cometPoolId: string,
-    args: CometSingleSidedDepositArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
+  async function createTrustlines(assets: Asset[]) {
     try {
       if (connected) {
-        let cometClient = new CometClient(cometPoolId);
-        let operation = cometClient.depositTokenInGetLPOut(args);
-        if (sim) {
-          return await simulateOperation(operation);
-        }
-        await invokeSorobanOperation(operation);
-      }
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async function cometJoin(
-    cometPoolId: string,
-    args: CometLiquidityArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    try {
-      if (connected) {
-        let cometClient = new CometClient(cometPoolId);
-        let operation = cometClient.join(args);
-        if (sim) {
-          return await simulateOperation(operation);
-        }
-        await invokeSorobanOperation(operation);
-      }
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async function cometExit(
-    cometPoolId: string,
-    args: CometLiquidityArgs,
-    sim: boolean,
-  ): Promise<SorobanRpc.Api.SimulateTransactionResponse | undefined> {
-    try {
-      if (connected) {
-        let cometClient = new CometClient(cometPoolId);
-        let operation = cometClient.exit(args);
-        if (sim) {
-          return await simulateOperation(operation);
-        }
-        await invokeSorobanOperation(operation);
-      }
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async function faucet(): Promise<undefined> {
-    if (connected && process.env.NEXT_PUBLIC_PASSPHRASE === Networks.TESTNET) {
-      const url = `https://ewqw4hx7oa.execute-api.us-east-1.amazonaws.com/getAssets?userId=${walletAddress}`;
-      try {
-        setTxStatus(TxStatus.BUILDING);
-        const resp = await fetch(url, { method: 'GET' });
-        const txEnvelopeXDR = await resp.text();
-        let transaction = new Transaction(
-          xdr.TransactionEnvelope.fromXDR(txEnvelopeXDR, 'base64'),
-          network.passphrase,
-        );
-
-        let signedTx = new Transaction(await sign(transaction.toXDR()), network.passphrase);
-        await sendTransaction(signedTx);
-        try {
-          // reload Horizon account after submission
-          try {
-            await loadUserData(walletAddress);
-          } catch {
-            console.error('Failed loading account: ', walletAddress);
-          }
-
-          return;
-        } catch (e: any) {
-          console.error('Failed submitting transaction: ', e);
-          setFailureMessage(e?.message);
-          setTxStatus(TxStatus.FAIL);
-          return undefined;
-        }
-      } catch (e) {}
-    }
-  }
-
-  async function createTrustline(asset: Asset) {
-    try {
-      if (sorobanContext.address) {
-        const trustlineOperation = Operation.changeTrust({
-          asset: asset,
-        });
-        const account = await rpc.getAccount(sorobanContext.address);
+        const account = await stellarRpc.getAccount(walletAddress);
         const tx_builder = new TransactionBuilder(account, {
           networkPassphrase: network.passphrase,
           fee: BASE_FEE,
           timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 5 * 60 * 1000 },
-        }).addOperation(trustlineOperation);
+        });
+        for (let asset of assets) {
+          const trustlineOperation = Operation.changeTrust({
+            asset: asset,
+          });
+          tx_builder.addOperation(trustlineOperation);
+        }
         const transaction = tx_builder.build();
         const signedTx = await sign(transaction.toXDR());
         const tx = new Transaction(signedTx, network.passphrase);
         setTxType(TxType.PREREQ);
         const result = await sendTransaction(tx);
         if (result) {
-          try {
-            await loadUserData(walletAddress);
-          } catch {
-            console.error('Failed reloading blend data for account: ', walletAddress);
-          }
+          cleanWalletCache();
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to create trustline: ', e);
+      setFailureMessage(e?.message);
+      setTxStatus(TxStatus.FAIL);
     }
   }
 
@@ -721,24 +492,20 @@ export const WalletProvider = ({ children = null as any }) => {
         lastTxHash: txHash,
         lastTxFailure: txFailure,
         txType,
-        walletId: autoConnect,
+        walletId: XBULL_ID,
         isLoading: loading,
         connect,
         disconnect,
         clearLastTx,
         restore,
+        swapExactTokensForTokens,
+        swapTokensforExactTokens,
+        routerGetAmountIn,
+        routerGetAmountOut,
+        routerPairFor,
         poolSubmit,
         poolClaim,
-        backstopDeposit,
-        backstopWithdraw,
-        backstopQueueWithdrawal,
-        backstopDequeueWithdrawal,
-        backstopClaim,
-        cometSingleSidedDeposit,
-        cometJoin,
-        cometExit,
-        faucet,
-        createTrustline,
+        createTrustlines,
         getNetworkDetails,
       }}
     >

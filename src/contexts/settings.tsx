@@ -1,7 +1,7 @@
 import { Network } from '@blend-capital/blend-sdk';
 import { useMediaQuery, useTheme } from '@mui/material';
-import { SorobanRpc } from '@stellar/stellar-sdk';
-import { useLocalStorageState } from '../hooks/useLocalStorageState';
+import { rpc } from '@stellar/stellar-sdk';
+import { useLocalStorageState } from '../hooks';
 import React, { useContext, useState } from 'react';
 
 const DEFAULT_RPC = process.env.NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';
@@ -24,9 +24,9 @@ export interface TrackedPool {
 export interface ISettingsContext {
   viewType: ViewType;
   network: Network & { horizonUrl: string };
-  setNetwork: (rpcUrl: string, newHorizonUrl: string, opts?: SorobanRpc.Server.Options) => void;
-  getRPCServer: () => SorobanRpc.Server;
-  getHorizonServer: () => SorobanRpc.Server;
+  setNetwork: (rpcUrl: string, newHorizonUrl: string, opts?: rpc.Server.Options) => void;
+  getRPCServer: () => rpc.Server;
+  getHorizonServer: () => rpc.Server;
   lastPool: string | undefined;
   setLastPool: (poolId: string) => void;
   trackedPools: TrackedPool[];
@@ -69,17 +69,17 @@ export const SettingsProvider = ({ children = null as any }) => {
   function handleSetNetwork(
     newRpcUrl: string,
     newHorizonUrl: string,
-    opts?: SorobanRpc.Server.Options,
+    opts?: rpc.Server.Options,
   ) {
     setNetwork({ rpc: newRpcUrl, passphrase: DEFAULT_PASSPHRASE, opts, horizonUrl: newHorizonUrl });
   }
 
   function getRPCServer() {
-    return new SorobanRpc.Server(network.rpc, network.opts);
+    return new rpc.Server(network.rpc, network.opts);
   }
 
   function getHorizonServer() {
-    return new SorobanRpc.Server(network.horizonUrl, network.opts);
+    return new rpc.Server(network.horizonUrl, network.opts);
   }
 
   function trackPool(id: string, name: string | undefined) {

@@ -1,18 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { NextPage } from 'next';
 import { Box, Button, Grid, Typography, useTheme } from '@mui/material';
+import { RequestType, SubmitArgs } from '@blend-capital/blend-sdk';
 import BorrowForm from '../components/borrow/BorrowForm';
 import CollateralRatioSlider from '../components/borrow/CollateralRatioSlider';
 import TransactionOverview from '../components/borrow/TransactionOverview';
 import StyledGrid from '../components/common/StyledGrid';
 import { useWallet } from '../contexts/wallet';
-import { toBalance } from '../utils/formatter';
 import { scaleInputToBigInt } from '../utils/scval';
-import { RequestType, SubmitArgs } from '@blend-capital/blend-sdk';
-import { useHorizonAccount, usePool, usePoolOracle, usePoolUser } from '../hooks/api';
-import { useSorobanReact } from '@soroban-react/core';
+import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
 
-const POOL_ID = process.env.NEXT_PUBLIC_BLND_POOL || '';
+//TODO: Get this through config or API
+const POOL_ID = process.env.NEXT_PUBLIC_Pool || "CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU"
 
 const Borrow: NextPage = () => {
   const [collateralRatio, setCollateralRatio] = useState<number>(110);
@@ -20,23 +19,24 @@ const Borrow: NextPage = () => {
   const [supplyAmount, setSupplyAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const { connected, poolSubmit, txStatus, txType } = useWallet();
-  const { address } = useSorobanReact();
+  const { connected, poolSubmit, txStatus, txType, walletAddress } = useWallet();
 
   const { data: pool } = usePool(POOL_ID);
   const { data: poolOracle } = usePoolOracle(pool);
   const { data: poolUser } = usePoolUser(pool);
-  const reserve = pool?.reserves.get('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC');
-  const decimals = reserve?.config.decimals ?? 7;
-  const symbol = reserve?.tokenMetadata.symbol ?? 'XLM';
 
+  const collateral = pool?.reserves.get(process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '');
+  const stablecoin = pool?.reserves.get(process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '');
+
+  //TODO: Fix the calculations to work using oracle price
   const handleCollateralRatioChange = (_event: Event, newValue: number | number[]) => {
     const ratio = Array.isArray(newValue) ? newValue[0] : newValue;
     setCollateralRatio(ratio);
 
     // Update supply amount based on new ratio only if borrowAmount exists
     if (borrowAmount && !isNaN(parseFloat(borrowAmount))) {
-      const newSupplyAmount = ((parseFloat(borrowAmount) * ratio) / 100).toFixed(2);
+      const newSupplyAmount = ((parseFloat(borrowAmount) * ratio)).toFixed(2);
+      console.log('newSupplyAmount:', newSupplyAmount);
       setSupplyAmount(newSupplyAmount);
     }
   };
@@ -53,7 +53,7 @@ const Borrow: NextPage = () => {
 
     // Only calculate if we have a valid number
     const numValue = parseFloat(value);
-    const supplyValue = ((numValue * collateralRatio) / 100).toFixed(2);
+    const supplyValue = ((numValue * collateralRatio)).toFixed(2);
     setSupplyAmount(supplyValue);
   };
 
@@ -74,23 +74,23 @@ const Borrow: NextPage = () => {
   };
 
   const handleSubmitTransaction = async () => {
-    if (borrowAmount && address && reserve) {
+    if (borrowAmount && walletAddress && collateral && stablecoin) {
       setIsLoading(true);
       try {
         let submitArgs: SubmitArgs = {
-          from: address,
-          to: address,
-          spender: address,
+          from: walletAddress,
+          to: walletAddress,
+          spender: walletAddress,
           requests: [
             {
-              amount: scaleInputToBigInt(supplyAmount, reserve.config.decimals),
+              amount: scaleInputToBigInt(supplyAmount, collateral.config.decimals),
               request_type: RequestType.SupplyCollateral,
-              address: reserve.assetId,
+              address: collateral.assetId,
             },
             {
-              amount: scaleInputToBigInt(borrowAmount, reserve.config.decimals),
+              amount: scaleInputToBigInt(borrowAmount, stablecoin.config.decimals),
               request_type: RequestType.Borrow,
-              address: reserve.assetId,
+              address: stablecoin.assetId,
             },
           ],
         };
@@ -118,7 +118,7 @@ const Borrow: NextPage = () => {
           <Box sx={{ textAlign: 'center', color: 'white' }}>
             <Typography variant="subtitle2">Liability Factor</Typography>
             <Typography variant="h6">
-              {((reserve?.getLiabilityFactor() ?? 0) * 100).toFixed(2)}%
+              0%
             </Typography>
           </Box>
         </Grid>
@@ -148,11 +148,11 @@ const Borrow: NextPage = () => {
           <Grid item xs={12} sx={{ padding: '0px !important' }}>
             <TransactionOverview
               amount={null}
-              symbol={reserve?.tokenMetadata?.symbol ?? ''}
+              symbol={''}
               collateralRatio={collateralRatio}
               collateralAmount={null}
               assetToBase={assetToBase}
-              decimals={decimals}
+              decimals={7}
               userPoolData={poolUser}
               newPositionEstimate={null}
               assetId={'your_asset_id'} // Replace with actual asset ID
@@ -167,7 +167,7 @@ const Borrow: NextPage = () => {
         variant="contained"
         fullWidth
         onClick={handleSubmitTransaction}
-        disabled={isLoading || !borrowAmount || !address}
+        disabled={isLoading || !borrowAmount || !walletAddress}
         sx={{
           mt: 2,
           padding: '16px 8px',

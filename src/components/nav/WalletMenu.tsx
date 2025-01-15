@@ -4,7 +4,6 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import WalletIcon from '@mui/icons-material/Wallet';
 import {
   Alert,
-  Box,
   Button,
   ListItemIcon,
   ListItemText,
@@ -19,14 +18,10 @@ import React from 'react';
 import { useWallet } from '../../contexts/wallet';
 import * as formatter from '../../utils/formatter';
 import { CustomButton } from '../common/CustomButton';
-import { WalletButton } from './WalletButton';
-import { useSorobanReact } from '@soroban-react/core';
 
 export const WalletMenu = () => {
   const theme = useTheme();
   const { connect, disconnect, connected, walletAddress, isLoading } = useWallet();
-  const sorobanContext = useSorobanReact();
-  const isSorobanConnected = Boolean(sorobanContext.activeConnector);
 
   // snackbars
   const [openCon, setOpenCon] = React.useState(false);
@@ -43,8 +38,7 @@ export const WalletMenu = () => {
   };
 
   const handleDisconnectWallet = () => {
-    // Disconnect both wallet and Soroban
-    sorobanContext.disconnect();
+    disconnect();
     setOpenDis(true);
   };
 
@@ -67,38 +61,42 @@ export const WalletMenu = () => {
     setAnchorElDropdown(event.currentTarget);
   };
 
+  const handleClickConnect = () => {
+    connect(handleConnectWallet);
+  };
+
   const handleClose = () => {
     handleSnackClose();
     setAnchorElDropdown(null);
   };
 
-  // Show connected state only when both wallet and Soroban are connected
-  const fullyConnected = sorobanContext.address != undefined;
-
   return (
     <>
-      {fullyConnected ? (
+      {connected ? (
         <CustomButton
           id="wallet-dropdown-button"
           onClick={handleClickDropdown}
-          sx={{
-            width: '100%',
-            height: '44px',
-            color: theme.palette.text.secondary,
-            background: '#030615',
-            borderRadius: '8px',
-          }}
+          sx={{ width: '100%', height: '100%', color: theme.palette.text.secondary }}
         >
           <WalletIcon />
-          <Typography variant="body1" color="white">
-            {formatter.toCompactAddress(sorobanContext.address)}
+          <Typography variant="body1" color={theme.palette.text.primary}>
+            {formatter.toCompactAddress(walletAddress)}
           </Typography>
-          <ArrowDropDownIcon sx={{ color: 'white' }} />
+          <ArrowDropDownIcon sx={{ color: theme.palette.text.secondary }} />
         </CustomButton>
       ) : (
-        <WalletButton />
+        <Button
+          id="connect-wallet-dropdown-button"
+          variant="contained"
+          color="primary"
+          endIcon={<ArrowDropDownIcon />}
+          onClick={handleClickConnect}
+          disabled={isLoading}
+          sx={{ width: '100%' }}
+        >
+          Connect Wallet
+        </Button>
       )}
-
       <Menu
         id="wallet-dropdown-menu"
         anchorEl={anchorElDropdown}
@@ -106,17 +104,11 @@ export const WalletMenu = () => {
         onClose={handleClose}
         MenuListProps={{
           'aria-labelledby': 'wallet-dropdown-button',
-          sx: {
-            width: anchorElDropdown && anchorElDropdown.offsetWidth,
-            backgroundColor: '#030615',
-            color: 'white',
-          },
+          sx: { width: anchorElDropdown && anchorElDropdown.offsetWidth },
         }}
         PaperProps={{
-          sx: {
-            backgroundColor: '#030615',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          },
+          // @ts-ignore - TODO: Figure out why typing is broken
+          backgroundColor: theme.palette.menu.main,
         }}
       >
         <MenuItem
@@ -124,11 +116,10 @@ export const WalletMenu = () => {
             handleClose();
             handleCopyAddress();
           }}
-          sx={{ color: 'white' }}
         >
           <ListItemText>Copy address</ListItemText>
           <ListItemIcon>
-            <ContentCopyIcon sx={{ color: 'white' }} />
+            <ContentCopyIcon />
           </ListItemIcon>
         </MenuItem>
         <MenuItem

@@ -2,31 +2,8 @@ import React from 'react';
 import { Typography, Grid, Box, Button } from '@mui/material';
 import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
 import { toBalance, toPercentage } from '../utils/formatter';
-import { FlameIcon } from '../components/common/FlameIcon';
-import { RightArrowIcon } from '../components/common/RightArrowIcon';
 import { TokenType } from '../interfaces';
-import { useSorobanReact } from '@soroban-react/core';
-
-const tokens: TokenType[] = [
-  {
-    code: 'XLM',
-    contract: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
-    icon: '/icons/tokens/xlm.svg',
-    decimals: 7,
-  },
-  {
-    code: 'USDC',
-    contract: 'CAAFIHB4I7WQMJMKC22CZVQNNX7EONWSOMT6SUXK6I3G3F6J4XFRWNDI',
-    icon: '/icons/tokens/ousd.svg',
-    decimals: 7,
-  },
-  {
-    code: 'SLP',
-    contract: 'YOUR_SLP_CONTRACT_ADDRESS',
-    icon: '/icons/tokens/slp.svg',
-    decimals: 7,
-  },
-];
+import { useWallet } from '../contexts/wallet';
 
 const ActionButton = ({ variant = 'withdraw', onClick }) => {
   const getButtonStyles = () => ({
@@ -93,8 +70,7 @@ const getTokenInfo = (contractId: string): TokenType | undefined => {
 };
 
 const ConnectWallet = () => {
-  const { connect } = useSorobanReact();
-
+  const { connect } = useWallet();
   return (
     <Box
       sx={{
@@ -152,8 +128,8 @@ const ConnectWallet = () => {
 };
 
 const Dashboard = () => {
-  const { address } = useSorobanReact();
-  if (!address) {
+  const { walletAddress } = useWallet();
+  if (!walletAddress) {
     return <ConnectWallet />;
   }
   const poolId = process.env.NEXT_PUBLIC_BLND_POOL;

@@ -3,7 +3,6 @@ import { Box, styled, Card, CardContent } from '@mui/material';
 import NavBar from '../components/nav/NavBar';
 import bg from './background.png';
 import { useRouter } from 'next/router';
-import ConnectWalletModal from '../components/nav/ConnectWalletModal';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: '#030615',
@@ -23,7 +22,6 @@ const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
   useEffect(() => {
     const handleRouteChange = () => {
-      // Reset height when route changes
       setContentHeight(undefined);
     };
 
@@ -91,7 +89,6 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
         }}
       >
         <NavBar />
-        <ConnectWalletModal />
         <ChildrenCard>{children}</ChildrenCard>
       </Box>
     </Box>

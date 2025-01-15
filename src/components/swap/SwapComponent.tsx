@@ -1,28 +1,17 @@
 import React, {
   SetStateAction,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useReducer,
   useState,
 } from 'react';
 import { Box, Card, CardContent, Typography, Button, Grid, CircularProgress } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import SwapIcon from '../../components/icons/SwapIcon';
 import TokenSelection from '../../components/common/TokenSelection';
-import { useSorobanReact } from '@soroban-react/core';
-import { useSwapCallback } from '../../hooks/useSwapCallback';
-import { useDerivedSwapInfo, useSwapActionHandlers } from '../../state/swap/hooks';
-import { Field } from '../../state/swap/actions';
-import swapReducer, { SwapState, initialState as initialSwapState } from '../../state/swap/reducer';
-import useSwapNetworkFees from '../../hooks/useSwapNetworkFees';
-import useSwapMainButton from '../../hooks/useSwapMainButton';
-import useGetMyBalances from '../../hooks/useGetMyBalances';
-import { AppContext } from '../../contexts';
 import { formatTokenAmount } from '../../helpers/format';
-import { InterfaceTrade } from '../../state/types';
 import { TokenType } from '../../interfaces';
+import { useHorizonAccount, useTokenBalance } from '../../hooks/api';
 
 const OverviewItem = ({
   label,
@@ -74,7 +63,6 @@ interface SwapComponentProps {
  */
 interface SwapStateProps {
   showConfirm: boolean;
-  tradeToConfirm?: InterfaceTrade;
   swapError?: Error;
   swapResult?: any;
 }
@@ -82,7 +70,6 @@ interface SwapStateProps {
 // Initial state for the swap operation
 const INITIAL_SWAP_STATE: SwapStateProps = {
   showConfirm: false,
-  tradeToConfirm: undefined,
   swapError: undefined,
   swapResult: undefined,
 };
@@ -91,22 +78,16 @@ const INITIAL_SWAP_STATE: SwapStateProps = {
 const tokens: TokenType[] = [
   {
     code: 'XLM',
-    contract: 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+    contract: process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '',
     icon: '/icons/tokens/xlm.svg',
     decimals: 7,
   },
   {
-    code: 'USDC',
-    contract: 'CAAFIHB4I7WQMJMKC22CZVQNNX7EONWSOMT6SUXK6I3G3F6J4XFRWNDI',
+    code: 'OUSD',
+    contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
-  },
-  {
-    code: 'SLP',
-    contract: 'YOUR_SLP_CONTRACT_ADDRESS',
-    icon: '/icons/tokens/slp.svg',
-    decimals: 7,
-  },
+  }
 ];
 
 /**
@@ -125,25 +106,27 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
   // Context and state initialization
   const [txError, setTxError] = useState<boolean>(false);
   const [txErrorMessage, setTxErrorMessage] = useState<string>();
+  const [inputAmount, setInputAmount] = useState<string>('');
+  const [outputAmount, setOutputAmount] = useState<string>('');
+
+  const { data: horizonAccount } = useHorizonAccount();
+  const collateral = process.env.NEXT_PUBLIC_COLLATERAL_ASSET || null;
+  const stablecoin = process.env.NEXT_PUBLIC_STABLECOIN_ASSET || null;
+
+  const { data: collateralBalance } = useTokenBalance(
+    collateral,
+    undefined,
+    horizonAccount
+  )
+  const { data: stablecoinBalance } = useTokenBalance(
+    stablecoin,
+    undefined,
+    horizonAccount
+  )
 
   // Core swap state management
-  const [{ showConfirm, tradeToConfirm, swapError, swapResult }, setSwapState] =
+  const [{ showConfirm, swapError, swapResult }, setSwapState] =
     useState<SwapStateProps>(INITIAL_SWAP_STATE);
-  const [state, dispatch] = useReducer(swapReducer, { ...initialSwapState, ...prefilledState });
-  const { typedValue, independentField } = state;
-
-  // Initialize swap handlers and derive swap state
-  const { onSwitchTokens, onCurrencySelection, onUserInput } = useSwapActionHandlers(dispatch);
-  const dependentField: Field = independentField === Field.INPUT ? Field.OUTPUT : Field.INPUT;
-
-  // Get derived swap information including trade state, balances, and errors
-  const {
-    trade: { state: tradeState, trade },
-    currencyBalances,
-    parsedAmount,
-    currencies,
-    inputError: swapInputError,
-  } = useDerivedSwapInfo(state);
 
   /**
    * Memoized calculation of parsed amounts for input and output fields
@@ -184,12 +167,6 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
     [decimals, dependentField, independentField, trade?.expectedAmount, typedValue],
   );
 
-  const {
-    tokenBalancesResponse,
-    availableNativeBalance,
-    isLoading: isLoadingMyBalances,
-  } = useGetMyBalances();
-
   // Initialize with default tokens (XLM and USDC)
   useEffect(() => {
     if (!currencies[Field.INPUT] || !currencies[Field.OUTPUT]) {
@@ -203,18 +180,6 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
       }
     }
   }, []);
-
-  // Function to get balance for a specific token
-  const getTokenBalance = useCallback(
-    (token: TokenType) => {
-      if (!tokenBalancesResponse?.balances) return '0';
-      const tokenBalance = tokenBalancesResponse.balances.find(
-        (b) => b.contract === token.contract,
-      );
-      return tokenBalance?.balance || '0';
-    },
-    [tokenBalancesResponse],
-  );
 
   /**
    * Handles selection of input token
@@ -357,25 +322,25 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
               <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'start' }}>
                 <TokenSelection
                   tokens={tokens}
-                  selectedToken={currencies[Field.INPUT] ?? tokens[0]}
+                  selectedToken={tokens[0]}
                   onTokenSelect={handleInputSelect}
-                  balance={getTokenBalance(currencies[Field.INPUT] ?? tokens[0]).toString()}
+                  balance={collateralBalance?.toString()}
                   amount={formattedAmounts[Field.INPUT]}
                   onAmountChange={handleTypeInput}
                   alignment="start"
-                  decimals={currencies[Field.INPUT]?.decimals ?? 7}
+                  decimals={7}
                 />
               </Grid>
               <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'end' }}>
                 <TokenSelection
                   tokens={tokens}
-                  selectedToken={currencies[Field.OUTPUT] ?? tokens[1]}
+                  selectedToken={tokens[1]}
                   onTokenSelect={handleOutputSelect}
-                  balance={getTokenBalance(currencies[Field.OUTPUT] ?? tokens[1]).toString()}
+                  balance={stablecoinBalance?.toString()}
                   amount={formattedAmounts[Field.OUTPUT]}
                   onAmountChange={handleTypeOutput}
                   alignment="end"
-                  decimals={currencies[Field.OUTPUT]?.decimals ?? 7}
+                  decimals={7}
                 />
               </Grid>
             </Grid>
@@ -385,7 +350,7 @@ const SwapComponent: React.FC<SwapComponentProps> = ({
         {/* Rate Information Section */}
         <Box sx={{ mb: 3 }}>
           <Typography align="center" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 2 }}>
-            Slippage: {trade?.slippageTolerance ?? 3}%
+            Slippage: {3}%
           </Typography>
           <Box
             sx={{
