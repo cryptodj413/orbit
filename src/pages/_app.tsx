@@ -9,6 +9,7 @@ import theme from '../theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import DefaultLayout from '../layouts/DefaultLayout';
+import '../globals.css'
 
 const queryClient = new QueryClient();
 

@@ -1,7 +1,8 @@
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LogoutIcon from '@mui/icons-material/Logout';
-import WalletIcon from '@mui/icons-material/Wallet';
+import settingSvg from '../../../public/icons/setting.svg';
+
 import {
   Alert,
   Button,
@@ -14,7 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import copy from 'copy-to-clipboard';
-import React from 'react';
+import React, { useState, MouseEvent } from 'react';
 import { useWallet } from '../../contexts/wallet';
 import * as formatter from '../../utils/formatter';
 import { CustomButton } from '../common/CustomButton';
@@ -24,10 +25,12 @@ export const WalletMenu = () => {
   const { connect, disconnect, connected, walletAddress, isLoading } = useWallet();
 
   // snackbars
-  const [openCon, setOpenCon] = React.useState(false);
-  const [openDis, setOpenDis] = React.useState(false);
-  const [openCopy, setOpenCopy] = React.useState(false);
-  const [openError, setOpenError] = React.useState(false);
+  const [openCon, setOpenCon] = useState(false);
+  const [openDis, setOpenDis] = useState(false);
+  const [openCopy, setOpenCopy] = useState(false);
+  const [openError, setOpenError] = useState(false);
+  const [anchorElDropdown, setAnchorElDropdown] = useState<null | HTMLElement>(null);
+  const openDropdown = Boolean(anchorElDropdown);
 
   const handleConnectWallet = (successful: boolean) => {
     if (successful) {
@@ -54,14 +57,12 @@ export const WalletMenu = () => {
     setOpenError(false);
   };
 
-  const [anchorElDropdown, setAnchorElDropdown] = React.useState<null | HTMLElement>(null);
-  const openDropdown = Boolean(anchorElDropdown);
-
-  const handleClickDropdown = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClickDropdown = (event: MouseEvent<HTMLButtonElement>) => {
     setAnchorElDropdown(event.currentTarget);
   };
 
   const handleClickConnect = () => {
+    if(isLoading) return ;
     connect(handleConnectWallet);
   };
 
@@ -73,29 +74,28 @@ export const WalletMenu = () => {
   return (
     <>
       {connected ? (
-        <CustomButton
+        <div
           id="wallet-dropdown-button"
-          onClick={handleClickDropdown}
-          sx={{ width: '100%', height: '100%', color: theme.palette.text.secondary }}
+          className='w-[221px] h-full rounded-lg text-white flex bg-white bg-opacity-[16%]'
         >
-          <WalletIcon />
-          <Typography variant="body1" color={theme.palette.text.primary}>
+          <div className='w-[189px] h-full rounded-lg bg-richBlack text-center place-content-center font-normal text-[16px] leading-4 opacity-100'>
             {formatter.toCompactAddress(walletAddress)}
-          </Typography>
-          <ArrowDropDownIcon sx={{ color: theme.palette.text.secondary }} />
-        </CustomButton>
+          </div>
+          <button 
+            className='w-[32px] h-full bg-none flex justify-center items-center cursor-pointer'
+            onClick={handleClickDropdown}
+          >
+            <img src={settingSvg.src} className='w-4 h-4 mix-blend-hard-light text-platinum'/>
+          </button>
+        </div>
       ) : (
-        <Button
+        <div
           id="connect-wallet-dropdown-button"
-          variant="contained"
-          color="primary"
-          endIcon={<ArrowDropDownIcon />}
+          className={`w-[156.85px] h-full rounded-[9.54px] bg-secondary text-center place-content-center text-[16px] leading-4 font-normal text-richBlack cursor-pointer ${isLoading? "bg-inactive cursor-not-allowed": ""}`}
           onClick={handleClickConnect}
-          disabled={isLoading}
-          sx={{ width: '100%' }}
         >
           Connect Wallet
-        </Button>
+        </div>
       )}
       <Menu
         id="wallet-dropdown-menu"

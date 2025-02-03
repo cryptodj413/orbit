@@ -55,13 +55,13 @@ const theme: Theme = createTheme({
       paper: '#212429E5',
     },
     primary: {
-      main: '#36B04A',
-      opaque: '#36B04A26',
+      main: '#0215D3',
+      opaque: '#0215D326',
       contrastText: 'white',
     },
     secondary: {
-      main: '#ff3366',
-      opaque: '#ff336626',
+      main: '#96FD02',
+      opaque: '#96FD0226',
     },
     lend: {
       main: '#00C4EF',

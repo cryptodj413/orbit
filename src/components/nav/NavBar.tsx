@@ -7,7 +7,6 @@ import { WalletMenu } from './WalletMenu';
 const NavBar: React.FC = () => {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
-  const navItemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   useEffect(() => {
     const path = router.pathname;
@@ -16,41 +15,9 @@ const NavBar: React.FC = () => {
     else if (path.includes('/borrow')) setActiveIndex(2);
   }, [router.pathname]);
 
-  const getHighlightStyle = () => {
-    const activeItem = navItemRefs.current[activeIndex];
-    if (!activeItem) return {};
-
-    const { offsetLeft, offsetWidth } = activeItem;
-    const textElement = activeItem.querySelector('span');
-    const textWidth = textElement ? textElement.offsetWidth : 0;
-    const padding = 16; // Adjust this value to control the highlight padding
-
-    return {
-      left: `${offsetLeft + (offsetWidth - textWidth) / 2 - padding / 2}px`,
-      width: `${textWidth + padding}px`,
-    };
-  };
-
   return (
-    <Box
-      sx={{
-        width: '680px',
-        height: '100%',
-        display: 'flex',
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'row',
-          gap: 2,
-          justifyContent: 'space-between',
-          background: '#030615',
-          borderRadius: '22px',
-          p: 0.4,
-          px: 2,
-          position: 'relative',
-        }}
+    <div className='w-[680px] h-12 flex justify-between items-center font-satoshi'>
+      <div className='flex gap-4 space justify-between rounded-[22px] w-[279px] h-full items-center bg-richBlack px-4 mix-blend-hard-light'
       >
         {['Dashboard', 'Swap', 'Borrow'].map((title, index) => (
           <NavItem
@@ -58,30 +25,13 @@ const NavBar: React.FC = () => {
             to={{ pathname: `/${title.toLowerCase()}` }}
             title={title}
             isActive={activeIndex === index}
-            ref={(el) => {
-              navItemRefs.current[index] = el;
-            }}
           />
         ))}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            height: '80%',
-            background: '#2050F2',
-            borderRadius: '22px',
-            transition: 'left 0.3s ease-in-out, width 0.3s ease-in-out',
-            ...getHighlightStyle(),
-          }}
-        />
-      </Box>
-      <Box sx={{ width: '100%', display: 'flex', justifyContent: 'end' }}>
-        <Box sx={{ width: '70%' }}>
+      </div>
+      <div className='flex justify-end w-min h-full'>
           <WalletMenu />
-        </Box>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

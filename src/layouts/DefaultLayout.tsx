@@ -1,7 +1,7 @@
 import React, { ReactNode, useRef, useEffect, useState } from 'react';
 import { Box, styled, Card, CardContent } from '@mui/material';
 import NavBar from '../components/nav/NavBar';
-import bg from './background.png';
+import bg from '../../public/background.png';
 import { useRouter } from 'next/router';
 
 const StyledCard = styled(Card)(({ theme }) => ({
@@ -68,7 +68,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          filter: 'brightness(0.4)', // Adjust value between 0-1
+          filter: 'brightness(1.0)', // Adjust value between 0-1
           zIndex: 0,
         },
         '& > *': {
