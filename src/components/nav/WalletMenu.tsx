@@ -29,6 +29,7 @@ export const WalletMenu = () => {
   const [openDis, setOpenDis] = useState(false);
   const [openCopy, setOpenCopy] = useState(false);
   const [openError, setOpenError] = useState(false);
+  // const [openDropdown, setOpenDropdown] = useState(false);
   const [anchorElDropdown, setAnchorElDropdown] = useState<null | HTMLElement>(null);
   const openDropdown = Boolean(anchorElDropdown);
 
@@ -76,16 +77,23 @@ export const WalletMenu = () => {
       {connected ? (
         <div
           id="wallet-dropdown-button"
-          className='w-[221px] h-full rounded-lg text-white flex bg-white bg-opacity-[16%]'
+          className='h-full rounded-lg text-white flex bg-white bg-opacity-[16%]'
         >
-          <div className='w-[189px] h-full rounded-lg bg-richBlack text-center place-content-center font-normal text-[16px] leading-4 opacity-100'>
+          <div 
+            className={`w-[189px] h-full bg-richBlack text-center place-content-center font-normal text-[16px] leading-4 opacity-100 cursor-pointer`} 
+            style={{
+              borderRadius: openDropdown ? "8px 56px 0px 8px": "8px"
+            }}
+            onClick={handleCopyAddress}
+          >
             {formatter.toCompactAddress(walletAddress)}
           </div>
           <button 
-            className='w-[32px] h-full bg-none flex justify-center items-center cursor-pointer'
+            className='px-2 h-full bg-none flex justify-center items-center gap-1 cursor-pointer'
             onClick={handleClickDropdown}
           >
-            <img src={settingSvg.src} className='w-4 h-4 mix-blend-hard-light text-platinum'/>
+            <img src={settingSvg.src} className='block w-4 h-4 mix-blend-hard-light text-platinum'/>
+            <p className="transition-all" style={{ width: openDropdown ? '70px' : '0px', overflow: 'hidden' }}>Settings</p>
           </button>
         </div>
       ) : (
@@ -98,23 +106,123 @@ export const WalletMenu = () => {
         </div>
       )}
       <Menu
+  id="wallet-dropdown-menu"
+  anchorEl={anchorElDropdown}
+  open={openDropdown}
+  onClose={handleClose}
+  sx={{
+    backgroundColor: "transparent !important",
+    "& .MuiPaper-root": {
+      backgroundColor: "transparent !important",
+      boxShadow: "none !important",
+    },
+    "& .MuiList-root": {
+      backgroundColor: "transparent !important",
+    },
+  }}
+  MenuListProps={{
+    'aria-labelledby': 'wallet-dropdown-button',
+    sx: {
+      backgroundColor: "transparent !important",
+    },
+  }}
+  anchorOrigin={{
+    vertical: 'bottom',
+    horizontal: 'right',
+  }}
+  transformOrigin={{
+    vertical: 'top',
+    horizontal: 'right',
+  }}
+  PaperProps={{
+    sx: {
+      backgroundColor: "transparent !important",
+      boxShadow: "none !important",
+    },
+  }}
+>
+  <MenuItem
+    onClick={() => {
+      handleClose();
+      handleCopyAddress();
+    }}
+    sx={{
+      backgroundColor: "transparent !important",
+      "&:hover": { backgroundColor: "transparent !important" },
+      "&:focus": { backgroundColor: "transparent !important" },
+    }}
+  >
+    <ListItemText>Copy address</ListItemText>
+    <ListItemIcon>
+      <ContentCopyIcon 
+        sx={{
+          marginLeft: "auto"
+        }}
+      />
+    </ListItemIcon>
+  </MenuItem>
+  <MenuItem
+    onClick={() => {
+      handleClose();
+      handleDisconnectWallet();
+    }}
+    sx={{ 
+      backgroundColor: "transparent !important",
+      "&:hover": { backgroundColor: "transparent !important" },
+      "&:focus": { backgroundColor: "transparent !important" },
+      color: '#E7424C',
+    }}
+  >
+    <ListItemText>Disconnect</ListItemText>
+    <ListItemIcon>
+      <LogoutIcon sx={{
+        marginLeft: "auto",
+        color: '#E7424C' 
+      }} />
+    </ListItemIcon>
+  </MenuItem>
+</Menu>
+
+      {/* <Menu
         id="wallet-dropdown-menu"
         anchorEl={anchorElDropdown}
         open={openDropdown}
         onClose={handleClose}
+        sx={{
+          backgroundColor: "transparent !important"
+        }}
         MenuListProps={{
           'aria-labelledby': 'wallet-dropdown-button',
-          sx: { width: anchorElDropdown && anchorElDropdown.offsetWidth },
+          sx: {
+            // transform: `translateX(-100px)`
+            // position: 'absolute',
+            // left: 0
+            backgroundColor: "transparent !important"
+          },
+        }}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right'
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right'
         }}
         PaperProps={{
           // @ts-ignore - TODO: Figure out why typing is broken
-          backgroundColor: theme.palette.menu.main,
+          backgroundColor: "transparent !important",
+          boxShadow: "none", // Remove box shadow
         }}
       >
         <MenuItem
           onClick={() => {
             handleClose();
             handleCopyAddress();
+          }}
+          sx={{
+            backgroundColor: "transparent !important",
+            "&:hover": { backgroundColor: "transparent" },
+            "&:focus": { backgroundColor: "transparent" },
           }}
         >
           <ListItemText>Copy address</ListItemText>
@@ -127,14 +235,19 @@ export const WalletMenu = () => {
             handleClose();
             handleDisconnectWallet();
           }}
-          sx={{ color: '#E7424C' }}
+          sx={{ 
+            backgroundColor: "transparent !important",
+            "&:hover": { backgroundColor: "transparent" },
+            "&:focus": { backgroundColor: "transparent" },
+            color: '#E7424C'
+          }}
         >
           <ListItemText>Disconnect</ListItemText>
           <ListItemIcon>
             <LogoutIcon sx={{ color: '#E7424C' }} />
           </ListItemIcon>
         </MenuItem>
-      </Menu>
+      </Menu> */}
 
       <Snackbar
         open={openCon}
