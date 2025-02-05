@@ -60,64 +60,64 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        gap: '10px',
+        gap: '29.64px',
         alignItems: alignment,
-        width: '100%',
+        padding: '25.19px 27.58px'
       }}
     >
-      <Box
-        display="flex"
-        alignItems="center"
-        justifyContent="space-between"
-        width="120px"
-        height="40px"
-        px={2}
-        borderRadius="20px"
-        border="1px solid white"
-        onClick={handleClick}
-        style={{ cursor: 'pointer' }}
-      >
-        <Box display="flex" alignItems="center" gap={1}>
-          <img src={selectedToken.icon} alt={selectedToken.code} width="20" height="20" />
-          <Typography variant="body2" color="white">
-            {selectedToken.code}
-          </Typography>
-        </Box>
-        <IconButton size="small" sx={{ color: 'white' }}>
+      <Box sx={{display: 'flex', flexDirection: 'column', gap: '14.87px'}}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          height="33.61px"
+          px={"11.32px"}
+          py={"7.3px"}
+          borderRadius="18.96px"
+          border="1px solid white"
+          onClick={handleClick}
+          style={{ cursor: 'pointer' }}
+        >
+          <Box display="flex" alignItems="center" sx={{ height: '19px' }}>
+            <img src={selectedToken.icon} alt={selectedToken.code} width="15.35px" height="15.35px" />
+            <Typography variant="body2" color="white" className='text-[16px] font-normal leading-[19.2px] font-satoshi'>
+              {selectedToken.code}
+            </Typography>
+          </Box>
           <ArrowDropDownIcon />
-        </IconButton>
+        </Box>
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleClose}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: alignment === 'start' ? 'left' : 'right',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: alignment === 'start' ? 'left' : 'right',
+          }}
+        >
+          {tokens.map((token) => (
+            <MenuItem key={token.contract} onClick={() => handleTokenSelect(token)}>
+              <Box display="flex" alignItems="center" gap={1}>
+                <img
+                  src={token.icon}
+                  alt={token.code}
+                  width="20"
+                  height="20"
+                  style={{ borderRadius: '100px' }}
+                />
+                <Typography variant="body2">{token.code}</Typography>
+              </Box>
+            </MenuItem>
+          ))}
+        </Menu>
+        <Typography variant="body2" color="white" sx={{ textAlign: alignment, fontSize: '16px', lineHeight: '19.2px'}} className='font-satoshi'>
+          Balance: {formattedBalance} {selectedToken.code}
+        </Typography>
       </Box>
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: alignment === 'start' ? 'left' : 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: alignment === 'start' ? 'left' : 'right',
-        }}
-      >
-        {tokens.map((token) => (
-          <MenuItem key={token.contract} onClick={() => handleTokenSelect(token)}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <img
-                src={token.icon}
-                alt={token.code}
-                width="20"
-                height="20"
-                style={{ borderRadius: '100px' }}
-              />
-              <Typography variant="body2">{token.code}</Typography>
-            </Box>
-          </MenuItem>
-        ))}
-      </Menu>
-      <Typography variant="body2" color="white" sx={{ textAlign: alignment }}>
-        Balance: {formattedBalance} {selectedToken.code}
-      </Typography>
       <TextField
         value={amount}
         onChange={handleAmountChange}

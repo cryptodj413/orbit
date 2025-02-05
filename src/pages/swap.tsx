@@ -167,54 +167,52 @@ const SwapPage: NextPage = () => {
   };
 
   return (
-    <Card sx={{ borderRadius: '24px', minWidth: '480px', maxWidth: '100%' }}>
-      <CardContent sx={{ padding: 3, width: '100%' }}>
+    <div>
+      <div>
         {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '16px', fontWeight: 400 }}>
-            You swap
-          </Typography>
-          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '16px', fontWeight: 400 }}>
-            to receive
-          </Typography>
-        </Box>
+        <div className='flex flex-col gap-[7.48px]'>
+          <div className='flex justify-between px-2'>
+            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '20px', fontWeight: 400, lineHeight: '24px', fontFamily: 'Satoshi_Variable-Normal, Helvetica' }}>
+              You swap
+            </Typography>
+            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '20px', fontWeight: 400, lineHeight: '24px', fontFamily: 'Satoshi_Variable-Normal, Helvetica' }}>
+              to receive
+            </Typography>
+          </div>
 
-        {/* Token Selection Section */}
-        <Box sx={{ position: 'relative', mb: 2 }}>
-          <SwapIcon />
-          <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', p: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <TokenSelection
-                  tokens={tokens}
-                  selectedToken={tokens[0]}
-                  onTokenSelect={() => { }}
-                  balance={collateralBalance?.toString()}
-                  amount={inputAmount}
-                  onAmountChange={handleInputChange}
-                  alignment="start"
-                  decimals={7}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TokenSelection
-                  tokens={tokens}
-                  selectedToken={tokens[1]}
-                  onTokenSelect={() => { }}
-                  balance={outputTokenBalance?.toString()}
-                  amount={outputAmount}
-                  onAmountChange={() => { }}
-                  alignment="end"
-                  decimals={7}
-                />
-              </Grid>
-            </Grid>
+          {/* Token Selection Section */}
+          <Box sx={{ position: 'relative', display: 'flex', minWidth: '629.63px' }}>
+            {/* <SwapIcon /> */}
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'end' }}>
+              <TokenSelection
+                tokens={tokens}
+                selectedToken={tokens[0]}
+                onTokenSelect={() => { }}
+                balance={collateralBalance?.toString()}
+                amount={inputAmount}
+                onAmountChange={handleInputChange}
+                alignment="start"
+                decimals={7}
+              />
+            </Box>
+            <Box sx={{ width: '100%' }}>
+              <TokenSelection
+                tokens={tokens}
+                selectedToken={tokens[1]}
+                onTokenSelect={() => { }}
+                balance={outputTokenBalance?.toString()}
+                amount={outputAmount}
+                onAmountChange={() => { }}
+                alignment="end"
+                decimals={7}
+              />
+            </Box>
           </Box>
-        </Box>
 
-        <Typography variant="caption" align="center" sx={{ display: 'block', color: 'rgba(255, 255, 255, 0.5)', mb: 2 }}>
-          1% slippage tolerance
-        </Typography>
+          <p className='text-center'>
+            Slippage: 3%
+          </p>
+        </div>
 
         {/* Transaction Overview */}
         {inputAmount && outputAmount && (
@@ -260,7 +258,9 @@ const SwapPage: NextPage = () => {
             </Grid>
           </Box>
         )}
+      </div>
 
+      <div>
         <Button
           fullWidth
           variant="contained"
@@ -268,7 +268,12 @@ const SwapPage: NextPage = () => {
           disabled={!connected || !inputAmount || parseFloat(inputAmount) <= 0 || isCalculating}
           sx={{
             backgroundColor: '#2050F2',
+            height: '62.96px',
             color: 'white',
+            marginTop: '7.92px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             padding: '16px',
             borderRadius: '12px',
             fontSize: '16px',
@@ -278,19 +283,20 @@ const SwapPage: NextPage = () => {
             '&:disabled': {
               backgroundColor: '#1a2847',
               color: 'rgba(255, 255, 255, 0.3)',
+              cursor: 'not-allowed',
             },
           }}
         >
-          {!connected ? 'Connect Wallet' : isCalculating ? 'Calculating...' : 'Swap'}
+          {'Submit Transaction'}
         </Button>
 
         {txError && (
-          <Typography color="error" align="center" sx={{ mt: 2 }}>
+          <Typography color="error" align="center" sx={{ mt: 2, marginTop: '7.92px', }}>
             {txErrorMessage}
           </Typography>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
