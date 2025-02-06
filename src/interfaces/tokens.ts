@@ -1,3 +1,4 @@
+import { Asset } from "@stellar/stellar-sdk";
 export interface TokenType {
   code: string;
   issuer?: string;
@@ -7,6 +8,7 @@ export interface TokenType {
   domain?: string;
   icon?: string;
   decimals?: number;
+  asset: Asset;
 }
 
 export interface tokensResponse {

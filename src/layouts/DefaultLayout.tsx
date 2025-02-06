@@ -1,46 +1,14 @@
-import React, { ReactNode, useRef, useEffect, useState } from 'react';
-import { Box, styled, Card, CardContent } from '@mui/material';
+import React, { ReactNode } from 'react';
+import { Box } from '@mui/material';
 import NavBar from '../components/nav/NavBar';
 import bg from '../../public/background.png';
-import { useRouter } from 'next/router';
-
-const StyledCard = styled(Card)(({ theme }) => ({
-  background: '#030615',
-  borderRadius: '25px',
-  overflow: 'hidden',
-  display: 'flex',
-  width: '680px',
-  padding: theme.spacing(4),
-  paddingBottom: theme.spacing(4),
-  transition: 'height 0.3s ease-in-out',
-}));
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [contentHeight, setContentHeight] = useState<number | undefined>(undefined);
-  const router = useRouter();
-
-  useEffect(() => {
-    const handleRouteChange = () => {
-      setContentHeight(undefined);
-    };
-
-    router.events.on('routeChangeStart', handleRouteChange);
-
-    return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
-    };
-  }, [router]);
 
   return (
-    <StyledCard sx={{ height: contentHeight ? `calc(${contentHeight}px + 64px)` : 'auto' }}>
-      <CardContent
-        sx={{ p: 0, width: '100%', height: '100%', pb: '0px !important' }}
-        ref={contentRef}
-      >
-        {children}
-      </CardContent>
-    </StyledCard>
+    <div className='w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack'>
+      {children}
+    </div>
   );
 };
 
