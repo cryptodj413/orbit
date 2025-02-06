@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, IconButton, Menu, MenuItem, TextField } from '@mui/material';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+// import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import arrowDown from '../../../public/icons/arrowdown.svg';
 import { TokenType } from '../../interfaces';
 
 interface TokenSelectionProps {
@@ -35,6 +36,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
   };
 
   const handleTokenSelect = (token: TokenType) => {
+    console.log(`selected token`, token);
     onTokenSelect(token);
     handleClose();
   };
@@ -61,31 +63,23 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         display: 'flex',
         flexDirection: 'column',
         gap: '29.64px',
-        alignItems: alignment,
-        padding: '25.19px 27.58px'
+        padding: '25.19px 27.58px',
       }}
     >
-      <Box sx={{display: 'flex', flexDirection: 'column', gap: '14.87px'}}>
-        <Box
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          height="33.61px"
-          px={"11.32px"}
-          py={"7.3px"}
-          borderRadius="18.96px"
-          border="1px solid white"
-          onClick={handleClick}
-          style={{ cursor: 'pointer' }}
-        >
-          <Box display="flex" alignItems="center" sx={{ height: '19px' }}>
-            <img src={selectedToken.icon} alt={selectedToken.code} width="15.35px" height="15.35px" />
-            <Typography variant="body2" color="white" className='text-[16px] font-normal leading-[19.2px] font-satoshi'>
+      <div className={`flex flex-col w-full ${alignment === "start" ? "items-start": "items-end"}`}>
+        <button className='flex items-center gap-[5.12px] px-[12.18px] py-[7.3px] rounded-[18.96px] border-[0.37px] border-white w-min' onClick={handleClick}>
+          <div className='flex items-center h-[19px]'>
+            <div className='w-[15.35px] h-[15.35px] mr-[5.12px]'>
+              <img src={selectedToken.icon} alt={selectedToken.code} width="100%" height="100%"/>
+            </div>
+            <div className='text-[16px] text-white font-normal leading-[19.2px] font-satoshi'>
               {selectedToken.code}
-            </Typography>
-          </Box>
-          <ArrowDropDownIcon />
-        </Box>
+            </div>
+          </div>
+          <div className='w-[6.43px] h-[3.84px]'>
+            <img src={arrowDown.src} alt='*' width="100%" height="100%" />
+          </div>
+        </button>
         <Menu
           anchorEl={anchorEl}
           open={Boolean(anchorEl)}
@@ -114,23 +108,24 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
             </MenuItem>
           ))}
         </Menu>
-        <Typography variant="body2" color="white" sx={{ textAlign: alignment, fontSize: '16px', lineHeight: '19.2px'}} className='font-satoshi'>
+        <p className="text-[16px] leading-[19.2px] font-satoshi mt-[14.87px]">
           Balance: {formattedBalance} {selectedToken.code}
-        </Typography>
-      </Box>
+        </p>
+      </div>
       <TextField
         value={amount}
         onChange={handleAmountChange}
         variant="standard"
         InputProps={{
           disableUnderline: true,
-          style: { fontSize: '24px', color: 'white' },
+          style: { fontSize: '27.58px' },
         }}
         sx={{
-          input: { color: 'white', textAlign: alignment },
+          input: { color: 'white', textAlign: alignment, fontWeight: 700, lineHeight: "41.35px", letterSpacing: "8%"},
           width: '100%',
         }}
         placeholder="0.0"
+        className='font-satoshi'
       />
     </Box>
   );

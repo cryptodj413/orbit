@@ -4,9 +4,9 @@ import { Box, Button, Card, CardContent, Typography, Grid, CircularProgress } fr
 import { useWallet } from '../contexts/wallet';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import TokenSelection from '../components/common/TokenSelection';
-import SwapIcon from '../components/icons/SwapIcon';
-import { styled } from '@mui/material/styles';
-import { xdr, StrKey } from '@stellar/stellar-sdk';
+import swapBackground from '../../public/swapBackground.svg';
+import { StrKey, Asset } from '@stellar/stellar-sdk';
+import { TokenType } from '../interfaces';
 
 const DECIMALS = 7;
 const DECIMAL_MULTIPLIER = 10 ** DECIMALS;
@@ -18,12 +18,14 @@ const tokens = [
     contract: process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '',
     icon: '/icons/tokens/xlm.svg',
     decimals: 7,
+    asset: new Asset("XLM", "GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX")
   },
   {
     code: 'OUSD',
     contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
+    asset: new Asset("OUSD", "GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX")
   }
 ];
 
@@ -46,8 +48,10 @@ const OverviewItem = ({
 );
 
 const SwapPage: NextPage = () => {
-  const [inputAmount, setInputAmount] = useState<string>('');
-  const [outputAmount, setOutputAmount] = useState<string>('');
+  const [inputAmount, setInputAmount] = useState<string>('0');
+  const [outputAmount, setOutputAmount] = useState<string>('0');
+  const [selectedInputToken, setSelectedInputToken] = useState<TokenType>(tokens[0]);
+  const [selectedOutputToken, setSelectedOutputToken] = useState<TokenType>(tokens[1]);
   const [pairAddress, setPairAddress] = useState<string>('');
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [txError, setTxError] = useState<boolean>(false);
@@ -55,8 +59,10 @@ const SwapPage: NextPage = () => {
 
   const { connected, walletAddress, swapExactTokensForTokens, routerPairFor, routerGetAmountOut, routerGetAmountIn } = useWallet();
   const { data: horizonAccount } = useHorizonAccount();
-  const { data: collateralBalance } = useTokenBalance(tokens[0].contract, undefined, horizonAccount);
-  const { data: outputTokenBalance } = useTokenBalance(tokens[1].contract, undefined, horizonAccount);
+  console.log('Calling useTokenBalance with:', selectedInputToken.contract, horizonAccount);
+
+  const { data: inputTokenBalance } = useTokenBalance(selectedInputToken.contract, selectedInputToken.asset, horizonAccount);
+  const { data: outputTokenBalance } = useTokenBalance(selectedOutputToken.contract, selectedOutputToken.asset, horizonAccount);
 
   const floatToBigInt = (value: string | number): bigint => {
     const multiplier = 10 ** DECIMALS;
@@ -108,7 +114,7 @@ const SwapPage: NextPage = () => {
     try {
       const args = {
         amount_in: floatToBigInt(inputValue),
-        path: [tokens[0].contract, tokens[1].contract],
+        path: [selectedInputToken.contract, selectedOutputToken.contract],
       };
 
       const response = await routerGetAmountOut(
@@ -183,30 +189,33 @@ const SwapPage: NextPage = () => {
           {/* Token Selection Section */}
           <Box sx={{ position: 'relative', display: 'flex', minWidth: '629.63px' }}>
             {/* <SwapIcon /> */}
-            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'end' }}>
+            <Box sx={{ width: '100%', display: 'flex', justifyContent: 'end', zIndex: 10 }}>
               <TokenSelection
                 tokens={tokens}
-                selectedToken={tokens[0]}
-                onTokenSelect={() => { }}
-                balance={collateralBalance?.toString()}
+                selectedToken={selectedInputToken}
+                onTokenSelect={setSelectedInputToken}
+                balance={bigIntToFloat(inputTokenBalance)}
                 amount={inputAmount}
                 onAmountChange={handleInputChange}
                 alignment="start"
                 decimals={7}
               />
             </Box>
-            <Box sx={{ width: '100%' }}>
+            <Box sx={{ width: '100%', zIndex: 10 }}>
               <TokenSelection
                 tokens={tokens}
-                selectedToken={tokens[1]}
-                onTokenSelect={() => { }}
-                balance={outputTokenBalance?.toString()}
+                selectedToken={selectedOutputToken}
+                onTokenSelect={setSelectedOutputToken}
+                balance={bigIntToFloat(outputTokenBalance)}
                 amount={outputAmount}
                 onAmountChange={() => { }}
                 alignment="end"
                 decimals={7}
               />
             </Box>
+            <div className='absolute left-0 top-0 w-full h-full'>
+              <img src={swapBackground.src} width={"100%"} height={"100%"}/>
+            </div>
           </Box>
 
           <p className='text-center'>
@@ -235,15 +244,15 @@ const SwapPage: NextPage = () => {
                 </Typography>
                 <OverviewItem
                   label="You Swap:"
-                  value={`${inputAmount} ${tokens[0].code}`}
+                  value={`${inputAmount} ${selectedInputToken.code}`}
                 />
                 <OverviewItem
                   label="You Receive:"
-                  value={`${outputAmount} ${tokens[1].code}`}
+                  value={`${outputAmount} ${selectedOutputToken.code}`}
                 />
                 <OverviewItem
                   label="Minimum Received:"
-                  value={`${(parseFloat(outputAmount) * (1 - SLIPPAGE / 100)).toFixed(7)} ${tokens[1].code}`}
+                  value={`${(parseFloat(outputAmount) * (1 - SLIPPAGE / 100)).toFixed(7)} ${selectedOutputToken.code}`}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -252,7 +261,7 @@ const SwapPage: NextPage = () => {
                 </Typography>
                 <OverviewItem
                   label="Rate:"
-                  value={`1 ${tokens[0].code} = ${(parseFloat(outputAmount) / parseFloat(inputAmount)).toFixed(7)} ${tokens[1].code}`}
+                  value={`1 ${selectedInputToken.code} = ${(parseFloat(outputAmount) / parseFloat(inputAmount)).toFixed(7)} ${selectedOutputToken.code}`}
                 />
               </Grid>
             </Grid>
@@ -281,9 +290,9 @@ const SwapPage: NextPage = () => {
               backgroundColor: '#1565c0',
             },
             '&:disabled': {
-              backgroundColor: '#1a2847',
-              color: 'rgba(255, 255, 255, 0.3)',
-              cursor: 'not-allowed',
+              backgroundColor: '#83868F',
+              opacity: "32%",
+              color: 'rgba(255, 255, 255)',
             },
           }}
         >

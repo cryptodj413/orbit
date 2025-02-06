@@ -6,7 +6,7 @@ import bg from '../../public/background.png';
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   return (
-    <div className='px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack'>
+    <div className='w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack'>
       {children}
     </div>
   );

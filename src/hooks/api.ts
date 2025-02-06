@@ -279,6 +279,13 @@ export function useTokenBalance(
 ): UseQueryResult<bigint> {
   const { walletAddress, connected } = useWallet();
   const { network } = useSettings();
+  console.log('Token balance query enabled:', {
+    enabled,
+    connected,
+    hasAccount: !!account,
+    hasWalletAddress: walletAddress !== '',
+  });
+  console.log(enabled && connected && !!account && walletAddress !== '');
   return useQuery({
     staleTime: USER_STALE_TIME,
     queryKey: ['balance', tokenId, walletAddress, account?.last_modified_ledger],
@@ -309,6 +316,16 @@ export function useTokenBalance(
         }
       }
       const stellarRpc = new rpc.Server(network.rpc, network.opts);
+
+      console.log(`here TokenID, WalletAddress`, tokenId, walletAddress);
+      const result = await getTokenBalance(
+        stellarRpc,
+        network.passphrase,
+        tokenId,
+        new Address(walletAddress)
+      );
+      console.log(`result`, result)
+      return result;
       return await getTokenBalance(
         stellarRpc,
         network.passphrase,

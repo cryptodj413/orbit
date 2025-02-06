@@ -9,17 +9,15 @@ interface NavItemProps extends Omit<ButtonProps, 'href'> {
   isActive: boolean;
 }
 
-const NavItem = React.forwardRef<HTMLButtonElement, NavItemProps>(
-  ({ to, title, isActive, ...props }) => {
-    return (
-      <Link href={to} passHref legacyBehavior>
-        <span className={`inline-block p-2 text-[16px] font-normal cursor-pointer leading-[16px] h-[35px] place-content-center rounded-2xl justify-between transition-opacity ${isActive? "bg-zaffre": "opacity-80 hover:opacity-100"}`}>
-          {title}
-        </span>
-      </Link>
-    );
-  }
-);
+const NavItem: React.FC<NavItemProps> = ({ to, title, isActive }) => {
+  return (
+    <Link href={to} passHref legacyBehavior>
+      <span className={`inline-block p-2 text-[16px] font-normal cursor-pointer leading-[16px] h-[35px] place-content-center rounded-2xl justify-between transition-opacity ${isActive ? "bg-zaffre" : "opacity-80 hover:opacity-100"}`}>
+        {title}
+      </span>
+    </Link>
+  );
+}
 
 NavItem.displayName = 'NavItem';
 
