@@ -42,7 +42,7 @@ declare module '@mui/material/Button' {
 
 const satoshi = localFont({
   src: "./fonts/Satoshi-Variable.ttf", // Adjust the path if needed
-  weight: "400",
+  weight: "400 900",
   style: "normal",
   variable: "--font-satoshi", // Define a CSS variable
 });

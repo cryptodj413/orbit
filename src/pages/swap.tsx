@@ -23,7 +23,7 @@ const tokens = [
     asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
   },
   {
-    code: 'OUSD',
+    code: 'oUSD',
     contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
@@ -31,27 +31,32 @@ const tokens = [
   },
 ];
 
-const OverviewItem = ({
-  label,
-  value,
-  icon,
-}: {
+const OverviewItem = ({label, value, icon}: {
   label: string;
   value: string;
   icon?: React.ReactElement
-}) => (
-  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-    <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
-      {icon && <Box sx={{ mr: 1 }}>{icon}</Box>}
-      {label}
-    </Typography>
-    <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>{value}</Typography>
-  </Box>
-);
+}) => {
+  const [first, setFirst] = useState(true);
+
+  useEffect(() => {
+    setFirst(false)
+  }, []);
+
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+      <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
+        {!first && icon && <Box sx={{ mr: 1 }}>{icon}</Box>}
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>{value}</Typography>
+    </Box>
+  );
+}
 
 const SwapPage: NextPage = () => {
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [outputAmount, setOutputAmount] = useState<string>('0');
+  const [exchageRate, setExchangeRate] = useState<string>('0')
   const [selectedInputToken, setSelectedInputToken] = useState<TokenType>(tokens[0]);
   const [selectedOutputToken, setSelectedOutputToken] = useState<TokenType>(tokens[1]);
   const [pairAddress, setPairAddress] = useState<string>('');
@@ -124,6 +129,10 @@ const SwapPage: NextPage = () => {
     isCalculating ? setStatus(StatusType.LOADING) : undefined
   }, [isCalculating])
 
+  useEffect(() => {
+    getOutputAmount(inputAmount)
+  }, [selectedInputToken, selectedOutputToken])
+
   const getOutputAmount = async (inputValue: string) => {
     if (!inputValue || isNaN(parseFloat(inputValue)) || !connected) {
       setOutputAmount('');
@@ -131,6 +140,12 @@ const SwapPage: NextPage = () => {
     }
     // setIsCalculating(true)
     try {
+      if(selectedInputToken.code === selectedOutputToken.code) {
+        setOutputAmount(inputValue)
+        setExchangeRate("1")
+        return
+      }
+
       const args = {
         amount_in: floatToBigInt(inputValue),
         path: [selectedInputToken.contract, selectedOutputToken.contract],
@@ -143,6 +158,8 @@ const SwapPage: NextPage = () => {
         if (outputValue?._value?._attributes?.lo?._value) {
           const amount = bigIntToFloat(BigInt(outputValue._value._attributes.lo._value));
           setOutputAmount(amount);
+          const rate = Number(amount) / Number(inputValue);
+          setExchangeRate(String(rate))
         }
       }
     } catch (error) {
@@ -253,7 +270,7 @@ const SwapPage: NextPage = () => {
         </div>
 
         <div className="flex justify-between px-4 pb-3">
-          <p className="text-[#ffffffcc]">1 oUSD = 0.09214 XLM </p>
+          <p className="text-[#ffffffcc]">1 {selectedInputToken.code} = {exchageRate} {selectedOutputToken.code} </p>
           <p className="text-[#ffffffcc]">0.5% = 154.12 XLM</p>
         </div>
 
@@ -299,7 +316,7 @@ const SwapPage: NextPage = () => {
                   }`}
                 /> */}
                 <OverviewItem
-                  // icon={<LocalGasStationIcon />}
+                  icon={<LocalGasStationIcon />}
                   label="Gas:"
                   value={`0.03XML`}
                 />
@@ -312,7 +329,7 @@ const SwapPage: NextPage = () => {
                 <OverviewItem
                   label="Rate:"
                   value={`1 ${selectedInputToken.code} = ${(
-                    parseFloat(outputAmount) / parseFloat(inputAmount)
+                    parseFloat(outputAmount) / parseFloat(inputAmou nt)
                   ).toFixed(7)} ${selectedOutputToken.code}`}
                 />
               </Grid> */}

@@ -25,7 +25,6 @@ const ActionButton = ({ variant = 'withdraw', onClick }) => {
         variant="h6"
         component="span"
         sx={{
-          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
           fontWeight: 'bold',
           fontSize: '1.25rem',
           lineHeight: 'normal',
@@ -87,7 +86,6 @@ const ConnectWallet = () => {
         variant="h4"
         sx={{
           color: 'white',
-          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
           fontWeight: 'bold',
           letterSpacing: '-0.8px',
         }}
@@ -116,7 +114,6 @@ const ConnectWallet = () => {
           '&:hover': {
             backgroundColor: '#96fd0252',
           },
-          fontFamily: 'Satoshi_Variable-Bold, Helvetica',
           fontWeight: 'bold',
           fontSize: '1.1rem',
         }}

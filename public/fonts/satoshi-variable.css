@@ -3,7 +3,33 @@
   font-family: 'Satoshi Variable';
   font-style: normal;
   font-weight: 400;
-  font-feature-settings: 'onum' 1; /* Use Lining Numbers */
   src: local(''), url('Satoshi-Variable.ttf') format('ttf'),
     /* Chrome 26+, Opera 23+, Firefox 39+ */ url('Satoshi-Variable.ttf') format('ttf'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* dm-sans-700 - latin */
+@font-face {
+  font-family: 'Satoshi Variable';
+  font-style: normal;
+  font-weight: 500;
+  src: local(''), url('Satoshi-Variable.ttf') format('ttf'),
+    /* Chrome 26+, Opera 23+, Firefox 39+ */ url('Satoshi-Variable.ttf') format('ttf'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* dm-sans-700 - latin */
+@font-face {
+  font-family: 'Satoshi Variable';
+  font-style: normal;
+  font-weight: 600;
+  src: local(''), url('Satoshi-Variable.ttf') format('ttf'),
+    /* Chrome 26+, Opera 23+, Firefox 39+ */ url('Satoshi-Variable.ttf') format('ttf'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
+}
+
+/* dm-sans-700 - latin */
+@font-face {
+  font-family: 'Satoshi Variable';
+  font-style: normal;
+  font-weight: 700;
+  src: local(''), url('Satoshi-Variable.ttf') format('ttf'),
+    /* Chrome 26+, Opera 23+, Firefox 39+ */ url('-Variable.ttf') format('ttf'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
 }

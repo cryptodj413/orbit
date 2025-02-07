@@ -6,7 +6,6 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '../theme';
 import DefaultLayout from '../layouts/DefaultLayout';
-import '/public/fonts/satoshi-variable.css';
 import '../globals.css';
 import { SettingsProvider } from '../contexts';
 import { WalletProvider } from '../contexts/wallet';
