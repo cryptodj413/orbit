@@ -1,13 +1,35 @@
 import React, { ReactNode } from 'react';
 import { Box } from '@mui/material';
+import localFont from 'next/font/local';
 import NavBar from '../components/nav/NavBar';
+import LoadingComponent from '../components/status/loading';
+import SuccessComponent from '../components/status/success';
+import FailComponent from '../components/status/failed';
 import bg from '../../public/background.png';
+import { useStatus, StatusType } from '../contexts/status';
+
+// Load the TTF font
+const myFont = localFont({
+  src: '../fonts/Satoshi-Variable.ttf', // Correct path
+  weight: '400', // Adjust as needed
+  style: 'normal',
+  variable: '--font-myFont', // Optional: CSS variable
+});
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const {status} = useStatus();
 
   return (
-    <div className='w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack'>
+    <div className="w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack relative">
       {children}
+      {
+        status === undefined ? "" :
+        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-richBlack bg-opacity-95 z-20">
+          {status === StatusType.LOADING && <LoadingComponent />}
+          {status === StatusType.SUCCESS && <SuccessComponent />}
+          {status === StatusType.FAILED && <FailComponent />}
+        </div>
+      }
     </div>
   );
 };
@@ -45,6 +67,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           zIndex: 1,
         },
       }}
+      className={myFont.className}
     >
       <Box
         sx={{

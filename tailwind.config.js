@@ -16,9 +16,6 @@ export default {
         zaffre: "#0211A9",
         inactive: "#83868F"
       },
-      fontFamily: {
-        satoshi: ["Satoshi-Variable", "sans-serif", "Arial", "Helvetica"]
-      }
     },
   },
   plugins: [],

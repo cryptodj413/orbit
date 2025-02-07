@@ -1,4 +1,5 @@
 import { createTheme, Theme } from '@mui/material';
+import localFont from 'next/font/local';
 
 declare module '@mui/material/styles/createPalette' {
   interface SimplePaletteColorOptions {
@@ -39,7 +40,21 @@ declare module '@mui/material/Button' {
   }
 }
 
-const FONT: string = '"DM Sans", Roboto';
+const satoshi = localFont({
+  src: "./fonts/Satoshi-Variable.ttf", // Adjust the path if needed
+  weight: "400",
+  style: "normal",
+  variable: "--font-satoshi", // Define a CSS variable
+});
+
+// const gendy = localFont({
+//   src: "./fonts/Gendy-Regular.ttf",
+//   weight: "400",
+//   style: "normal",
+//   variable: "--font-gendy",
+// });
+
+const FONT: string = '${satoshi.style.fontFamily}, Helvetica';
 
 const pxToRem = (px: number) => {
   const remVal = px / 16;

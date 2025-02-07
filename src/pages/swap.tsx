@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
+import { StrKey, Asset } from '@stellar/stellar-sdk';
 import { Box, Button, Card, CardContent, Typography, Grid, CircularProgress } from '@mui/material';
-import { useWallet } from '../contexts/wallet';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import TokenSelection from '../components/common/TokenSelection';
-import swapBackground from '../../public/swapBackground.svg';
-import { StrKey, Asset } from '@stellar/stellar-sdk';
 import { TokenType } from '../interfaces';
+import { useWallet } from '../contexts/wallet';
+import { useStatus, StatusType } from '../contexts/status';
+import swapBackground from '../../public/swapBackground.svg';
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 
 const DECIMALS = 7;
 const DECIMAL_MULTIPLIER = 10 ** DECIMALS;
@@ -18,15 +20,15 @@ const tokens = [
     contract: process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '',
     icon: '/icons/tokens/xlm.svg',
     decimals: 7,
-    asset: new Asset("XLM", "GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX")
+    asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
   },
   {
     code: 'OUSD',
     contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
-    asset: new Asset("OUSD", "GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX")
-  }
+    asset: new Asset('OUSD', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
+  },
 ];
 
 const OverviewItem = ({
@@ -36,14 +38,14 @@ const OverviewItem = ({
 }: {
   label: string;
   value: string;
-  icon?: React.ReactNode;
+  icon?: React.ReactElement
 }) => (
   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
       {icon && <Box sx={{ mr: 1 }}>{icon}</Box>}
       {label}
     </Typography>
-    <Typography sx={{ fontSize: '13px', fontWeight: '600' }}>{value}</Typography>
+    <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>{value}</Typography>
   </Box>
 );
 
@@ -57,12 +59,29 @@ const SwapPage: NextPage = () => {
   const [txError, setTxError] = useState<boolean>(false);
   const [txErrorMessage, setTxErrorMessage] = useState<string>();
 
-  const { connected, walletAddress, swapExactTokensForTokens, routerPairFor, routerGetAmountOut, routerGetAmountIn } = useWallet();
+  const {
+    connected,
+    walletAddress,
+    swapExactTokensForTokens,
+    routerPairFor,
+    routerGetAmountOut,
+    routerGetAmountIn,
+  } = useWallet();
+  const {status, setStatus} = useStatus()
+ 
   const { data: horizonAccount } = useHorizonAccount();
   console.log('Calling useTokenBalance with:', selectedInputToken.contract, horizonAccount);
 
-  const { data: inputTokenBalance } = useTokenBalance(selectedInputToken.contract, selectedInputToken.asset, horizonAccount);
-  const { data: outputTokenBalance } = useTokenBalance(selectedOutputToken.contract, selectedOutputToken.asset, horizonAccount);
+  const { data: inputTokenBalance } = useTokenBalance(
+    selectedInputToken.contract,
+    selectedInputToken.asset,
+    horizonAccount,
+  );
+  const { data: outputTokenBalance } = useTokenBalance(
+    selectedOutputToken.contract,
+    selectedOutputToken.asset,
+    horizonAccount,
+  );
 
   const floatToBigInt = (value: string | number): bigint => {
     const multiplier = 10 ** DECIMALS;
@@ -82,10 +101,7 @@ const SwapPage: NextPage = () => {
           token_b: tokens[1].contract,
         };
 
-        const response = await routerPairFor(
-          process.env.NEXT_PUBLIC_ROUTER_ID || '',
-          args
-        );
+        const response = await routerPairFor(process.env.NEXT_PUBLIC_ROUTER_ID || '', args);
 
         if (response?.result?.retval) {
           const retval = response.result.retval;
@@ -104,23 +120,23 @@ const SwapPage: NextPage = () => {
     }
   }, [connected, routerPairFor]);
 
+  useEffect(() => {
+    isCalculating ? setStatus(StatusType.LOADING) : undefined
+  }, [isCalculating])
+
   const getOutputAmount = async (inputValue: string) => {
     if (!inputValue || isNaN(parseFloat(inputValue)) || !connected) {
       setOutputAmount('');
       return;
     }
-
-    setIsCalculating(true);
+    // setIsCalculating(true)
     try {
       const args = {
         amount_in: floatToBigInt(inputValue),
         path: [selectedInputToken.contract, selectedOutputToken.contract],
       };
 
-      const response = await routerGetAmountOut(
-        process.env.NEXT_PUBLIC_ROUTER_ID || '',
-        args
-      );
+      const response = await routerGetAmountOut(process.env.NEXT_PUBLIC_ROUTER_ID || '', args);
 
       if (response?.result?.retval?._value) {
         const outputValue = response.result.retval._value[1];
@@ -133,7 +149,7 @@ const SwapPage: NextPage = () => {
       console.error('Failed to get output amount:', error);
       setOutputAmount('');
     } finally {
-      setIsCalculating(false);
+      // setIsCalculating(false);
     }
   };
 
@@ -148,6 +164,7 @@ const SwapPage: NextPage = () => {
 
   const handleSwap = async () => {
     if (!inputAmount || !connected) return;
+    setIsCalculating(true);
 
     try {
       const minOutputAmount = parseFloat(outputAmount) * (1 - SLIPPAGE / 100);
@@ -160,12 +177,12 @@ const SwapPage: NextPage = () => {
         deadline: BigInt(Math.floor(Date.now() / 1000) + 1200), // 20 minutes
       };
 
-      await swapExactTokensForTokens(
-        process.env.NEXT_PUBLIC_ROUTER_ID || '',
-        args,
-        false
-      );
+      await swapExactTokensForTokens(process.env.NEXT_PUBLIC_ROUTER_ID || '', args, false);
+      setStatus(StatusType.SUCCESS)
+      setIsCalculating(false)
     } catch (error) {
+      setStatus(StatusType.FAILED)
+      setIsCalculating(false)
       console.error('Swap failed:', error);
       setTxError(true);
       setTxErrorMessage(error.message);
@@ -176,12 +193,26 @@ const SwapPage: NextPage = () => {
     <div>
       <div>
         {/* Header */}
-        <div className='flex flex-col gap-[7.48px]'>
-          <div className='flex justify-between px-2'>
-            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '20px', fontWeight: 400, lineHeight: '24px', fontFamily: 'Satoshi_Variable-Normal, Helvetica' }}>
+        <div className="flex flex-col gap-[7.48px]">
+          <div className="flex justify-between px-2">
+            <Typography
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '20px',
+                fontWeight: 400,
+                lineHeight: '24px',
+              }}
+            >
               You swap
             </Typography>
-            <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '20px', fontWeight: 400, lineHeight: '24px', fontFamily: 'Satoshi_Variable-Normal, Helvetica' }}>
+            <Typography
+              sx={{
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '20px',
+                fontWeight: 400,
+                lineHeight: '24px',
+              }}
+            >
               to receive
             </Typography>
           </div>
@@ -208,67 +239,88 @@ const SwapPage: NextPage = () => {
                 onTokenSelect={setSelectedOutputToken}
                 balance={bigIntToFloat(outputTokenBalance)}
                 amount={outputAmount}
-                onAmountChange={() => { }}
+                onAmountChange={() => {}}
                 alignment="end"
                 decimals={7}
               />
             </Box>
-            <div className='absolute left-0 top-0 w-full h-full'>
-              <img src={swapBackground.src} width={"100%"} height={"100%"}/>
+            <div className="absolute left-0 top-0 w-full h-full">
+              <img src={swapBackground.src} width={'100%'} height={'100%'} />
             </div>
           </Box>
 
-          <p className='text-center'>
-            Slippage: 3%
-          </p>
+          <p className="text-center text-[#999999]">Slippage: 3%</p>
+        </div>
+
+        <div className="flex justify-between px-4 pb-3">
+          <p className="text-[#ffffffcc]">1 oUSD = 0.09214 XLM </p>
+          <p className="text-[#ffffffcc]">0.5% = 154.12 XLM</p>
         </div>
 
         {/* Transaction Overview */}
         {inputAmount && outputAmount && (
           <Box
             sx={{
-              p: 3,
+              px: '196px',
+              py: '38px',
               color: 'white',
-              background: 'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
+              background:
+                'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
               borderRadius: '16px',
               mb: 3,
+              border: 2,
+              borderColor: 'rgba(255, 255, 255, 0.32)',
             }}
           >
-            <Typography variant="subtitle2" align="center" gutterBottom>
+            <Typography
+              align="center"
+              gutterBottom
+              sx={{ fontSize: '16px', fontWeight: '600', mb: 2 }}
+            >
               Transaction Overview
             </Typography>
             <Grid container spacing={4}>
-              <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" gutterBottom>
+              <Grid item xs={12} md={12}>
+                {/* <Typography variant="subtitle2" gutterBottom>
                   Swap Details
-                </Typography>
+                </Typography> */}
                 <OverviewItem
-                  label="You Swap:"
+                  label="You Swap"
                   value={`${inputAmount} ${selectedInputToken.code}`}
                 />
                 <OverviewItem
-                  label="You Receive:"
+                  label="You Receive"
                   value={`${outputAmount} ${selectedOutputToken.code}`}
                 />
-                <OverviewItem
+                {/* <OverviewItem
                   label="Minimum Received:"
-                  value={`${(parseFloat(outputAmount) * (1 - SLIPPAGE / 100)).toFixed(7)} ${selectedOutputToken.code}`}
+                  value={`${(parseFloat(outputAmount) * (1 - SLIPPAGE / 100)).toFixed(7)} ${
+                    selectedOutputToken.code
+                  }`}
+                /> */}
+                <OverviewItem
+                  // icon={<LocalGasStationIcon />}
+                  label="Gas:"
+                  value={`0.03XML`}
                 />
+                <OverviewItem label="Platform Fee:" value={`0.5%`} />
               </Grid>
-              <Grid item xs={12} md={6}>
+              {/* <Grid item xs={12} md={6}>
                 <Typography variant="subtitle2" gutterBottom>
                   Network Details
                 </Typography>
                 <OverviewItem
                   label="Rate:"
-                  value={`1 ${selectedInputToken.code} = ${(parseFloat(outputAmount) / parseFloat(inputAmount)).toFixed(7)} ${selectedOutputToken.code}`}
+                  value={`1 ${selectedInputToken.code} = ${(
+                    parseFloat(outputAmount) / parseFloat(inputAmount)
+                  ).toFixed(7)} ${selectedOutputToken.code}`}
                 />
-              </Grid>
+              </Grid> */}
             </Grid>
           </Box>
         )}
       </div>
-
+      {/* <Dropdown /> */}
       <div>
         <Button
           fullWidth
@@ -279,19 +331,19 @@ const SwapPage: NextPage = () => {
             backgroundColor: '#2050F2',
             height: '62.96px',
             color: 'white',
-            marginTop: '7.92px',
+            marginTop: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: '16px',
             borderRadius: '12px',
-            fontSize: '16px',
+            fontSize: '20px',
             '&:hover': {
               backgroundColor: '#1565c0',
             },
             '&:disabled': {
               backgroundColor: '#83868F',
-              opacity: "32%",
+              opacity: '32%',
               color: 'rgba(255, 255, 255)',
             },
           }}
@@ -300,7 +352,7 @@ const SwapPage: NextPage = () => {
         </Button>
 
         {txError && (
-          <Typography color="error" align="center" sx={{ mt: 2, marginTop: '7.92px', }}>
+          <Typography color="error" align="center" sx={{ mt: 2, marginTop: '7.92px' }}>
             {txErrorMessage}
           </Typography>
         )}

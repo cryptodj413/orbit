@@ -66,18 +66,23 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         padding: '25.19px 27.58px',
       }}
     >
-      <div className={`flex flex-col w-full ${alignment === "start" ? "items-start": "items-end"}`}>
-        <button className='flex items-center gap-[5.12px] px-[12.18px] py-[7.3px] rounded-[18.96px] border-[0.37px] border-white w-min' onClick={handleClick}>
-          <div className='flex items-center h-[19px]'>
-            <div className='w-[15.35px] h-[15.35px] mr-[5.12px]'>
-              <img src={selectedToken.icon} alt={selectedToken.code} width="100%" height="100%"/>
+      <div
+        className={`flex flex-col w-full ${alignment === 'start' ? 'items-start' : 'items-end'}`}
+      >
+        <button
+          className="flex items-center gap-[5.12px] px-[12.18px] py-[7.3px] rounded-[18.96px] border-[0.37px] border-white w-min"
+          onClick={handleClick}
+        >
+          <div className="flex items-center h-[19px]">
+            <div className="w-[15.35px] h-[15.35px] mr-[5.12px]">
+              <img src={selectedToken.icon} alt={selectedToken.code} width="100%" height="100%" />
             </div>
-            <div className='text-[16px] text-white font-normal leading-[19.2px] font-satoshi'>
+            <div className="text-[16px] text-white font-normal leading-[19.2px]">
               {selectedToken.code}
             </div>
           </div>
-          <div className='w-[6.43px] h-[3.84px]'>
-            <img src={arrowDown.src} alt='*' width="100%" height="100%" />
+          <div className="w-[6.43px] h-[3.84px]">
+            <img src={arrowDown.src} alt="*" width="100%" height="100%" />
           </div>
         </button>
         <Menu
@@ -108,7 +113,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
             </MenuItem>
           ))}
         </Menu>
-        <p className="text-[16px] leading-[19.2px] font-satoshi mt-[14.87px]">
+        <p className="text-[16px] leading-[19.2px] mt-[14.87px]">
           Balance: {formattedBalance} {selectedToken.code}
         </p>
       </div>
@@ -118,14 +123,18 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         variant="standard"
         InputProps={{
           disableUnderline: true,
-          style: { fontSize: '27.58px' },
+          style: { fontSize: '27.58px', fontWeight: 700 },
         }}
         sx={{
-          input: { color: 'white', textAlign: alignment, fontWeight: 700, lineHeight: "41.35px", letterSpacing: "8%"},
+          input: {
+            color: 'white',
+            textAlign: alignment,
+            lineHeight: '41.35px',
+            letterSpacing: '8%',
+          },
           width: '100%',
         }}
         placeholder="0.0"
-        className='font-satoshi'
       />
     </Box>
   );
