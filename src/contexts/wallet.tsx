@@ -42,6 +42,7 @@ export interface IWalletContext {
   connected: boolean;
   walletAddress: string;
   txStatus: TxStatus;
+  setTxStatus: React.Dispatch<React.SetStateAction<TxStatus>>;
   lastTxHash: string | undefined;
   lastTxFailure: string | undefined;
   txType: TxType;
@@ -303,7 +304,7 @@ export const WalletProvider = ({ children = null as any }) => {
         timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 5 * 60 * 1000 },
       }).addOperation(operation);
       const transaction = tx_builder.build();
-      console.log(transaction.toXDR());
+      // console.log(transaction.toXDR());
       const simResponse = await simulateOperation(operation);
       const assembled_tx = rpc.assembleTransaction(transaction, simResponse).build();
       const signedTx = await sign(assembled_tx.toXDR());
@@ -313,6 +314,7 @@ export const WalletProvider = ({ children = null as any }) => {
       console.error('Unknown error submitting transaction: ', e);
       setFailureMessage(e?.message);
       setTxStatus(TxStatus.FAIL);
+      console.log("kkkk")
     }
   }
 
@@ -328,8 +330,8 @@ export const WalletProvider = ({ children = null as any }) => {
       const router = new RouterContract(routerId);
       const xdrSwap = router.swapExactTokensForTokens(swapArgs);
       const operation = xdr.Operation.fromXDR(xdrSwap, 'base64');
-      console.log('Submitting xdr: ', xdrSwap);
-      console.log('Submitting operation: ', operation);
+      // console.log('Submitting xdr: ', xdrSwap);
+      // console.log('Submitting operation: ', operation);
       if (sim) {
         return await simulateOperation(operation);
       }
@@ -358,8 +360,8 @@ export const WalletProvider = ({ children = null as any }) => {
       const router = new RouterContract(routerId);
       const xdrGetAmountIn = router.routerGetAmountsIn(routerGetAmountInArgs);
       const operation = xdr.Operation.fromXDR(xdrGetAmountIn, 'base64');
-      console.log('Submitting xdr: ', xdrGetAmountIn);
-      console.log('Submitting operation: ', operation);
+      // console.log('Submitting xdr: ', xdrGetAmountIn);
+      // console.log('Submitting operation: ', operation);
       return await simulateOperation(operation);
     }
   }
@@ -369,8 +371,8 @@ export const WalletProvider = ({ children = null as any }) => {
       const router = new RouterContract(routerId);
       const xdrGetAmountOut = router.routerGetAmountsOut(routerGetAmountOutArgs);
       const operation = xdr.Operation.fromXDR(xdrGetAmountOut, 'base64');
-      console.log('Submitting xdr: ', xdrGetAmountOut);
-      console.log('Submitting operation: ', operation);
+      // console.log('Submitting xdr: ', xdrGetAmountOut);
+      // console.log('Submitting operation: ', operation);
       return await simulateOperation(operation);
     }
   }
@@ -489,6 +491,7 @@ export const WalletProvider = ({ children = null as any }) => {
         connected,
         walletAddress,
         txStatus,
+        setTxStatus,
         lastTxHash: txHash,
         lastTxFailure: txFailure,
         txType,

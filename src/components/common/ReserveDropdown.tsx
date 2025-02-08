@@ -21,7 +21,7 @@ export const ReserveDropdown: React.FC<ReserveDropdown> = ({ action, poolId, act
   const activeReserve = reserves?.get(activeReserveId);
 
   useEffect(() => {
-    console.log(activeReserveId);
+    // console.log(activeReserveId);
   }, [activeReserve]);
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
