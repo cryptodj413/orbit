@@ -6,7 +6,7 @@ import LoadingComponent from '../components/status/loading';
 import SuccessComponent from '../components/status/success';
 import FailComponent from '../components/status/failed';
 import bg from '../../public/background.png';
-import { useStatus, StatusType } from '../contexts/status';
+import { TxStatus, useWallet } from '../contexts/wallet';
 
 // Load the TTF font
 const myFont = localFont({
@@ -17,17 +17,19 @@ const myFont = localFont({
 });
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const {status} = useStatus();
+  const {txStatus} = useWallet()
 
   return (
     <div className="w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack relative">
       {children}
       {
-        status === undefined ? "" :
+        txStatus === TxStatus.NONE ? "" :
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-richBlack bg-opacity-95 z-20">
-          {status === StatusType.LOADING && <LoadingComponent />}
-          {status === StatusType.SUCCESS && <SuccessComponent />}
-          {status === StatusType.FAILED && <FailComponent />}
+          {txStatus === TxStatus.BUILDING && <LoadingComponent />}
+          {txStatus === TxStatus.SUBMITTING && <LoadingComponent />}
+          {txStatus === TxStatus.SIGNING && <LoadingComponent />}
+          {txStatus === TxStatus.SUCCESS && <SuccessComponent />}
+          {txStatus === TxStatus.FAIL && <FailComponent />}
         </div>
       }
     </div>

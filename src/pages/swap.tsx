@@ -5,8 +5,7 @@ import { Box, Button, Card, CardContent, Typography, Grid, CircularProgress } fr
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import TokenSelection from '../components/common/TokenSelection';
 import { TokenType } from '../interfaces';
-import { useWallet } from '../contexts/wallet';
-import { useStatus, StatusType } from '../contexts/status';
+import { useWallet, TxStatus } from '../contexts/wallet';
 import swapBackground from '../../public/swapBackground.svg';
 import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 
@@ -71,11 +70,11 @@ const SwapPage: NextPage = () => {
     routerPairFor,
     routerGetAmountOut,
     routerGetAmountIn,
+    setTxStatus
   } = useWallet();
-  const {status, setStatus} = useStatus()
  
   const { data: horizonAccount } = useHorizonAccount();
-  console.log('Calling useTokenBalance with:', selectedInputToken.contract, horizonAccount);
+  // console.log('Calling useTokenBalance with:', selectedInputToken.contract, horizonAccount);
 
   const { data: inputTokenBalance } = useTokenBalance(
     selectedInputToken.contract,
@@ -126,7 +125,7 @@ const SwapPage: NextPage = () => {
   }, [connected, routerPairFor]);
 
   useEffect(() => {
-    isCalculating ? setStatus(StatusType.LOADING) : undefined
+    isCalculating ? setTxStatus(TxStatus.SUBMITTING) : undefined
   }, [isCalculating])
 
   useEffect(() => {
@@ -195,10 +194,8 @@ const SwapPage: NextPage = () => {
       };
 
       await swapExactTokensForTokens(process.env.NEXT_PUBLIC_ROUTER_ID || '', args, false);
-      setStatus(StatusType.SUCCESS)
       setIsCalculating(false)
     } catch (error) {
-      setStatus(StatusType.FAILED)
       setIsCalculating(false)
       console.error('Swap failed:', error);
       setTxError(true);
@@ -270,7 +267,7 @@ const SwapPage: NextPage = () => {
         </div>
 
         <div className="flex justify-between px-4 pb-3">
-          <p className="text-[#ffffffcc]">1 {selectedInputToken.code} = {exchageRate} {selectedOutputToken.code} </p>
+          <p className="text-[#ffffffcc]">1 {selectedInputToken.code} = {Number(exchageRate).toFixed(2)} {selectedOutputToken.code} </p>
           <p className="text-[#ffffffcc]">0.5% = 154.12 XLM</p>
         </div>
 
@@ -307,7 +304,7 @@ const SwapPage: NextPage = () => {
                 />
                 <OverviewItem
                   label="You Receive"
-                  value={`${outputAmount} ${selectedOutputToken.code}`}
+                  value={`${Number(outputAmount).toFixed(2)} ${selectedOutputToken.code}`}
                 />
                 {/* <OverviewItem
                   label="Minimum Received:"

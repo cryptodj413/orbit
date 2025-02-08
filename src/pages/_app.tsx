@@ -9,7 +9,6 @@ import DefaultLayout from '../layouts/DefaultLayout';
 import '../globals.css';
 import { SettingsProvider } from '../contexts';
 import { WalletProvider } from '../contexts/wallet';
-import { StatusProvider } from '../contexts/status';
 
 const queryClient = new QueryClient();
 
@@ -27,11 +26,9 @@ export default function MyApp(props: AppProps) {
             <SettingsProvider>
               <WalletProvider>
                 <CssBaseline />
-                  <StatusProvider>
                     <DefaultLayout>
                       <Component {...pageProps} />
                     </DefaultLayout>
-                  </StatusProvider>
               </WalletProvider>
             </SettingsProvider>
         </ThemeProvider>

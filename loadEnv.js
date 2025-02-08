@@ -22,7 +22,7 @@ function loadEnv() {
   // Load additional environment variables using dotenv-flow
   config({ path: process.cwd(), node_env: target });
 
-  console.log(`Environment variables loaded for ${target} environment`);
+  // console.log(`Environment variables loaded for ${target} environment`);
 }
 
 loadEnv();

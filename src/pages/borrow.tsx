@@ -36,13 +36,13 @@ const Borrow: NextPage = () => {
     // Update supply amount based on new ratio only if borrowAmount exists
     if (borrowAmount && !isNaN(parseFloat(borrowAmount))) {
       const newSupplyAmount = ((parseFloat(borrowAmount) * ratio)).toFixed(2);
-      console.log('newSupplyAmount:', newSupplyAmount);
+      // console.log('newSupplyAmount:', newSupplyAmount);
       setSupplyAmount(newSupplyAmount);
     }
   };
 
   const handleBorrowChange = (value: string) => {
-    console.log('handleBorrowChange received:', value);
+    // console.log('handleBorrowChange received:', value);
     setBorrowAmount(value);
 
     // If the value is empty or not a number, just set supply to empty
@@ -58,7 +58,7 @@ const Borrow: NextPage = () => {
   };
 
   const handleSupplyChange = (value: string) => {
-    console.log('handleSupplyChange received:', value);
+    // console.log('handleSupplyChange received:', value);
     setSupplyAmount(value);
 
     // If the value is empty or not a number, just set borrow to empty

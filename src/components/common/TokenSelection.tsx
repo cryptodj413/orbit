@@ -36,7 +36,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
   };
 
   const handleTokenSelect = (token: TokenType) => {
-    console.log(`selected token`, token);
+    // console.log(`selected token`, token);
     onTokenSelect(token);
     handleClose();
   };
@@ -114,7 +114,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
           ))}
         </Menu>
         <p className="text-[16px] leading-[19.2px] mt-[14.87px]">
-          Balance: {formattedBalance} {selectedToken.code}
+          Balance: {Number(formattedBalance).toFixed(2)} {selectedToken.code}
         </p>
       </div>
       <TextField
@@ -126,11 +126,15 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
           style: { fontSize: '27.58px', fontWeight: 700 },
         }}
         sx={{
+          '& .MuiInputBase-input': {
+            fontWeight: 700,
+          },
           input: {
             color: 'white',
             textAlign: alignment,
             lineHeight: '41.35px',
             letterSpacing: '8%',
+            fontWeight: 700,
           },
           width: '100%',
         }}

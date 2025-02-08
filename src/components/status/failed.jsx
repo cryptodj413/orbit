@@ -1,12 +1,12 @@
 import React from 'react';
-import { useStatus } from '../../contexts/status';
+import { useWallet, TxStatus } from '../../contexts/wallet';
 
 const FailComponent = () => {
-  const { setStatus } = useStatus();
+  const {setTxStatus} = useWallet()
 
   const handleReturn = () => {
-    setStatus(undefined);
-  };
+      setTxStatus(TxStatus.NONE)
+  }
 
   return (
     <div className="flex items-center justify-center">

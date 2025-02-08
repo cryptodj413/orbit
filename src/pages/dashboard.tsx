@@ -231,7 +231,7 @@ const Dashboard = () => {
   const handleClaim = async () => {
     if (claimedTokens.length > 0) {
       // Implement claim logic here
-      console.log('Claiming tokens:', claimedTokens);
+      // console.log('Claiming tokens:', claimedTokens);
     }
   };
 
@@ -296,7 +296,8 @@ const Dashboard = () => {
           <Grid item xs={3}>
             <ActionButton
               variant={position.amount >= 0 ? 'withdraw' : 'repay'}
-              onClick={() =>
+              onClick={
+                () =>
                 console.log(
                   `${position.amount >= 0 ? 'Withdrawing' : 'Repaying'} ${position.tokenCode}`,
                 )

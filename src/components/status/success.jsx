@@ -1,18 +1,18 @@
 "use client";
 import React from 'react'
 import { useRouter } from "next/navigation";
-import { useStatus } from '../../contexts/status';
+import { useWallet, TxStatus } from '../../contexts/wallet';
 
 const SuccessComponent = () => {
     const router = useRouter();
-    const {setStatus} = useStatus()
+    const {setTxStatus} = useWallet()
 
     const handleReturn = () => {
-        setStatus(undefined)
+        setTxStatus(TxStatus.NONE)
     }
 
     const handleToDashboard = () => {
-        setStatus(undefined)
+        setTxStatus(TxStatus.NONE)
         router.push("/dashboard");
     }
     return(
