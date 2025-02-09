@@ -41,9 +41,10 @@ declare module '@mui/material/Button' {
 }
 
 const satoshi = localFont({
-  src: "./fonts/Satoshi-Variable.ttf", // Adjust the path if needed
-  weight: "400 900",
-  style: "normal",
+  src: "./fonts/Satoshi-Variable.ttf", // Adjust the path if needed'
+  display: 'swap',
+  // weight: "400 900",
+  // style: "normal",
   variable: "--font-satoshi", // Define a CSS variable
 });
 
@@ -54,7 +55,8 @@ const satoshi = localFont({
 //   variable: "--font-gendy",
 // });
 
-const FONT: string = '${satoshi.style.fontFamily}, Helvetica';
+// const FONT: string = '${satoshi.style.fontFamily}, Helvetica';
+const FONT = satoshi.style.fontFamily
 
 const pxToRem = (px: number) => {
   const remVal = px / 16;
@@ -152,7 +154,7 @@ const theme: Theme = createTheme({
     subtitle2: undefined,
     body1: {
       fontFamily: FONT,
-      fontWeight: 500,
+      fontWeight: 300,
       fontSize: pxToRem(16),
       lineHeight: 1.3125,
     },
