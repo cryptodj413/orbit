@@ -69,7 +69,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           zIndex: 1,
         },
       }}
-      className={myFont.className}
+      // className={myFont.className}
     >
       <Box
         sx={{
@@ -79,6 +79,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           gap: '30px',
           alignItems: 'center',
           my: 'auto',
+
         }}
       >
         <NavBar />
