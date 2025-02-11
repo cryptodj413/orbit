@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { NextPage } from 'next';
 import { Box, Button, Grid, Typography, useTheme } from '@mui/material';
 import { RequestType, SubmitArgs } from '@blend-capital/blend-sdk';
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 import BorrowForm from '../components/borrow/BorrowForm';
 import CollateralRatioSlider from '../components/borrow/CollateralRatioSlider';
 import TransactionOverview from '../components/borrow/TransactionOverview';
 import StyledGrid from '../components/common/StyledGrid';
+
 import { useWallet } from '../contexts/wallet';
 import { scaleInputToBigInt } from '../utils/scval';
 import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
@@ -14,7 +16,7 @@ import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
 const POOL_ID = process.env.NEXT_PUBLIC_Pool || "CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU"
 
 const Borrow: NextPage = () => {
-  const [collateralRatio, setCollateralRatio] = useState<number>(110);
+  const [collateralRatio, setCollateralRatio] = useState<number>(135);
   const [borrowAmount, setBorrowAmount] = useState<string>('');
   const [supplyAmount, setSupplyAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -109,29 +111,29 @@ const Borrow: NextPage = () => {
     <>
       <StyledGrid>
         <Grid item xs={3}>
-          <Box sx={{ textAlign: 'center', color: 'white' }}>
+          <Box sx={{ textAlign: 'center', color: 'white', paddingBlock: '24px' }}>
             <Typography variant="subtitle2">Borrow APY</Typography>
-            <Typography variant="h6">3%</Typography>
+            <Typography variant="h6">4.00%</Typography>
           </Box>
         </Grid>
         <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center', color: 'white' }}>
+          <Box sx={{ textAlign: 'center', color: 'white',  paddingBlock: '24px'}}>
             <Typography variant="subtitle2">Liability Factor</Typography>
             <Typography variant="h6">
-              0%
+              100%
             </Typography>
           </Box>
         </Grid>
         <Grid item xs={3}>
-          <Box sx={{ textAlign: 'center', color: 'white' }}>
-            <Typography variant="subtitle2">Liquidation Price</Typography>
+          <Box sx={{ textAlign: 'center', color: 'white', paddingBlock: '24px'}}>
+            <Typography variant="subtitle2">Total Borrowed</Typography>
             <Typography variant="h6">
               ${borrowAmount ? (Number(borrowAmount) / 0.8).toFixed(2) : '0.00'}
             </Typography>
           </Box>
         </Grid>
 
-        <Grid item xs={12} sx={{ borderRight: '0px !important' }}>
+        <Grid item xs={12} sx={{ borderRight: '0px !important', paddingBlock: '32px' }}>
           <BorrowForm
             borrowAmount={borrowAmount}
             onBorrowChange={handleBorrowChange}
@@ -181,6 +183,8 @@ const Borrow: NextPage = () => {
             color: 'rgba(255, 255, 255, 0.3)',
           },
           borderRadius: '7px',
+          fontWeight: '400',
+          fontSize: '16px',
         }}
       >
         {isLoading ? 'Processing...' : 'Submit Transaction'}
