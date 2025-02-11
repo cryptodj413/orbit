@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Typography, Grid, CircularProgress } from '@mui/material';
+import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 import { toBalance, toPercentage } from '../../utils/formatter';
 import { rpc } from '@stellar/stellar-sdk';
 import { PositionsEstimate } from '@blend-capital/blend-sdk';
@@ -76,25 +77,28 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
   return (
     <Box
       sx={{
-        p: 3,
+        borderTop: '1px solid rgba(255, 255, 255, 0.32)',
+        paddingInline: '34px',
+        paddingBlock: '14px',
         color: 'white',
         background:
+
           'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
       }}
     >
-      <Typography variant="subtitle2" align="center" gutterBottom>
+      <Typography variant="subtitle2" align="center" gutterBottom fontWeight='700' fontSize='16px' marginBottom='16px'>
         Transaction Overview
       </Typography>
       {!isLoading ? (
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" gutterBottom>
+            <Typography variant="subtitle2" gutterBottom fontWeight='700' fontSize='13px'>
               Collateral Details
             </Typography>
             <OverviewItem label="Deposit:" value={`${collateralAmount} ${symbol}`} />
             <OverviewItem
               label="Deposit Value:"
-              value={`${calculatedValues.depositValue.toFixed(4)} oUSD`}
+              value={`$${calculatedValues.depositValue.toFixed(4)} oUSD`}
             />
             <OverviewItem
               label="Collateral Ratio:"
@@ -107,7 +111,7 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" gutterBottom>
+            <Typography variant="subtitle2" gutterBottom fontWeight='700' fontSize='13px'>
               Repayment and Fees
             </Typography>
             <OverviewItem
@@ -117,7 +121,7 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
             <OverviewItem
               label="Gas:"
               value={`${toBalance(BigInt((simResponse as any)?.minResourceFee ?? 0), 7)} XLM`}
-              icon={<GasIcon />}
+              icon={<LocalGasStationIcon sx={{width: '16px', height: '16px'}}/>}
             />
           </Grid>
         </Grid>
@@ -137,15 +141,6 @@ interface OverviewItemProps {
   newValue?: string;
   icon?: React.ReactNode;
 }
-
-const GasIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path
-      d="M22 17H19V10C19 9.73478 18.8946 9.48043 18.7071 9.29289C18.5196 9.10536 18.2652 9 18 9H16C15.7348 9 15.4804 9.10536 15.2929 9.29289C15.1054 9.48043 15 9.73478 15 10V17H2C1.73478 17 1.48043 17.1054 1.29289 17.2929C1.10536 17.4804 1 17.7348 1 18V21C1 21.2652 1.10536 21.5196 1.29289 21.7071C1.48043 21.8946 1.73478 22 2 22H22C22.2652 22 22.5196 21.8946 22.7071 21.7071C22.8946 21.5196 23 21.2652 23 21V18C23 17.7348 22.8946 17.4804 22.7071 17.2929C22.5196 17.1054 22.2652 17 22 17ZM13 5V3C13 2.73478 12.8946 2.48043 12.7071 2.29289C12.5196 2.10536 12.2652 2 12 2H4C3.73478 2 3.48043 2.10536 3.29289 2.29289C3.10536 2.48043 3 2.73478 3 3V15H13V5Z"
-      fill="currentColor"
-    />
-  </svg>
-);
 
 const OverviewItem: React.FC<OverviewItemProps> = ({ label, value, oldValue, newValue, icon }) => (
   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>

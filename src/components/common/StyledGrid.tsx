@@ -7,7 +7,7 @@ const StyledGrid = styled(Grid)(({ theme }) => ({
   '& > .MuiGrid-item': {
     borderRight: '1px solid rgba(255, 255, 255, 0.32)',
     borderBottom: '1px solid rgba(255, 255, 255, 0.32)',
-    padding: theme.spacing(2),
+    // padding: theme.spacing(2),
     '&:last-child': {
       borderRight: 'none',
     },

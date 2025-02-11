@@ -127,7 +127,7 @@ const theme: Theme = createTheme({
     },
     h2: {
       fontFamily: FONT,
-      fontWeight: 700,
+      fontWeight: 600,
       fontSize: pxToRem(18),
       lineHeight: 1.473,
     },
@@ -139,7 +139,7 @@ const theme: Theme = createTheme({
     },
     h4: {
       fontFamily: FONT,
-      fontWeight: 700,
+      fontWeight: 500,
       fontSize: pxToRem(16),
       lineHeight: 1.3125,
     },
@@ -149,9 +149,16 @@ const theme: Theme = createTheme({
       fontSize: pxToRem(16),
       lineHeight: 1.3125,
     },
-    h6: undefined,
+    h6: {
+      fontSize: 16,
+      fontWeight: 300,
+    },
     subtitle1: undefined,
-    subtitle2: undefined,
+    subtitle2: {
+      fontSize: 16,
+      fontWeight: 300,
+    },
+
     body1: {
       fontFamily: FONT,
       fontWeight: 300,
