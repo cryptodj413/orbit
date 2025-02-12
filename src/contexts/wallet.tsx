@@ -287,6 +287,13 @@ export const WalletProvider = ({ children = null as any }) => {
       }).addOperation(operation);
       const transaction = tx_builder.build();
       const simulation = await stellarRpc.simulateTransaction(transaction);
+      // if (simulation.error) {
+      //   const error = parseError(simulation);
+      //   console.error('Simulation failed:', error);
+      //   setFailureMessage(ContractErrorType[error.type]);
+      //   throw new Error(`Simulation failed: ${error.message || simulation.error}`);
+      // }
+      
       setLoading(false);
       return simulation;
     } catch (e) {
@@ -335,6 +342,7 @@ export const WalletProvider = ({ children = null as any }) => {
       if (sim) {
         return await simulateOperation(operation);
       }
+      console.log('invokeSorobanOperation', operation);
       await invokeSorobanOperation(operation);
       cleanWalletCache();
     }
@@ -404,6 +412,11 @@ export const WalletProvider = ({ children = null as any }) => {
       const pool = new PoolContract(poolId);
       const xdrSubmit = pool.submit(submitArgs);
       const operation = xdr.Operation.fromXDR(xdrSubmit, 'base64');
+      console.log('Submit Args:', {
+        poolId,
+        submitArgs,
+        operation: operation.toXDR('base64')
+      });
       console.log('Submitting xdr: ', xdrSubmit);
       console.log('Submitting operation: ', operation);
       if (sim) {

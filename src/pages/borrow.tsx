@@ -2,33 +2,47 @@ import React, { useState, useMemo } from 'react';
 import { NextPage } from 'next';
 import { Box, Button, Grid, Typography, useTheme } from '@mui/material';
 import { RequestType, SubmitArgs } from '@blend-capital/blend-sdk';
-import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
+import { rpc } from '@stellar/stellar-sdk';
 import BorrowForm from '../components/borrow/BorrowForm';
 import CollateralRatioSlider from '../components/borrow/CollateralRatioSlider';
 import TransactionOverview from '../components/borrow/TransactionOverview';
 import StyledGrid from '../components/common/StyledGrid';
-
-import { useWallet } from '../contexts/wallet';
+import { TxStatus, useWallet } from '../contexts/wallet';
 import { scaleInputToBigInt } from '../utils/scval';
 import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
+import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
+import { toBalance, toPercentage } from '../utils/formatter';
 
 //TODO: Get this through config or API
-const POOL_ID = process.env.NEXT_PUBLIC_Pool || "CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU"
+const POOL_ID =
+  process.env.NEXT_PUBLIC_Pool || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
 
 const Borrow: NextPage = () => {
   const [collateralRatio, setCollateralRatio] = useState<number>(135);
   const [borrowAmount, setBorrowAmount] = useState<string>('');
+  const [collateralAmount, setCollateralAmount] = useState<string>('');
   const [supplyAmount, setSupplyAmount] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [simResponse, setSimResponse] = useState<rpc.Api.SimulateTransactionResponse | undefined>(
+    undefined,
+  );
 
-  const { connected, poolSubmit, txStatus, txType, walletAddress } = useWallet();
+  const assetId =
+    process.env.NEXT_PUBLIC_COLLATERAL_ASSET ||
+    'CBZFW4ICZQY6WUKDI2EFRGKICT36QTLHZGS7BZTGJQ7RHCA2OTLO2PNM';
+  const stablecoinId =
+    process.env.NEXT_PUBLIC_STABLECOIN_ASSET ||
+    'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
+  const { connected, poolSubmit, txStatus, setTxStatus, txType, walletAddress } = useWallet();
 
   const { data: pool } = usePool(POOL_ID);
   const { data: poolOracle } = usePoolOracle(pool);
   const { data: poolUser } = usePoolUser(pool);
+  const assetToBase = poolOracle?.getPriceFloat(assetId);
 
   const collateral = pool?.reserves.get(process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '');
   const stablecoin = pool?.reserves.get(process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '');
+  const reserve = pool?.reserves.get(stablecoinId);
 
   //TODO: Fix the calculations to work using oracle price
   const handleCollateralRatioChange = (_event: Event, newValue: number | number[]) => {
@@ -37,7 +51,7 @@ const Borrow: NextPage = () => {
 
     // Update supply amount based on new ratio only if borrowAmount exists
     if (borrowAmount && !isNaN(parseFloat(borrowAmount))) {
-      const newSupplyAmount = ((parseFloat(borrowAmount) * ratio)).toFixed(2);
+      const newSupplyAmount = (parseFloat(borrowAmount) * ratio).toFixed(2);
       // console.log('newSupplyAmount:', newSupplyAmount);
       setSupplyAmount(newSupplyAmount);
     }
@@ -45,7 +59,8 @@ const Borrow: NextPage = () => {
 
   const handleBorrowChange = (value: string) => {
     // console.log('handleBorrowChange received:', value);
-    setBorrowAmount(value);
+    // setBorrowAmount(value);
+    setCollateralAmount(value);
 
     // If the value is empty or not a number, just set supply to empty
     if (!value || isNaN(parseFloat(value))) {
@@ -55,7 +70,7 @@ const Borrow: NextPage = () => {
 
     // Only calculate if we have a valid number
     const numValue = parseFloat(value);
-    const supplyValue = ((numValue * collateralRatio)).toFixed(2);
+    const supplyValue = (numValue * collateralRatio).toFixed(2);
     setSupplyAmount(supplyValue);
   };
 
@@ -75,8 +90,10 @@ const Borrow: NextPage = () => {
     setBorrowAmount(borrowValue);
   };
 
-  const handleSubmitTransaction = async () => {
-    if (borrowAmount && walletAddress && collateral && stablecoin) {
+  const handleSubmitTransaction = async (
+    sim: boolean,
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> => {
+    if (collateralAmount && walletAddress && collateral && stablecoin) {
       setIsLoading(true);
       try {
         let submitArgs: SubmitArgs = {
@@ -85,27 +102,51 @@ const Borrow: NextPage = () => {
           spender: walletAddress,
           requests: [
             {
-              amount: scaleInputToBigInt(supplyAmount, collateral.config.decimals),
+              // amount: scaleInputToBigInt(collateralAmount, collateral.config.decimals),
+              amount: scaleInputToBigInt('10', collateral.config.decimals),
               request_type: RequestType.SupplyCollateral,
               address: collateral.assetId,
             },
             {
-              amount: scaleInputToBigInt(borrowAmount, stablecoin.config.decimals),
+              // amount: scaleInputToBigInt(borrowAmount, stablecoin.config.decimals),
+              amount: scaleInputToBigInt('7.407', stablecoin.config.decimals),
               request_type: RequestType.Borrow,
               address: stablecoin.assetId,
             },
           ],
         };
-        await poolSubmit(POOL_ID, submitArgs, false);
+        return await poolSubmit(POOL_ID, submitArgs, sim);
       } finally {
         setIsLoading(false);
       }
     }
   };
 
-  const assetToBase = poolOracle?.getPriceFloat(
-    'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
-  );
+  const calculateSupplyAmount = (): string => {
+    if (!collateralAmount || isNaN(parseFloat(collateralAmount))) {
+      return '';
+    }
+    const baseRate = assetToBase || 1;
+    const numValue = parseFloat(collateralAmount);
+    // If I want to borrow 1 USDC, I need to supply (1 * collateralRatio/100) / price XLM
+    return ((numValue / (collateralRatio / 100)) * baseRate).toFixed(2);
+  };
+
+  useDebouncedState(collateralAmount, RPC_DEBOUNCE_DELAY, txType, async () => {
+    console.log('useDebouncedState');
+    setSimResponse(undefined);
+    // setParsedSimResult(undefined);
+    let response = await handleSubmitTransaction(true);
+    console.log('response 1', response);
+    if (response !== undefined) {
+      console.log('response 2', response);
+      setSimResponse(response);
+      // if (rpc.Api.isSimulationSuccess(response)) {
+      //   setParsedSimResult(parseResult(response, PoolContractV1.parsers.submit));
+      // }
+    }
+    // setLoadingEstimate(false);
+  });
 
   return (
     <>
@@ -113,29 +154,28 @@ const Borrow: NextPage = () => {
         <Grid item xs={3}>
           <Box sx={{ textAlign: 'center', color: 'white', paddingBlock: '24px' }}>
             <Typography variant="subtitle2">Borrow APY</Typography>
-            <Typography variant="h6">4.00%</Typography>
+            <Typography variant="h6">{toPercentage(reserve?.borrowApr)}</Typography>
           </Box>
         </Grid>
         <Grid item xs={6}>
-          <Box sx={{ textAlign: 'center', color: 'white',  paddingBlock: '24px'}}>
+          <Box sx={{ textAlign: 'center', color: 'white', paddingBlock: '24px' }}>
             <Typography variant="subtitle2">Liability Factor</Typography>
-            <Typography variant="h6">
-              100%
-            </Typography>
+            <Typography variant="h6">{toPercentage(reserve?.getLiabilityFactor())}</Typography>
           </Box>
         </Grid>
         <Grid item xs={3}>
-          <Box sx={{ textAlign: 'center', color: 'white', paddingBlock: '24px'}}>
+          <Box sx={{ textAlign: 'center', color: 'white', paddingBlock: '24px' }}>
             <Typography variant="subtitle2">Total Borrowed</Typography>
             <Typography variant="h6">
-              ${borrowAmount ? (Number(borrowAmount) / 0.8).toFixed(2) : '0.00'}
+              ${toBalance(reserve?.totalLiabilitiesFloat())}
             </Typography>
           </Box>
         </Grid>
 
         <Grid item xs={12} sx={{ borderRight: '0px !important', paddingBlock: '32px' }}>
           <BorrowForm
-            borrowAmount={borrowAmount}
+            collateralAmount={collateralAmount}
+            borrowAmount={calculateSupplyAmount()}
             onBorrowChange={handleBorrowChange}
             assetToBase={assetToBase}
             collateralRatio={collateralRatio}
@@ -146,19 +186,19 @@ const Borrow: NextPage = () => {
           <CollateralRatioSlider value={collateralRatio} onChange={handleCollateralRatioChange} />
         </Grid>
 
-        {borrowAmount !== '' && (
+        {collateralAmount !== '' && (
           <Grid item xs={12} sx={{ padding: '0px !important' }}>
             <TransactionOverview
               amount={null}
-              symbol={''}
+              symbol={'XLM'}
               collateralRatio={collateralRatio}
-              collateralAmount={null}
+              collateralAmount={collateralAmount}
               assetToBase={assetToBase}
               decimals={7}
               userPoolData={poolUser}
               newPositionEstimate={null}
-              assetId={'your_asset_id'} // Replace with actual asset ID
-              simResponse={null}
+              assetId={assetId} // Replace with actual asset ID
+              simResponse={simResponse}
               isLoading={isLoading}
             />
           </Grid>
@@ -168,8 +208,8 @@ const Borrow: NextPage = () => {
       <Button
         variant="contained"
         fullWidth
-        onClick={handleSubmitTransaction}
-        disabled={isLoading || !borrowAmount || !walletAddress}
+        onClick={() => handleSubmitTransaction(false)}
+        disabled={isLoading || !collateralAmount || !walletAddress}
         sx={{
           mt: 2,
           padding: '16px 8px',

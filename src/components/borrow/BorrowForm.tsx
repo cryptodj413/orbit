@@ -31,6 +31,7 @@ const StyledInput = styled(InputBase)(({ theme }) => ({
 }));
 
 interface BorrowFormProps {
+  collateralAmount: string;
   borrowAmount: string;
   onBorrowChange: (value: string) => void;
   assetToBase: number | undefined;
@@ -38,6 +39,7 @@ interface BorrowFormProps {
 }
 
 const BorrowForm: React.FC<BorrowFormProps> = ({
+  collateralAmount,
   borrowAmount,
   onBorrowChange,
   assetToBase,
@@ -57,15 +59,15 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
   };
 
   // Calculate required XLM amount from USDC borrow amount
-  const calculateSupplyAmount = (): string => {
-    if (!borrowAmount || isNaN(parseFloat(borrowAmount))) {
-      return '';
-    }
-    const baseRate = assetToBase || 1;
-    const numValue = parseFloat(borrowAmount);
-    // If I want to borrow 1 USDC, I need to supply (1 * collateralRatio/100) / price XLM
-    return ((numValue * (collateralRatio / 100)) / baseRate).toFixed(2);
-  };
+  // const calculateSupplyAmount = (): string => {
+  //   if (!collateralAmount || isNaN(parseFloat(collateralAmount))) {
+  //     return '';
+  //   }
+  //   const baseRate = assetToBase || 1;
+  //   const numValue = parseFloat(collateralAmount);
+  //   // If I want to borrow 1 USDC, I need to supply (1 * collateralRatio/100) / price XLM
+  //   return ((numValue / (collateralRatio / 100)) * baseRate).toFixed(2);
+  // };
 
   return (
     <Box
@@ -87,7 +89,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
       >
         <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
           <StyledInput
-            value={borrowAmount}
+            value={collateralAmount}
             onChange={(e) => handleBorrowChange(e.target.value)}
             placeholder="0.00"
             type="text"
@@ -115,16 +117,19 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
           }}
           renderValue={() => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <img src={XlmIcon.src} width="18px" height="18px" alt="oUSD"/>
-              <Typography>Stellar Lumen (XLM) <KeyboardArrowDownIcon /></Typography>
+              <img src={XlmIcon.src} width="18px" height="18px" alt="oUSD" />
+              <Typography>
+                Stellar Lumen (XLM) <KeyboardArrowDownIcon />
+              </Typography>
             </Box>
           )}
         >
-          <MenuItem value="XLM" sx={{ display: 'flex', flexDirection:'row', alignItems: 'center', gap: 1 }}>
+          <MenuItem
+            value="XLM"
+            sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}
+          >
             <img src={XlmIcon.src} width="18px" height="18px" alt="XLM" />
             <Typography>Stellar Lumen (XLM)</Typography>
-            
-
           </MenuItem>
         </Select>
       </Box>
@@ -143,7 +148,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-          <StyledInput value={calculateSupplyAmount()} disabled placeholder="0.00" type="text" />
+          <StyledInput value={borrowAmount} disabled placeholder="0.00" type="text" />
           <Typography color="white" sx={{ ml: 1, fontSize: '30px', fontWeight: 500 }}>
             oUSD
           </Typography>
@@ -164,13 +169,16 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
           }}
           renderValue={() => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <img src={OusdIcon.src} width="18px" height="18px" alt="oUSD"/>
-              <Typography>Orbital Dollar (oUSD)<KeyboardArrowDownIcon /></Typography>
+              <img src={OusdIcon.src} width="18px" height="18px" alt="oUSD" />
+              <Typography>
+                Orbital Dollar (oUSD)
+                <KeyboardArrowDownIcon />
+              </Typography>
             </Box>
           )}
         >
           <MenuItem value="oUSD" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <img src={OusdIcon.src} width="18px" height="18px" alt="oUSD"/>
+            <img src={OusdIcon.src} width="18px" height="18px" alt="oUSD" />
             <Typography>Orbital Dollar (oUSD)</Typography>
           </MenuItem>
         </Select>

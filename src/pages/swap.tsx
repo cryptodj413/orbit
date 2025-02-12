@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
-import { StrKey, Asset } from '@stellar/stellar-sdk';
+import { StrKey, Asset, rpc } from '@stellar/stellar-sdk';
 import { Box, Button, Card, CardContent, Typography, Grid, CircularProgress } from '@mui/material';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import TokenSelection from '../components/common/TokenSelection';
@@ -8,6 +8,8 @@ import { TokenType } from '../interfaces';
 import { useWallet, TxStatus } from '../contexts/wallet';
 import swapBackground from '../../public/swapBackground.svg';
 import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
+import { toBalance } from '../utils/formatter';
+import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 
 const DECIMALS = 7;
 const DECIMAL_MULTIPLIER = 10 ** DECIMALS;
@@ -53,6 +55,9 @@ const OverviewItem = ({label, value, icon}: {
 }
 
 const SwapPage: NextPage = () => {
+  const [simResponse, setSimResponse] = useState<rpc.Api.SimulateTransactionResponse | undefined>(
+    undefined,
+  );
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [outputAmount, setOutputAmount] = useState<string>('0');
   const [exchageRate, setExchangeRate] = useState<string>('0')
@@ -66,6 +71,7 @@ const SwapPage: NextPage = () => {
   const {
     connected,
     walletAddress,
+    txType,
     swapExactTokensForTokens,
     routerPairFor,
     routerGetAmountOut,
@@ -125,10 +131,6 @@ const SwapPage: NextPage = () => {
   }, [connected, routerPairFor]);
 
   useEffect(() => {
-    isCalculating ? setTxStatus(TxStatus.SUBMITTING) : undefined
-  }, [isCalculating])
-
-  useEffect(() => {
     getOutputAmount(inputAmount)
   }, [selectedInputToken, selectedOutputToken])
 
@@ -178,30 +180,48 @@ const SwapPage: NextPage = () => {
     }
   };
 
-  const handleSwap = async () => {
-    if (!inputAmount || !connected) return;
-    setIsCalculating(true);
+  const handleSwap = async (sim: boolean): Promise<rpc.Api.SimulateTransactionResponse | undefined> => {
+    if( inputAmount && outputAmount && walletAddress && connected ) {
+      if(!sim){
+        setTxStatus(TxStatus.SUBMITTING);
+      }
+      try {
+        const minOutputAmount = parseFloat(outputAmount) * (1 - SLIPPAGE / 100);
+        const args = {
+          amount_in: floatToBigInt(inputAmount),
+          amount_out_min: floatToBigInt(minOutputAmount),
+          path: [selectedInputToken.contract, selectedOutputToken.contract],
+          to: walletAddress,
+          deadline: BigInt(Math.floor(Date.now() / 1000) + 1200), // 20 minutes
+        };
 
-    try {
-      const minOutputAmount = parseFloat(outputAmount) * (1 - SLIPPAGE / 100);
-
-      const args = {
-        amount_in: floatToBigInt(inputAmount),
-        amount_out_min: floatToBigInt(minOutputAmount),
-        path: [tokens[0].contract, tokens[1].contract],
-        to: walletAddress,
-        deadline: BigInt(Math.floor(Date.now() / 1000) + 1200), // 20 minutes
-      };
-
-      await swapExactTokensForTokens(process.env.NEXT_PUBLIC_ROUTER_ID || '', args, false);
-      setIsCalculating(false)
-    } catch (error) {
-      setIsCalculating(false)
-      console.error('Swap failed:', error);
-      setTxError(true);
-      setTxErrorMessage(error.message);
+        const result = await swapExactTokensForTokens(process.env.NEXT_PUBLIC_ROUTER_ID || '', args, sim);
+        return result;
+      } catch (error) {
+        console.error('Swap failed:', error);
+        setTxError(true);
+        setTxErrorMessage(error.message);
+        return undefined;
+      }
     }
+    return undefined;
   };
+
+  useDebouncedState(inputAmount, RPC_DEBOUNCE_DELAY, txType, async () => {
+    console.log('useDebouncedState');
+    setSimResponse(undefined);
+    // setParsedSimResult(undefined);
+    let response = await handleSwap(true);
+    console.log('swap response 1', response);
+    if (response !== undefined) {
+      console.log('swap response 2', response);
+      setSimResponse(response);
+      // if (rpc.Api.isSimulationSuccess(response)) {
+      //   setParsedSimResult(parseResult(response, PoolContractV1.parsers.submit));
+      // }
+    }
+    // setLoadingEstimate(false);
+  });
 
   return (
     <div>
@@ -315,7 +335,7 @@ const SwapPage: NextPage = () => {
                 <OverviewItem
                   icon={<LocalGasStationIcon />}
                   label="Gas:"
-                  value={`0.03XML`}
+                  value={`${toBalance(BigInt((simResponse as any)?.minResourceFee ?? 0), 7)} XLM`}
                 />
                 <OverviewItem label="Platform Fee:" value={`0.5%`} />
               </Grid>
@@ -339,7 +359,7 @@ const SwapPage: NextPage = () => {
         <Button
           fullWidth
           variant="contained"
-          onClick={handleSwap}
+          onClick={() => handleSwap(false)}
           disabled={!connected || !inputAmount || parseFloat(inputAmount) <= 0 || isCalculating}
           sx={{
             backgroundColor: '#2050F2',
