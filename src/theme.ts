@@ -161,7 +161,7 @@ const theme: Theme = createTheme({
 
     body1: {
       fontFamily: FONT,
-      fontWeight: 300,
+      fontWeight: 400,
       fontSize: pxToRem(16),
       lineHeight: 1.3125,
     },

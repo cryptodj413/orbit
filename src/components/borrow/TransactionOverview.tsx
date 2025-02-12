@@ -90,6 +90,7 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
         color: 'white',
         background:
           'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
+        borderRadius: '16px',
       }}
     >
       <Typography
