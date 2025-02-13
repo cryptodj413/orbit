@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { NextPage } from 'next';
-import { Box, Button, Grid, Typography, useTheme } from '@mui/material';
+import { Box, Button, Grid, Typography } from '@mui/material';
 import { RequestType, SubmitArgs } from '@blend-capital/blend-sdk';
 import { rpc } from '@stellar/stellar-sdk';
 import BorrowForm from '../components/borrow/BorrowForm';
 import CollateralRatioSlider from '../components/borrow/CollateralRatioSlider';
 import TransactionOverview from '../components/borrow/TransactionOverview';
 import StyledGrid from '../components/common/StyledGrid';
-import { TxStatus, useWallet } from '../contexts/wallet';
+import { useWallet } from '../contexts/wallet';
 import { scaleInputToBigInt } from '../utils/scval';
 import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
@@ -33,16 +33,14 @@ const Borrow: NextPage = () => {
   const stablecoinId =
     process.env.NEXT_PUBLIC_STABLECOIN_ASSET ||
     'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
-  const { connected, poolSubmit, txStatus, setTxStatus, txType, walletAddress } = useWallet();
-
+  const {poolSubmit, txType, walletAddress } = useWallet();
   const { data: pool } = usePool(POOL_ID);
   const { data: poolOracle } = usePoolOracle(pool);
   const { data: poolUser } = usePoolUser(pool);
-  const assetToBase = poolOracle?.getPriceFloat(assetId);
-
   const collateral = pool?.reserves.get(process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '');
   const stablecoin = pool?.reserves.get(process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '');
   const reserve = pool?.reserves.get(stablecoinId);
+  const assetToBase = poolOracle?.getPriceFloat(assetId);
 
   //TODO: Fix the calculations to work using oracle price
   const handleCollateralRatioChange = (_event: Event, newValue: number | number[]) => {
@@ -52,14 +50,11 @@ const Borrow: NextPage = () => {
     // Update supply amount based on new ratio only if borrowAmount exists
     if (borrowAmount && !isNaN(parseFloat(borrowAmount))) {
       const newSupplyAmount = (parseFloat(borrowAmount) * ratio).toFixed(2);
-      // console.log('newSupplyAmount:', newSupplyAmount);
       setSupplyAmount(newSupplyAmount);
     }
   };
 
   const handleBorrowChange = (value: string) => {
-    // console.log('handleBorrowChange received:', value);
-    // setBorrowAmount(value);
     setCollateralAmount(value);
 
     // If the value is empty or not a number, just set supply to empty
@@ -74,22 +69,6 @@ const Borrow: NextPage = () => {
     setSupplyAmount(supplyValue);
   };
 
-  const handleSupplyChange = (value: string) => {
-    // console.log('handleSupplyChange received:', value);
-    setSupplyAmount(value);
-
-    // If the value is empty or not a number, just set borrow to empty
-    if (!value || isNaN(parseFloat(value))) {
-      setBorrowAmount('');
-      return;
-    }
-
-    // Only calculate if we have a valid number
-    const numValue = parseFloat(value);
-    const borrowValue = ((numValue * 100) / collateralRatio).toFixed(2);
-    setBorrowAmount(borrowValue);
-  };
-
   const handleSubmitTransaction = async (
     sim: boolean,
   ): Promise<rpc.Api.SimulateTransactionResponse | undefined> => {
@@ -102,14 +81,12 @@ const Borrow: NextPage = () => {
           spender: walletAddress,
           requests: [
             {
-              // amount: scaleInputToBigInt(collateralAmount, collateral.config.decimals),
-              amount: scaleInputToBigInt('10', collateral.config.decimals),
+              amount: scaleInputToBigInt(collateralAmount, collateral.config.decimals),
               request_type: RequestType.SupplyCollateral,
               address: collateral.assetId,
             },
             {
-              // amount: scaleInputToBigInt(borrowAmount, stablecoin.config.decimals),
-              amount: scaleInputToBigInt('7.407', stablecoin.config.decimals),
+              amount: scaleInputToBigInt(calculateSupplyAmount(), stablecoin.config.decimals),
               request_type: RequestType.Borrow,
               address: stablecoin.assetId,
             },
@@ -133,19 +110,11 @@ const Borrow: NextPage = () => {
   };
 
   useDebouncedState(collateralAmount, RPC_DEBOUNCE_DELAY, txType, async () => {
-    console.log('useDebouncedState');
     setSimResponse(undefined);
-    // setParsedSimResult(undefined);
     let response = await handleSubmitTransaction(true);
-    console.log('response 1', response);
     if (response !== undefined) {
-      console.log('response 2', response);
       setSimResponse(response);
-      // if (rpc.Api.isSimulationSuccess(response)) {
-      //   setParsedSimResult(parseResult(response, PoolContractV1.parsers.submit));
-      // }
     }
-    // setLoadingEstimate(false);
   });
 
   return (

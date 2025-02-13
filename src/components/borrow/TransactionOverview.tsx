@@ -26,12 +26,10 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
   collateralRatio,
   collateralAmount,
   assetToBase,
-  decimals,
   userPoolData,
   newPositionEstimate,
   assetId,
   simResponse,
-  isLoading,
 }) => {
   const xlmToOUsdRate = 0.091; // 1
   const poolId =
@@ -39,7 +37,6 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
   const { data: pool } = usePool(poolId);
   const { data: poolOracle } = usePoolOracle(pool);
   const price = poolOracle?.getPriceFloat(assetId) || 0;
-  const reserve = pool?.reserves.get(assetId);
 
   const calculatedValues = useMemo(() => {
     const depositValue = Number(collateralAmount) * price;

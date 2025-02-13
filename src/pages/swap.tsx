@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
+import { Box, Button, Typography, Grid } from '@mui/material';
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import { StrKey, Asset, rpc } from '@stellar/stellar-sdk';
-import { Box, Button, Card, CardContent, Typography, Grid, CircularProgress } from '@mui/material';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
+import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import TokenSelection from '../components/common/TokenSelection';
 import { TokenType } from '../interfaces';
 import { useWallet, TxStatus } from '../contexts/wallet';
-import swapBackground from '../../public/swapBackground.svg';
-import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
 import { toBalance } from '../utils/formatter';
-import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
+import swapBackground from '../../public/swapBackground.svg';
 
 const DECIMALS = 7;
 const DECIMAL_MULTIPLIER = 10 ** DECIMALS;
@@ -32,15 +32,19 @@ const tokens = [
   },
 ];
 
-const OverviewItem = ({label, value, icon}: {
+const OverviewItem = ({
+  label,
+  value,
+  icon,
+}: {
   label: string;
   value: string;
-  icon?: React.ReactElement
+  icon?: React.ReactElement;
 }) => {
   const [first, setFirst] = useState(true);
 
   useEffect(() => {
-    setFirst(false)
+    setFirst(false);
   }, []);
 
   return (
@@ -52,7 +56,7 @@ const OverviewItem = ({label, value, icon}: {
       <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>{value}</Typography>
     </Box>
   );
-}
+};
 
 const SwapPage: NextPage = () => {
   const [simResponse, setSimResponse] = useState<rpc.Api.SimulateTransactionResponse | undefined>(
@@ -60,7 +64,7 @@ const SwapPage: NextPage = () => {
   );
   const [inputAmount, setInputAmount] = useState<string>('0');
   const [outputAmount, setOutputAmount] = useState<string>('0');
-  const [exchageRate, setExchangeRate] = useState<string>('0')
+  const [exchageRate, setExchangeRate] = useState<string>('0');
   const [selectedInputToken, setSelectedInputToken] = useState<TokenType>(tokens[0]);
   const [selectedOutputToken, setSelectedOutputToken] = useState<TokenType>(tokens[1]);
   const [pairAddress, setPairAddress] = useState<string>('');
@@ -76,11 +80,10 @@ const SwapPage: NextPage = () => {
     routerPairFor,
     routerGetAmountOut,
     routerGetAmountIn,
-    setTxStatus
+    setTxStatus,
   } = useWallet();
- 
+
   const { data: horizonAccount } = useHorizonAccount();
-  // console.log('Calling useTokenBalance with:', selectedInputToken.contract, horizonAccount);
 
   const { data: inputTokenBalance } = useTokenBalance(
     selectedInputToken.contract,
@@ -131,8 +134,8 @@ const SwapPage: NextPage = () => {
   }, [connected, routerPairFor]);
 
   useEffect(() => {
-    getOutputAmount(inputAmount)
-  }, [selectedInputToken, selectedOutputToken])
+    getOutputAmount(inputAmount);
+  }, [selectedInputToken, selectedOutputToken]);
 
   const getOutputAmount = async (inputValue: string) => {
     if (!inputValue || isNaN(parseFloat(inputValue)) || !connected) {
@@ -141,10 +144,10 @@ const SwapPage: NextPage = () => {
     }
     // setIsCalculating(true)
     try {
-      if(selectedInputToken.code === selectedOutputToken.code) {
-        setOutputAmount(inputValue)
-        setExchangeRate("1")
-        return
+      if (selectedInputToken.code === selectedOutputToken.code) {
+        setOutputAmount(inputValue);
+        setExchangeRate('1');
+        return;
       }
 
       const args = {
@@ -160,7 +163,7 @@ const SwapPage: NextPage = () => {
           const amount = bigIntToFloat(BigInt(outputValue._value._attributes.lo._value));
           setOutputAmount(amount);
           const rate = Number(amount) / Number(inputValue);
-          setExchangeRate(String(rate))
+          setExchangeRate(String(rate));
         }
       }
     } catch (error) {
@@ -180,9 +183,11 @@ const SwapPage: NextPage = () => {
     }
   };
 
-  const handleSwap = async (sim: boolean): Promise<rpc.Api.SimulateTransactionResponse | undefined> => {
-    if( inputAmount && outputAmount && walletAddress && connected ) {
-      if(!sim){
+  const handleSwap = async (
+    sim: boolean,
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> => {
+    if (inputAmount && outputAmount && walletAddress && connected) {
+      if (!sim) {
         setTxStatus(TxStatus.SUBMITTING);
       }
       try {
@@ -195,7 +200,11 @@ const SwapPage: NextPage = () => {
           deadline: BigInt(Math.floor(Date.now() / 1000) + 1200), // 20 minutes
         };
 
-        const result = await swapExactTokensForTokens(process.env.NEXT_PUBLIC_ROUTER_ID || '', args, sim);
+        const result = await swapExactTokensForTokens(
+          process.env.NEXT_PUBLIC_ROUTER_ID || '',
+          args,
+          sim,
+        );
         return result;
       } catch (error) {
         console.error('Swap failed:', error);
@@ -208,25 +217,16 @@ const SwapPage: NextPage = () => {
   };
 
   useDebouncedState(inputAmount, RPC_DEBOUNCE_DELAY, txType, async () => {
-    console.log('useDebouncedState');
     setSimResponse(undefined);
-    // setParsedSimResult(undefined);
     let response = await handleSwap(true);
-    console.log('swap response 1', response);
     if (response !== undefined) {
-      console.log('swap response 2', response);
       setSimResponse(response);
-      // if (rpc.Api.isSimulationSuccess(response)) {
-      //   setParsedSimResult(parseResult(response, PoolContractV1.parsers.submit));
-      // }
     }
-    // setLoadingEstimate(false);
   });
 
   return (
     <div>
       <div>
-        {/* Header */}
         <div className="flex flex-col gap-[7.48px]">
           <div className="flex justify-between px-2">
             <Typography
@@ -251,9 +251,7 @@ const SwapPage: NextPage = () => {
             </Typography>
           </div>
 
-          {/* Token Selection Section */}
           <Box sx={{ position: 'relative', display: 'flex', minWidth: '629.63px' }}>
-            {/* <SwapIcon /> */}
             <Box sx={{ width: '100%', display: 'flex', justifyContent: 'end', zIndex: 10 }}>
               <TokenSelection
                 tokens={tokens}
@@ -287,11 +285,13 @@ const SwapPage: NextPage = () => {
         </div>
 
         <div className="flex justify-between px-4 pb-3">
-          <p className="text-[#ffffffcc]">1 {selectedInputToken.code} = {Number(exchageRate).toFixed(2)} {selectedOutputToken.code} </p>
+          <p className="text-[#ffffffcc]">
+            1 {selectedInputToken.code} = {Number(exchageRate).toFixed(2)}{' '}
+            {selectedOutputToken.code}{' '}
+          </p>
           <p className="text-[#ffffffcc]">0.5% = 154.12 XLM</p>
         </div>
 
-        {/* Transaction Overview */}
         {inputAmount && outputAmount && (
           <Box
             sx={{
@@ -315,9 +315,6 @@ const SwapPage: NextPage = () => {
             </Typography>
             <Grid container spacing={4}>
               <Grid item xs={12} md={12}>
-                {/* <Typography variant="subtitle2" gutterBottom>
-                  Swap Details
-                </Typography> */}
                 <OverviewItem
                   label="You Swap"
                   value={`${inputAmount} ${selectedInputToken.code}`}
@@ -326,12 +323,7 @@ const SwapPage: NextPage = () => {
                   label="You Receive"
                   value={`${Number(outputAmount).toFixed(2)} ${selectedOutputToken.code}`}
                 />
-                {/* <OverviewItem
-                  label="Minimum Received:"
-                  value={`${(parseFloat(outputAmount) * (1 - SLIPPAGE / 100)).toFixed(7)} ${
-                    selectedOutputToken.code
-                  }`}
-                /> */}
+
                 <OverviewItem
                   icon={<LocalGasStationIcon />}
                   label="Gas:"
@@ -339,22 +331,10 @@ const SwapPage: NextPage = () => {
                 />
                 <OverviewItem label="Platform Fee:" value={`0.5%`} />
               </Grid>
-              {/* <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Network Details
-                </Typography>
-                <OverviewItem
-                  label="Rate:"
-                  value={`1 ${selectedInputToken.code} = ${(
-                    parseFloat(outputAmount) / parseFloat(inputAmou nt)
-                  ).toFixed(7)} ${selectedOutputToken.code}`}
-                />
-              </Grid> */}
             </Grid>
           </Box>
         )}
       </div>
-      {/* <Dropdown /> */}
       <div>
         <Button
           fullWidth

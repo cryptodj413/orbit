@@ -10,7 +10,6 @@ import {
   Select,
   MenuItem,
   InputBase,
-  TextField,
   useTheme,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -23,14 +22,13 @@ import {
   UserPositions,
 } from '@blend-capital/blend-sdk';
 import { SorobanRpc } from '@stellar/stellar-sdk';
-import { useSettings, ViewType } from '../../contexts';
+import { useStore } from '../../store/store';
+import { useSettings } from '../../contexts';
 import { TxStatus, TxType, useWallet } from '../../contexts/wallet';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../../hooks/debounce';
-import { useStore } from '../../store/store';
-import { toBalance, toPercentage } from '../../utils/formatter';
 import { requiresTrustline } from '../../utils/horizon';
 import { scaleInputToBigInt } from '../../utils/scval';
-import { getErrorFromSim, SubmitError } from '../../utils/txSim';
+import { getErrorFromSim } from '../../utils/txSim';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: '#030615',
@@ -108,7 +106,6 @@ const DynamicWidthInput = ({ value, onChange, placeholder }) => {
 
 const BorrowAnvil: React.FC = () => {
   const theme = useTheme();
-  const { viewType } = useSettings();
   const { connected, walletAddress, poolSubmit, txStatus, txType, createTrustline, isLoading } =
     useWallet();
 
@@ -175,22 +172,6 @@ const BorrowAnvil: React.FC = () => {
       }
     }, [toBorrow, simResponse, userPoolData?.positionEstimates, userAccount, reserve, theme]);
 
-  const handleBorrowMax = () => {
-    if (reserve && userPoolData) {
-      let to_bounded_hf =
-        (userPoolData.positionEstimates.totalEffectiveCollateral -
-          userPoolData.positionEstimates.totalEffectiveLiabilities * 1.02) /
-        1.02;
-      let to_borrow = Math.min(
-        to_bounded_hf / (assetToBase * reserve.getLiabilityFactor()),
-        reserve.estimates.supplied * (reserve.config.max_util / 1e7 - 0.01) -
-        reserve.estimates.borrowed,
-      );
-      setToBorrow(Math.max(to_borrow, 0).toFixed(7));
-      setLoadingEstimate(true);
-    }
-  };
-
   const handleSubmitTransaction = async (sim: boolean) => {
     if (toBorrow && connected && reserve) {
       let submitArgs: SubmitArgs = {
@@ -211,12 +192,6 @@ const BorrowAnvil: React.FC = () => {
         ],
       };
       return await poolSubmit(poolId, submitArgs, sim);
-    }
-  };
-
-  const handleAddAssetTrustline = async () => {
-    if (connected && reserve?.tokenMetadata?.asset) {
-      await createTrustline(reserve.tokenMetadata.asset);
     }
   };
 

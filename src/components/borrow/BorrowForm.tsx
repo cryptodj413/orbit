@@ -17,10 +17,8 @@ const StyledInput = styled(InputBase)(({ theme }) => ({
     fontFamily: theme.typography.h4.fontFamily,
     fontWeight: theme.typography.h4.fontWeight,
     textAlign: 'center',
-    // width: '100px',
     '&:focus': {
       outline: 'none',
-      // backgroundColor: 'rgba(255, 255, 255, 0.05)',
     },
   },
   '& .MuiInputBase-input.Mui-disabled': {
@@ -29,21 +27,18 @@ const StyledInput = styled(InputBase)(({ theme }) => ({
     cursor: 'not-allowed',
   },
 }));
-
 interface BorrowFormProps {
   collateralAmount: string;
   borrowAmount: string;
-  onBorrowChange: (value: string) => void;
   assetToBase: number | undefined;
   collateralRatio: number;
+  onBorrowChange: (value: string) => void;
 }
 
 const BorrowForm: React.FC<BorrowFormProps> = ({
   collateralAmount,
   borrowAmount,
   onBorrowChange,
-  assetToBase,
-  collateralRatio,
 }) => {
   const handleBorrowChange = (value: string) => {
     // Allow empty string
@@ -57,18 +52,6 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
       onBorrowChange(value);
     }
   };
-
-  // Calculate required XLM amount from USDC borrow amount
-  // const calculateSupplyAmount = (): string => {
-  //   if (!collateralAmount || isNaN(parseFloat(collateralAmount))) {
-  //     return '';
-  //   }
-  //   const baseRate = assetToBase || 1;
-  //   const numValue = parseFloat(collateralAmount);
-  //   // If I want to borrow 1 USDC, I need to supply (1 * collateralRatio/100) / price XLM
-  //   return ((numValue / (collateralRatio / 100)) * baseRate).toFixed(2);
-  // };
-
   return (
     <Box
       sx={{
