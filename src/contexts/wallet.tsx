@@ -1,10 +1,7 @@
 import {
-  BackstopClaimArgs,
-  BackstopContract,
   ContractErrorType,
   Network,
   parseError,
-  PoolBackstopActionArgs,
   PoolClaimArgs,
   PoolContract,
   Positions,
@@ -24,15 +21,13 @@ import { getNetworkDetails as getFreighterNetwork } from '@stellar/freighter-api
 import {
   Asset,
   BASE_FEE,
-  Networks,
   Operation,
   rpc,
   Transaction,
   TransactionBuilder,
   xdr,
 } from '@stellar/stellar-sdk';
-import * as StellarSdk from '@stellar/stellar-sdk';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useSettings } from './settings';
 import { useQueryClientCacheCleaner } from '../hooks/api';
 import { RouterContract, RouterGetAmountInArgs, RouterGetAmountOutArgs, RouterPairForArgs, RouterSwapExactTokensForTokensArgs, RouterSwapTokensForExactTokensArgs } from '../external/router';
@@ -47,7 +42,6 @@ export interface IWalletContext {
   lastTxFailure: string | undefined;
   txType: TxType;
   walletId: string | undefined;
-
   isLoading: boolean;
   connect: (handleSuccess: (success: boolean) => void) => Promise<void>;
   disconnect: () => void;
@@ -127,7 +121,6 @@ export const WalletProvider = ({ children = null as any }) => {
   const [txHash, setTxHash] = useState<string | undefined>(undefined);
   const [txFailure, setTxFailure] = useState<string | undefined>(undefined);
   const [txType, setTxType] = useState<TxType>(TxType.CONTRACT);
-  // wallet state
   const [walletAddress, setWalletAddress] = useState<string>('');
 
   function setFailureMessage(message: string | undefined) {
@@ -210,7 +203,6 @@ export const WalletProvider = ({ children = null as any }) => {
         } else if (typeof e === 'string') {
           setTxFailure(e);
         }
-
         setTxStatus(TxStatus.FAIL);
         throw e;
       }
@@ -260,7 +252,6 @@ export const WalletProvider = ({ children = null as any }) => {
     let hash = transaction.hash().toString('hex');
     setTxHash(hash);
     if (get_tx_response.status === 'SUCCESS') {
-      console.log('Successfully submitted transaction: ', hash);
       // stall for a bit to ensure data propagates to horizon
       await new Promise((resolve) => setTimeout(resolve, 500));
       setTxStatus(TxStatus.SUCCESS);
@@ -287,6 +278,13 @@ export const WalletProvider = ({ children = null as any }) => {
       }).addOperation(operation);
       const transaction = tx_builder.build();
       const simulation = await stellarRpc.simulateTransaction(transaction);
+      // if (simulation.error) {
+      //   const error = parseError(simulation);
+      //   console.error('Simulation failed:', error);
+      //   setFailureMessage(ContractErrorType[error.type]);
+      //   throw new Error(`Simulation failed: ${error.message || simulation.error}`);
+      // }
+      
       setLoading(false);
       return simulation;
     } catch (e) {
@@ -304,7 +302,6 @@ export const WalletProvider = ({ children = null as any }) => {
         timebounds: { minTime: 0, maxTime: Math.floor(Date.now() / 1000) + 5 * 60 * 1000 },
       }).addOperation(operation);
       const transaction = tx_builder.build();
-      // console.log(transaction.toXDR());
       const simResponse = await simulateOperation(operation);
       const assembled_tx = rpc.assembleTransaction(transaction, simResponse).build();
       const signedTx = await sign(assembled_tx.toXDR());
@@ -314,7 +311,6 @@ export const WalletProvider = ({ children = null as any }) => {
       console.error('Unknown error submitting transaction: ', e);
       setFailureMessage(e?.message);
       setTxStatus(TxStatus.FAIL);
-      console.log("kkkk")
     }
   }
 
@@ -330,8 +326,6 @@ export const WalletProvider = ({ children = null as any }) => {
       const router = new RouterContract(routerId);
       const xdrSwap = router.swapExactTokensForTokens(swapArgs);
       const operation = xdr.Operation.fromXDR(xdrSwap, 'base64');
-      // console.log('Submitting xdr: ', xdrSwap);
-      // console.log('Submitting operation: ', operation);
       if (sim) {
         return await simulateOperation(operation);
       }
@@ -345,8 +339,6 @@ export const WalletProvider = ({ children = null as any }) => {
       const router = new RouterContract(routerId);
       const xdrSwap = router.swapTokensForExactTokens(swapArgs);
       const operation = xdr.Operation.fromXDR(xdrSwap, 'base64');
-      console.log('Submitting xdr: ', xdrSwap);
-      console.log('Submitting operation: ', operation);
       if (sim) {
         return await simulateOperation(operation);
       }
@@ -360,8 +352,6 @@ export const WalletProvider = ({ children = null as any }) => {
       const router = new RouterContract(routerId);
       const xdrGetAmountIn = router.routerGetAmountsIn(routerGetAmountInArgs);
       const operation = xdr.Operation.fromXDR(xdrGetAmountIn, 'base64');
-      // console.log('Submitting xdr: ', xdrGetAmountIn);
-      // console.log('Submitting operation: ', operation);
       return await simulateOperation(operation);
     }
   }
@@ -371,8 +361,6 @@ export const WalletProvider = ({ children = null as any }) => {
       const router = new RouterContract(routerId);
       const xdrGetAmountOut = router.routerGetAmountsOut(routerGetAmountOutArgs);
       const operation = xdr.Operation.fromXDR(xdrGetAmountOut, 'base64');
-      // console.log('Submitting xdr: ', xdrGetAmountOut);
-      // console.log('Submitting operation: ', operation);
       return await simulateOperation(operation);
     }
   }
@@ -404,8 +392,6 @@ export const WalletProvider = ({ children = null as any }) => {
       const pool = new PoolContract(poolId);
       const xdrSubmit = pool.submit(submitArgs);
       const operation = xdr.Operation.fromXDR(xdrSubmit, 'base64');
-      console.log('Submitting xdr: ', xdrSubmit);
-      console.log('Submitting operation: ', operation);
       if (sim) {
         return await simulateOperation(operation);
       }

@@ -1,71 +1,43 @@
 import React from 'react';
-import { Typography, Grid, Box, Button } from '@mui/material';
+import { Typography, Box, Button, Grid } from '@mui/material';
+import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
 import { toBalance, toPercentage } from '../utils/formatter';
 import { TokenType } from '../interfaces';
 import { useWallet } from '../contexts/wallet';
+import FlameIcon from '../components/dashboard/FlameIcon';
+import StellarIcon from '../../public/icons/tokens/xlm.svg';
+import OusdIcon from '../../public/icons/tokens/ousd.svg';
+import UsdcIcon from '../../public/icons/tokens/Usdc.svg'
 
-const ActionButton = ({ variant = 'withdraw', onClick }) => {
-  const getButtonStyles = () => ({
-    background: variant === 'withdraw' ? 'rgba(150, 253, 2, 0.16)' : 'rgba(253, 2, 213, 0.16)',
-    borderRadius: '8px',
-    color: 'white',
-    padding: '8px 16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    '&:hover': {
-      backgroundColor: variant === 'withdraw' ? '#96fd0252' : '#fd02d552',
-    },
-  });
-
+const ColItem = ({ item, val }) => {
   return (
-    <Button sx={getButtonStyles()} onClick={onClick}>
-      <Typography
-        variant="h6"
-        component="span"
-        sx={{
-          fontWeight: 'bold',
-          fontSize: '1.25rem',
-          lineHeight: 'normal',
-          letterSpacing: '-0.8px',
-          color: 'white',
-        }}
-      >
-        {variant === 'withdraw' ? 'Withdraw' : 'Repay'}
-      </Typography>
-    </Button>
+    <div className="flex flex-col font-medium">
+      <p className="text-base">{item}</p>
+      <p className="text-xl">{val}</p>
+    </div>
   );
 };
 
-const InfoSection = ({ title, items }) => (
-  <Grid item xs={6}>
-    <Typography variant="h5" gutterBottom sx={{ color: 'white' }}>
-      {title}
-    </Typography>
-    {items.map((item, index) => (
-      <Typography
-        key={index}
-        variant="body1"
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          color: 'rgba(255, 255, 255, 0.7)',
-          '.value': {
-            color: 'white',
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        <span>{item.label}:</span>
-        <span className="value">{item.value}</span>
-      </Typography>
-    ))}
-  </Grid>
-);
-
-const getTokenInfo = (contractId: string): TokenType | undefined => {
-  return tokens.find((token) => token.contract === contractId);
+const PositionItem = () => {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
+        <p className="text-base font-bold">Your supplied positions</p>
+        <p className="text-base font-light">
+          Total Supplied: <span className="text-lg font-bold">$612.79</span>
+        </p>
+      </div>
+      <div className="flex justify-between">
+        <ColItem item="Asset" val="XLM" />
+        <ColItem item="Balance" val="3.06k" />
+        <ColItem item="APR" val="151.09%" />
+        <button className="w-40 py-2 px-6 bg-[#94fd0295] font-medium text-xl rounded-lg">
+          Withdraw +
+        </button>
+      </div>
+    </div>
+  );
 };
 
 const ConnectWallet = () => {
@@ -105,7 +77,7 @@ const ConnectWallet = () => {
         protocol
       </Typography>
       <Button
-        onClick={connect}
+        onClick={() => {}}
         sx={{
           background: 'rgba(150, 253, 2, 0.16)',
           borderRadius: '8px',
@@ -129,184 +101,122 @@ const Dashboard = () => {
   if (!walletAddress) {
     return <ConnectWallet />;
   }
-  const poolId = process.env.NEXT_PUBLIC_BLND_POOL;
-  const { data: pool } = usePool(poolId);
-  const { data: poolOracle } = usePoolOracle(pool);
-  const { data: userPoolData } = usePoolUser(pool);
-
-  const { emissions, claimedTokens } = React.useMemo(() => {
-    if (!userPoolData || !pool) {
-      return { emissions: 0, claimedTokens: [] };
-    }
-    return userPoolData.estimateEmissions(pool);
-  }, [userPoolData, pool]);
-
-  const positionEstimates = React.useMemo(() => {
-    if (!poolOracle || !pool || !userPoolData) {
-      return null;
-    }
-
-    let totalCollateral = 0;
-    let totalLiabilities = 0;
-
-    // Calculate total collateral and liabilities
-    pool.reserves.forEach((reserve, assetId) => {
-      const collateralAmount = userPoolData.getCollateralFloat(reserve);
-      const liabilityAmount = userPoolData.getLiabilitiesFloat(reserve);
-      const price = poolOracle.getPriceFloat(assetId) || 0;
-
-      totalCollateral += collateralAmount * price;
-      totalLiabilities += liabilityAmount * price;
-    });
-
-    return {
-      totalCollateral,
-      totalLiabilities,
-    };
-  }, [pool, poolOracle, userPoolData]);
-
-  const overviewData = [
-    {
-      label: 'Total Collateral Deposited',
-      value: `$${toBalance(positionEstimates?.totalCollateral || 0)}`,
-    },
-    {
-      label: 'Total Debt Outstanding',
-      value: `$${toBalance(positionEstimates?.totalLiabilities || 0)}`,
-    },
-  ];
-
-  const positionsData = [
-    {
-      label: 'Total Collateral',
-      value: `$${toBalance(positionEstimates?.totalCollateral || 0)}`,
-    },
-    {
-      label: 'Total Liabilities',
-      value: `$${toBalance(positionEstimates?.totalLiabilities || 0)}`,
-    },
-  ];
-
-  const balancesData = React.useMemo(() => {
-    if (!pool || !userPoolData) return [];
-
-    const balances = [];
-    pool.reserves.forEach((reserve, assetId) => {
-      const collateral = userPoolData.getCollateralFloat(reserve);
-      const supply = userPoolData.getSupplyFloat(reserve);
-      if (collateral > 0 || supply > 0) {
-        const tokenInfo = getTokenInfo(assetId);
-        balances.push({
-          label: tokenInfo?.code || assetId,
-          value: `${toBalance(collateral + supply)} ${tokenInfo?.code || assetId}`,
-        });
-      }
-    });
-    return balances;
-  }, [pool, userPoolData]);
-
-  const positions = React.useMemo(() => {
-    if (!pool || !userPoolData || !poolOracle) return [];
-
-    const positionsList = [];
-    pool.reserves.forEach((reserve, assetId) => {
-      const collateral = userPoolData.getCollateralFloat(reserve);
-      const supply = userPoolData.getSupplyFloat(reserve);
-      const liabilities = userPoolData.getLiabilitiesFloat(reserve);
-
-      if (collateral > 0 || supply > 0 || liabilities > 0) {
-        const tokenInfo = getTokenInfo(assetId);
-        positionsList.push({
-          token: assetId,
-          tokenCode: tokenInfo?.code || assetId,
-          tokenIcon: tokenInfo?.icon || `/icons/tokens/default.svg`,
-          amount: collateral + supply - liabilities,
-          price: poolOracle.getPriceFloat(assetId) || 0,
-        });
-      }
-    });
-    return positionsList;
-  }, [pool, userPoolData, poolOracle]);
-
-  const handleClaim = async () => {
-    if (claimedTokens.length > 0) {
-      // Implement claim logic here
-      // console.log('Claiming tokens:', claimedTokens);
-    }
-  };
 
   return (
-    <Grid container spacing={4}>
-      <Grid container item spacing={4}>
-        <InfoSection title="Overview" items={overviewData} />
-        <InfoSection title="My Positions" items={positionsData} />
-      </Grid>
+    <div className="mx-5 my-2">
+      <div className="flex gap-6 mb-8">
+        <div className="flex flex-col gap-4 w-1/2">
+          <div className="">
+            <div className="text-xl font-bold mb-4">Overview</div>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <p>Total Collateral Deposited:</p>
+                <p className="font-bold">315.16USD</p>
+              </div>
+              <div className="flex justify-between">
+                <p>Total Debt Outstanding:</p>
+                <p className="font-bold">20.15%</p>
+              </div>
+            </div>
+          </div>
+          <div className="">
+            <div className="text-xl font-bold mb-4">Balance</div>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between">
+                <p>Stellar Lumens:</p>
+                <div className="flex items-center">
+                  <p className="font-bold">1562XLM</p>&nbsp;
+                  <img src={StellarIcon.src} className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <p>Orbital US Dollar:</p>
+                <div className="flex items-center">
+                  <p className="font-bold">102.78oUSD</p>&nbsp;
+                  <img src={OusdIcon.src} className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <Grid container item spacing={4}>
-        <InfoSection title="Balances" items={balancesData} />
-        {/* <Grid item xs={6} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <FlameIcon />
-          <Box onClick={handleClaim} sx={{ cursor: 'pointer' }}>
-            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              Claim Pool Emissions
-            </Typography>
-            <Typography variant="subtitle1" sx={{ color: 'white' }}>
-              {toBalance(emissions)} BLEND
-            </Typography>
-          </Box>
-          <RightArrowIcon />
-        </Grid> */}
-      </Grid>
+        <div className="flex flex-col w-1/2">
+          <div className="text-xl font-bold mb-4">My Positions</div>
+          <div className="flex gap-5">
+            <div className="flex flex-col font-medium">
+              <p className="text-base font-light">Net APR</p>
+              <p className="text-base font-medium">130.68%</p>
+            </div>
+            <div className="flex flex-col font-medium">
+              <p className="text-base font-light">Borrow Capacity</p>
+              <p className="text-base font-medium">$478.45</p>
+            </div>
+            <div className="flex items-baseline">
+              <div className="bg-blue-500 rounded-full w-12 h-12 flex items-center justify-center">
+                <div className="bg-black rounded-full w-9 h-9"></div>
+              </div>
+              <p className="text-[13px]">15</p>
+            </div>
+          </div>
 
-      {positions.map((position, index) => (
-        <Grid container item spacing={4} key={position.token}>
-          <Grid item xs={3}>
-            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              Asset
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-              <img
-                src={position.tokenIcon}
-                alt={position.tokenCode}
-                width="30px"
-                height="30px"
-                style={{ borderRadius: '100px' }}
-              />
-              <Typography variant="subtitle1" sx={{ color: 'white' }}>
-                {position.tokenCode}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={3}>
-            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              Balance
-            </Typography>
-            <Typography variant="subtitle1" sx={{ color: 'white' }}>
-              {toBalance(position.amount)}
-            </Typography>
-          </Grid>
-          <Grid item xs={3}>
-            <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-              Value
-            </Typography>
-            <Typography variant="subtitle1" sx={{ color: 'white' }}>
-              ${toBalance(position.amount * position.price)}
-            </Typography>
-          </Grid>
-          <Grid item xs={3}>
-            <ActionButton
-              variant={position.amount >= 0 ? 'withdraw' : 'repay'}
-              onClick={
-                () =>
-                console.log(
-                  `${position.amount >= 0 ? 'Withdrawing' : 'Repaying'} ${position.tokenCode}`,
-                )
-              }
-            />
-          </Grid>
-        </Grid>
-      ))}
-    </Grid>
+          <div className="bg-[#ffffff44] rounded-[8px] px-4 py-2 flex items-center justify-between mt-[22px]">
+            <FlameIcon />
+            <div className="flex flex-col">
+              <p className="text-base font-light">Claim Pool Emissions</p>
+              <p className="text-xl font-medium">0 Blend</p>
+            </div>
+            <ArrowRightAltIcon />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
+            <p className="text-base font-bold">Your supplied positions</p>
+            <p className="text-base font-light">
+              Total Supplied: <span className="text-lg font-bold">$612.79</span>
+            </p>
+          </div>
+          <div className="flex justify-between">
+            <div className="flex flex-col font-medium">
+              <p className="text-base">Asset</p>
+              <div className="flex items-center gap-2">
+                <img src={OusdIcon.src} className='w-8 h-8' />
+                <p className="text-xl">XLM</p>
+              </div>
+            </div>
+            <ColItem item="Balance" val="3.06k" />
+            <ColItem item="APR" val="151.09%" />
+            <button className="w-40 py-2 px-6 bg-[#94fd0295] font-medium text-xl rounded-lg">
+              Withdraw +
+            </button>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
+            <p className="text-base font-bold">Your supplied positions</p>
+            <p className="text-base font-light">
+              Total Borrowed: <span className="text-lg font-bold">$80.21</span>
+            </p>
+          </div>
+          <div className="flex justify-between">
+            <div className="flex flex-col font-medium">
+              <p className="text-base">Asset</p>
+              <div className="flex items-center gap-2">
+                <img src={UsdcIcon.src} className='w-8 h-8' />
+                <p className="text-xl">USDC</p>
+              </div>
+            </div>
+            <ColItem item="Balance" val="3.06k" />
+            <ColItem item="APR" val="151.09%" />
+            <button className="w-40 py-2 px-6 bg-[#fd02d385] font-medium text-xl rounded-lg">
+              Repay +
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

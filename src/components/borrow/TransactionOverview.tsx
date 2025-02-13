@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, Typography, Grid, CircularProgress } from '@mui/material';
-import LocalGasStationIcon from "@mui/icons-material/LocalGasStation";
+import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import { usePool, usePoolOracle } from '../../hooks/api';
 import { toBalance, toPercentage } from '../../utils/formatter';
 import { rpc } from '@stellar/stellar-sdk';
 import { PositionsEstimate } from '@blend-capital/blend-sdk';
@@ -25,19 +26,22 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
   collateralRatio,
   collateralAmount,
   assetToBase,
-  decimals,
   userPoolData,
   newPositionEstimate,
   assetId,
   simResponse,
-  isLoading,
 }) => {
-  const xlmToOUsdRate = 0.091; // 1 XLM = 0.091 oUSD
+  const xlmToOUsdRate = 0.091; // 1
+  const poolId =
+    process.env.NEXT_PUBLIC_Pool || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
+  const { data: pool } = usePool(poolId);
+  const { data: poolOracle } = usePoolOracle(pool);
+  const price = poolOracle?.getPriceFloat(assetId) || 0;
 
   const calculatedValues = useMemo(() => {
-    const depositValue = Number(collateralAmount) * xlmToOUsdRate;
+    const depositValue = Number(collateralAmount) * price;
     const maxBorrow = depositValue * (100 / collateralRatio);
-    const currentBorrow = Number(amount) * xlmToOUsdRate;
+    const currentBorrow = Number(collateralAmount) * xlmToOUsdRate;
     const effectiveCollateralRatio =
       currentBorrow > 0 ? (depositValue / currentBorrow) * 100 : collateralRatio;
     const liquidationPrice = (currentBorrow / 0.8).toFixed(2);
@@ -82,54 +86,56 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
         paddingBlock: '14px',
         color: 'white',
         background:
-
           'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
+        borderRadius: '16px',
       }}
     >
-      <Typography variant="subtitle2" align="center" gutterBottom fontWeight='700' fontSize='16px' marginBottom='16px'>
+      <Typography
+        variant="subtitle2"
+        align="center"
+        gutterBottom
+        fontWeight="700"
+        fontSize="16px"
+        marginBottom="16px"
+      >
         Transaction Overview
       </Typography>
-      {!isLoading ? (
-        <Grid container spacing={4}>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" gutterBottom fontWeight='700' fontSize='13px'>
-              Collateral Details
-            </Typography>
-            <OverviewItem label="Deposit:" value={`${collateralAmount} ${symbol}`} />
-            <OverviewItem
-              label="Deposit Value:"
-              value={`$${calculatedValues.depositValue.toFixed(4)} oUSD`}
-            />
-            <OverviewItem
-              label="Collateral Ratio:"
-              value={`${calculatedValues.effectiveCollateralRatio.toFixed(2)}%`}
-              newValue={`${collateralRatio}%`}
-            />
-            <OverviewItem
-              label="Max Borrow:"
-              value={`${calculatedValues.maxBorrow.toFixed(4)} oUSD`}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Typography variant="subtitle2" gutterBottom fontWeight='700' fontSize='13px'>
-              Repayment and Fees
-            </Typography>
-            <OverviewItem
-              label="Amount to repay:"
-              value={`${calculatedValues.currentBorrow.toFixed(4)} oUSD`}
-            />
-            <OverviewItem
-              label="Gas:"
-              value={`${toBalance(BigInt((simResponse as any)?.minResourceFee ?? 0), 7)} XLM`}
-              icon={<LocalGasStationIcon sx={{width: '16px', height: '16px'}}/>}
-            />
-          </Grid>
+
+      <Grid container spacing={4}>
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle2" gutterBottom fontWeight="700" fontSize="13px">
+            Collateral Details
+          </Typography>
+          <OverviewItem label="Deposit:" value={`${collateralAmount} ${symbol}`} />
+          <OverviewItem
+            label="Deposit Value:"
+            value={`$${calculatedValues.depositValue.toFixed(2)} USD`}
+          />
+          <OverviewItem
+            label="Collateral Ratio:"
+            // value={`${calculatedValues.effectiveCollateralRatio.toFixed(2)}%`}
+            value={`${collateralRatio}%`}
+          />
+          <OverviewItem
+            label="Max Borrow:"
+            value={`${calculatedValues.maxBorrow.toFixed(2)} oUSD`}
+          />
         </Grid>
-      ) : (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
+        <Grid item xs={12} md={6}>
+          <Typography variant="subtitle2" gutterBottom fontWeight="700" fontSize="13px">
+            Repayment and Fees
+          </Typography>
+          <OverviewItem
+            label="Amount to repay:"
+            value={`${calculatedValues.maxBorrow.toFixed(2)} oUSD`}
+          />
+          <OverviewItem
+            label="Gas:"
+            value={`${toBalance(BigInt((simResponse as any)?.minResourceFee ?? 0), 7)} XLM`}
+            icon={<LocalGasStationIcon sx={{ width: '16px', height: '16px' }} />}
+          />
+        </Grid>
+      </Grid>
     </Box>
   );
 };
