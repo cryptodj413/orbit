@@ -2,6 +2,8 @@
 import BigNumber from 'bignumber.js';
 
 const POSTFIXES = ['', 'k', 'M', 'B', 'T', 'P', 'E', 'Z', 'Y'];
+const DECIMALS = 7;
+const DECIMAL_MULTIPLIER = 10 ** DECIMALS;
 
 /**
  * Format a number as a balance
@@ -111,3 +113,13 @@ export function toTimeSpan(secondsLeft: number): string {
 export function getEmissionTextFromValue(value: number, symbol: string) {
   return ` This position earns ${toBalance(value, 7)} BLND a year per ${symbol}`;
 }
+
+export const floatToBigInt = (value: string | number): bigint => {
+    const multiplier = 10 ** DECIMALS;
+    const floatValue = typeof value === 'string' ? parseFloat(value) : value;
+    return BigInt(Math.round(floatValue * multiplier));
+  };
+
+export const bigIntToFloat = (value: bigint): string => {
+    return (Number(value) / DECIMAL_MULTIPLIER).toFixed(DECIMALS);
+  };

@@ -15,7 +15,7 @@ export default {
         platinum: "#E2E2E2",
         zaffre: "#0211A9",
         inactive: "#83868F"
-      },
+      }
     },
   },
   plugins: [],
