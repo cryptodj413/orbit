@@ -8,11 +8,9 @@ import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import TokenSelection from '../components/common/TokenSelection';
 import { TokenType } from '../interfaces';
 import { useWallet, TxStatus } from '../contexts/wallet';
-import { toBalance } from '../utils/formatter';
+import { toBalance, bigIntToFloat, floatToBigInt } from '../utils/formatter';
 import swapBackground from '../../public/swapBackground.svg';
 
-const DECIMALS = 7;
-const DECIMAL_MULTIPLIER = 10 ** DECIMALS;
 const SLIPPAGE = 1.0; // Fixed 1% slippage
 
 const tokens = [
@@ -96,15 +94,7 @@ const SwapPage: NextPage = () => {
     horizonAccount,
   );
 
-  const floatToBigInt = (value: string | number): bigint => {
-    const multiplier = 10 ** DECIMALS;
-    const floatValue = typeof value === 'string' ? parseFloat(value) : value;
-    return BigInt(Math.round(floatValue * multiplier));
-  };
-
-  const bigIntToFloat = (value: bigint): string => {
-    return (Number(value) / DECIMAL_MULTIPLIER).toFixed(DECIMALS);
-  };
+  
 
   useEffect(() => {
     const fetchPairAddress = async () => {

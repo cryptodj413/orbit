@@ -1,14 +1,42 @@
 import React from 'react';
 import { Typography, Box, Button, Grid } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
-import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
-import { toBalance, toPercentage } from '../utils/formatter';
+import { Asset, rpc } from '@stellar/stellar-sdk';
+import {
+  ContractErrorType,
+  parseError,
+  PoolClaimArgs,
+  PositionsEstimate,
+} from '@blend-capital/blend-sdk';
+const { PoolContract } = require('@blend-capital/blend-sdk');
+import { usePool, usePoolOracle, usePoolUser, useTokenBalance, useHorizonAccount, useSimulateOperation } from '../hooks/api';
+import { bigIntToFloat, toBalance, toPercentage } from '../utils/formatter';
+import { BLND_ASSET } from '../utils/token_display';
+import { requiresTrustline } from '../utils/horizon';
 import { TokenType } from '../interfaces';
 import { useWallet } from '../contexts/wallet';
 import FlameIcon from '../components/dashboard/FlameIcon';
 import StellarIcon from '../../public/icons/tokens/xlm.svg';
 import OusdIcon from '../../public/icons/tokens/ousd.svg';
-import UsdcIcon from '../../public/icons/tokens/Usdc.svg'
+import UsdcIcon from '../../public/icons/tokens/Usdc.svg';
+import { bigintToInput } from '../utils/scval';
+
+const tokens = [
+  {
+    code: 'XLM',
+    contract: process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '',
+    icon: '/icons/tokens/xlm.svg',
+    decimals: 7,
+    asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
+  },
+  {
+    code: 'oUSD',
+    contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
+    icon: '/icons/tokens/ousd.svg',
+    decimals: 7,
+    asset: new Asset('OUSD', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
+  },
+];
 
 const ColItem = ({ item, val }) => {
   return (
@@ -96,14 +124,145 @@ const ConnectWallet = () => {
   );
 };
 
+const getTokenInfo = (contractId: string): TokenType | undefined => {
+  return tokens.find((token) => token.contract === contractId);
+};
+
 const Dashboard = () => {
-  const { walletAddress } = useWallet();
+  const { walletAddress, connected, createTrustlines } = useWallet();
   if (!walletAddress) {
     return <ConnectWallet />;
   }
 
+  const { data: horizonAccount } = useHorizonAccount();
+  const { data: stellarBalance } = useTokenBalance(
+    tokens[0].contract,
+    tokens[0].asset,
+    horizonAccount,
+  );
+  const { data: orbitalBalance } = useTokenBalance(
+    tokens[1].contract,
+    tokens[1].asset,
+    horizonAccount,
+  );
+
+  const poolId = process.env.NEXT_PUBLIC_POOL;
+  const { data: pool } = usePool(poolId);
+  const { data: poolOracle } = usePoolOracle(pool);
+  const { data: userPoolData } = usePoolUser(pool);
+  const { data: account, refetch: refechAccount } = useHorizonAccount();
+
+  const { emissions, claimedTokens } = React.useMemo(() => {
+    if (!userPoolData || !pool) {
+      return { emissions: 0, claimedTokens: [] };
+    }
+    return userPoolData.estimateEmissions(pool);
+  }, [userPoolData, pool]);
+
+  const positionEstimates = React.useMemo(() => {
+    if (!poolOracle || !pool || !userPoolData) {
+      return null;
+    }
+
+    let totalCollateral = 0;
+    let totalLiabilities = 0;
+
+    // Calculate total collateral and liabilities
+    pool.reserves.forEach((reserve, assetId) => {
+      const collateralAmount = userPoolData.getCollateralFloat(reserve);
+      const liabilityAmount = userPoolData.getLiabilitiesFloat(reserve);
+      const price = poolOracle.getPriceFloat(assetId) || 0;
+
+      totalCollateral += collateralAmount * price;
+      totalLiabilities += liabilityAmount * price;
+    });
+
+    return {
+      totalCollateral,
+      totalLiabilities,
+    };
+  }, [pool, poolOracle, userPoolData]);
+
+  const balancesData = React.useMemo(() => {
+    if (!pool || !userPoolData) return [];
+
+    const balances = [];
+    pool.reserves.forEach((reserve, assetId) => {
+      const collateral = userPoolData.getCollateralFloat(reserve);
+      const supply = userPoolData.getSupplyFloat(reserve);
+      const dTokens = userPoolData.getLiabilityDTokens(reserve);
+      // if (collateral > 0 || supply > 0) {
+        const tokenInfo = getTokenInfo(assetId);
+        balances.push({
+          label: tokenInfo?.code || assetId,
+          value: `${toBalance(collateral + supply)} ${tokenInfo?.code || assetId}`,
+          borrowApr: toPercentage(reserve.borrowApr),
+          supplyApr: toPercentage(reserve.supplyApr),
+        });
+      // }
+    });
+    return  balances;
+  }, [pool, userPoolData]);
+
+  const positions = React.useMemo(() => {
+    if (!pool || !userPoolData || !poolOracle) return [];
+
+    const positionsList = [];
+    pool.reserves.forEach((reserve, assetId) => {
+      const collateral = userPoolData.getCollateralFloat(reserve);
+      const supply = userPoolData.getSupplyFloat(reserve);
+      const liabilities = userPoolData.getLiabilitiesFloat(reserve);
+
+      if (collateral > 0 || supply > 0 || liabilities > 0) {
+        const tokenInfo = getTokenInfo(assetId);
+        positionsList.push({
+          token: assetId,
+          tokenCode: tokenInfo?.code || assetId,
+          tokenIcon: tokenInfo?.icon || `/icons/tokens/default.svg`,
+          amount: collateral + supply - liabilities,
+          price: poolOracle.getPriceFloat(assetId) || 0,
+        });
+      }
+    });
+    return positionsList;
+  }, [pool, userPoolData, poolOracle]);
+
+  const userEst = poolOracle
+    ? PositionsEstimate.build(pool, poolOracle, userPoolData.positions)
+    : undefined;
+  const percent = Number(userEst?.borrowLimit.toFixed(2)) * 100
+
+  async function handleCreateTrustlineClick() {
+    if (connected) {
+      await createTrustlines([BLND_ASSET]);
+      refechAccount();
+    }
+  }
+
+  const poolContract = poolId ? new PoolContract(poolId) : undefined;
+  const claimArgs: PoolClaimArgs = {
+    from: walletAddress,
+    reserve_token_ids: claimedTokens,
+    to: walletAddress,
+  };
+  const sim_op = poolContract && walletAddress !== '' ? poolContract.claim(claimArgs) : '';
+  const {
+    data: simResult,
+    isLoading,
+    refetch: refetchSim,
+  } = useSimulateOperation(sim_op, claimedTokens.length > 0 && sim_op !== '' && connected);
+
+
+  const hasBLNDTrustline = !requiresTrustline(account, BLND_ASSET);
+  const isRestore =
+    isLoading === false && simResult !== undefined && rpc.Api.isSimulationRestore(simResult);
+  const isError =
+    isLoading === false && simResult !== undefined && rpc.Api.isSimulationError(simResult);
+  const isTrustline = hasBLNDTrustline && !isRestore && !isError
+  console.log("Is Trustline", isTrustline)
+
   return (
-    <div className="mx-5 my-2">
+    <div className="mx-5 my-2 backdrop-blur-[130px] bg-opacity-20">
       <div className="flex gap-6 mb-8">
         <div className="flex flex-col gap-4 w-1/2">
           <div className="">
@@ -111,11 +270,16 @@ const Dashboard = () => {
             <div className="flex flex-col gap-2">
               <div className="flex justify-between">
                 <p>Total Collateral Deposited:</p>
-                <p className="font-bold">315.16USD</p>
+                <p className="font-bold">{toBalance(positionEstimates?.totalCollateral)}USD</p>
               </div>
               <div className="flex justify-between">
                 <p>Total Debt Outstanding:</p>
-                <p className="font-bold">20.15%</p>
+                <p className="font-bold">
+                  {toBalance(
+                    positionEstimates?.totalLiabilities
+                  )}
+                  USD
+                </p>
               </div>
             </div>
           </div>
@@ -125,14 +289,14 @@ const Dashboard = () => {
               <div className="flex justify-between">
                 <p>Stellar Lumens:</p>
                 <div className="flex items-center">
-                  <p className="font-bold">1562XLM</p>&nbsp;
+                  <p className="font-bold">{Number(bigIntToFloat(stellarBalance)).toFixed(2)}</p>&nbsp;
                   <img src={StellarIcon.src} className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex justify-between">
                 <p>Orbital US Dollar:</p>
                 <div className="flex items-center">
-                  <p className="font-bold">102.78oUSD</p>&nbsp;
+                  <p className="font-bold">{Number(bigIntToFloat(orbitalBalance)).toFixed(2)}</p>&nbsp;
                   <img src={OusdIcon.src} className="w-4 h-4" />
                 </div>
               </div>
@@ -142,28 +306,30 @@ const Dashboard = () => {
 
         <div className="flex flex-col w-1/2">
           <div className="text-xl font-bold mb-4">My Positions</div>
-          <div className="flex gap-5">
+          <div className="flex gap-4">
             <div className="flex flex-col font-medium">
               <p className="text-base font-light">Net APR</p>
-              <p className="text-base font-medium">130.68%</p>
+              <p className="text-base font-medium">{toPercentage(userEst?.netApr)}</p>
             </div>
             <div className="flex flex-col font-medium">
               <p className="text-base font-light">Borrow Capacity</p>
-              <p className="text-base font-medium">$478.45</p>
+              <p className="text-base font-medium">{`$${toBalance(userEst?.borrowCap)}`}</p>
             </div>
             <div className="flex items-baseline">
-              <div className="bg-blue-500 rounded-full w-12 h-12 flex items-center justify-center">
+              <div className="rounded-full w-12 h-12 flex items-center justify-center" style={{
+                  background: `conic-gradient(blue 0deg, blue ${percent * 3.6}deg, white ${percent * 3.6}deg)`
+                }}>
                 <div className="bg-black rounded-full w-9 h-9"></div>
               </div>
-              <p className="text-[13px]">15</p>
+              <p className="text-[13px]">{percent}</p>
             </div>
           </div>
 
           <div className="bg-[#ffffff44] rounded-[8px] px-4 py-2 flex items-center justify-between mt-[22px]">
             <FlameIcon />
-            <div className="flex flex-col">
+            <div className="flex flex-col cursor-pointer" onClick={handleCreateTrustlineClick}>
               <p className="text-base font-light">Claim Pool Emissions</p>
-              <p className="text-xl font-medium">0 Blend</p>
+              <p className="text-xl font-medium">{isTrustline ? `0 BLND` : `Add Blnd TrustLine`}</p>
             </div>
             <ArrowRightAltIcon />
           </div>
@@ -175,19 +341,19 @@ const Dashboard = () => {
           <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
             <p className="text-base font-bold">Your supplied positions</p>
             <p className="text-base font-light">
-              Total Supplied: <span className="text-lg font-bold">$612.79</span>
+              Total Supplied: <span className="text-lg font-bold">${toBalance(positionEstimates?.totalCollateral)}</span>
             </p>
           </div>
           <div className="flex justify-between">
             <div className="flex flex-col font-medium">
               <p className="text-base">Asset</p>
               <div className="flex items-center gap-2">
-                <img src={OusdIcon.src} className='w-8 h-8' />
+                <img src={StellarIcon.src} className="w-8 h-8" />
                 <p className="text-xl">XLM</p>
               </div>
             </div>
-            <ColItem item="Balance" val="3.06k" />
-            <ColItem item="APR" val="151.09%" />
+            <ColItem item="Balance" val={balancesData[0] ? balancesData[0].value : "--"} />
+            <ColItem item="APR" val={balancesData[0] ?  balancesData[0].supplyApr : "--"} />
             <button className="w-40 py-2 px-6 bg-[#94fd0295] font-medium text-xl rounded-lg">
               Withdraw +
             </button>
@@ -195,23 +361,23 @@ const Dashboard = () => {
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
-            <p className="text-base font-bold">Your supplied positions</p>
+            <p className="text-base font-bold">Your borrowed positions</p>
             <p className="text-base font-light">
-              Total Borrowed: <span className="text-lg font-bold">$80.21</span>
+              Total Borrowed: <span className="text-lg font-bold">${toBalance(positionEstimates?.totalLiabilities)}</span>
             </p>
           </div>
           <div className="flex justify-between">
             <div className="flex flex-col font-medium">
               <p className="text-base">Asset</p>
               <div className="flex items-center gap-2">
-                <img src={UsdcIcon.src} className='w-8 h-8' />
-                <p className="text-xl">USDC</p>
+                <img src={OusdIcon.src} className="w-8 h-8" />
+                <p className="text-xl">OUSD</p>
               </div>
             </div>
-            <ColItem item="Balance" val="3.06k" />
-            <ColItem item="APR" val="151.09%" />
+            <ColItem item="Balance" val={balancesData[1] ? balancesData[1].value : "--"} />
+            <ColItem item="APR" val={balancesData[1] ?  balancesData[1].borrowApr : "--"} />
             <button className="w-40 py-2 px-6 bg-[#fd02d385] font-medium text-xl rounded-lg">
-              Repay +
+              Repay -
             </button>
           </div>
         </div>

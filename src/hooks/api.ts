@@ -316,15 +316,12 @@ export function useTokenBalance(
         }
       }
       const stellarRpc = new rpc.Server(network.rpc, network.opts);
-
-      // console.log(`here TokenID, WalletAddress`, tokenId, walletAddress);
       const result = await getTokenBalance(
         stellarRpc,
         network.passphrase,
         tokenId,
         new Address(walletAddress)
       );
-      // console.log(`result`, result)
       return result;
       return await getTokenBalance(
         stellarRpc,
@@ -507,3 +504,4 @@ export function useTokenMetadataFromToml(
     },
   });
 }
+
