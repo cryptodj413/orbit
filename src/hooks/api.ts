@@ -5,6 +5,7 @@ import {
   Pool,
   PoolEvent,
   poolEventFromEventResponse,
+  // PoolMetadata
   PoolOracle,
   PoolUser,
   Positions,
@@ -17,6 +18,8 @@ import { useSettings } from '../contexts';
 import { useWallet } from '../contexts/wallet';
 import { getTokenMetadataFromTOML, StellarTokenMetadata } from '../external/stellar-toml';
 import { getTokenBalance } from '../external/token';
+// import { NOT_BLEND_POOL_ERROR_MESSAGE, PoolMeta } from './types';
+
 
 const DEFAULT_STALE_TIME = 30 * 1000;
 const USER_STALE_TIME = 60 * 1000;
@@ -505,3 +508,50 @@ export function useTokenMetadataFromToml(
   });
 }
 
+// export function usePoolMeta(
+//   poolId: string,
+//   enabled: boolean = true
+// ): UseQueryResult<PoolMeta, Error> {
+//   const { network } = useSettings();
+
+//   return useQuery({
+//     staleTime: Infinity,
+//     queryKey: ['poolMetadata', poolId],
+//     enabled: enabled && poolId !== '',
+//     queryFn: async () => {
+//       try {
+//         let metadata = await PoolMetadata.load(network, poolId);
+//         if (
+//           metadata.wasmHash === 'baf978f10efdbcd85747868bef8832845ea6809f7643b67a4ac0cd669327fc2c'
+//         ) {
+//           // v1 pool - validate backstop is correct
+//           if (metadata.backstop === BACKSTOP_ID) {
+//             return { id: poolId, version: Version.V1, ...metadata } as PoolMeta;
+//           }
+//         } else if (
+//           metadata.wasmHash === 'd89babfef41542f013451644f3de18c05a1cc0a81bef447f3c15d26f75ee0f38'
+//         ) {
+//           // v2 pool - validate backstop is correct
+//           if (metadata.backstop === BACKSTOP_ID_V2) {
+//             return { id: poolId, version: Version.V2, ...metadata } as PoolMeta;
+//           }
+//         }
+//         throw new Error(NOT_BLEND_POOL_ERROR_MESSAGE);
+//       } catch (e: any) {
+//         if (e?.message?.includes(ErrorTypes.LedgerEntryParseError)) {
+//           throw new Error(NOT_BLEND_POOL_ERROR_MESSAGE);
+//         } else {
+//           console.error('Error fetching pool metadata', e);
+//         }
+//         throw e;
+//       }
+//     },
+//     retry: (failureCount, error) => {
+//       if (error?.message === NOT_BLEND_POOL_ERROR_MESSAGE) {
+//         // Do not retry if this is not a blend pool
+//         return false;
+//       }
+//       return failureCount < 3;
+//     },
+//   });
+// }

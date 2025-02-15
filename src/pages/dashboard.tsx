@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Typography, Box, Button, Grid } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import { Asset, rpc } from '@stellar/stellar-sdk';
@@ -9,7 +10,14 @@ import {
   PositionsEstimate,
 } from '@blend-capital/blend-sdk';
 const { PoolContract } = require('@blend-capital/blend-sdk');
-import { usePool, usePoolOracle, usePoolUser, useTokenBalance, useHorizonAccount, useSimulateOperation } from '../hooks/api';
+import {
+  usePool,
+  usePoolOracle,
+  usePoolUser,
+  useTokenBalance,
+  useHorizonAccount,
+  useSimulateOperation,
+} from '../hooks/api';
 import { bigIntToFloat, toBalance, toPercentage } from '../utils/formatter';
 import { BLND_ASSET } from '../utils/token_display';
 import { requiresTrustline } from '../utils/horizon';
@@ -18,8 +26,6 @@ import { useWallet } from '../contexts/wallet';
 import FlameIcon from '../components/dashboard/FlameIcon';
 import StellarIcon from '../../public/icons/tokens/xlm.svg';
 import OusdIcon from '../../public/icons/tokens/ousd.svg';
-import UsdcIcon from '../../public/icons/tokens/Usdc.svg';
-import { bigintToInput } from '../utils/scval';
 
 const tokens = [
   {
@@ -30,7 +36,7 @@ const tokens = [
     asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
   },
   {
-    code: 'oUSD',
+    code: 'OUSD',
     contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
@@ -192,16 +198,16 @@ const Dashboard = () => {
       const supply = userPoolData.getSupplyFloat(reserve);
       const dTokens = userPoolData.getLiabilityDTokens(reserve);
       // if (collateral > 0 || supply > 0) {
-        const tokenInfo = getTokenInfo(assetId);
-        balances.push({
-          label: tokenInfo?.code || assetId,
-          value: `${toBalance(collateral + supply)} ${tokenInfo?.code || assetId}`,
-          borrowApr: toPercentage(reserve.borrowApr),
-          supplyApr: toPercentage(reserve.supplyApr),
-        });
+      const tokenInfo = getTokenInfo(assetId);
+      balances.push({
+        label: tokenInfo?.code || assetId,
+        value: `${toBalance(collateral + supply)} ${tokenInfo?.code || assetId}`,
+        borrowApr: toPercentage(reserve.borrowApr),
+        supplyApr: toPercentage(reserve.supplyApr),
+      });
       // }
     });
-    return  balances;
+    return balances;
   }, [pool, userPoolData]);
 
   const positions = React.useMemo(() => {
@@ -230,7 +236,7 @@ const Dashboard = () => {
   const userEst = poolOracle
     ? PositionsEstimate.build(pool, poolOracle, userPoolData.positions)
     : undefined;
-  const percent = Number(userEst?.borrowLimit.toFixed(2)) * 100
+  const percent = Number(userEst?.borrowLimit.toFixed(2)) * 100;
 
   async function handleCreateTrustlineClick() {
     if (connected) {
@@ -252,14 +258,12 @@ const Dashboard = () => {
     refetch: refetchSim,
   } = useSimulateOperation(sim_op, claimedTokens.length > 0 && sim_op !== '' && connected);
 
-
   const hasBLNDTrustline = !requiresTrustline(account, BLND_ASSET);
   const isRestore =
     isLoading === false && simResult !== undefined && rpc.Api.isSimulationRestore(simResult);
   const isError =
     isLoading === false && simResult !== undefined && rpc.Api.isSimulationError(simResult);
-  const isTrustline = hasBLNDTrustline && !isRestore && !isError
-  console.log("Is Trustline", isTrustline)
+  const isTrustline = hasBLNDTrustline && !isRestore && !isError;
 
   return (
     <div className="mx-5 my-2 backdrop-blur-[130px] bg-opacity-20">
@@ -275,9 +279,7 @@ const Dashboard = () => {
               <div className="flex justify-between">
                 <p>Total Debt Outstanding:</p>
                 <p className="font-bold">
-                  {toBalance(
-                    positionEstimates?.totalLiabilities
-                  )}
+                  {toBalance(positionEstimates?.totalLiabilities)}
                   USD
                 </p>
               </div>
@@ -289,14 +291,16 @@ const Dashboard = () => {
               <div className="flex justify-between">
                 <p>Stellar Lumens:</p>
                 <div className="flex items-center">
-                  <p className="font-bold">{Number(bigIntToFloat(stellarBalance)).toFixed(2)}</p>&nbsp;
+                  <p className="font-bold">{Number(bigIntToFloat(stellarBalance)).toFixed(2)}</p>
+                  &nbsp;
                   <img src={StellarIcon.src} className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex justify-between">
                 <p>Orbital US Dollar:</p>
                 <div className="flex items-center">
-                  <p className="font-bold">{Number(bigIntToFloat(orbitalBalance)).toFixed(2)}</p>&nbsp;
+                  <p className="font-bold">{Number(bigIntToFloat(orbitalBalance)).toFixed(2)}</p>
+                  &nbsp;
                   <img src={OusdIcon.src} className="w-4 h-4" />
                 </div>
               </div>
@@ -316,9 +320,14 @@ const Dashboard = () => {
               <p className="text-base font-medium">{`$${toBalance(userEst?.borrowCap)}`}</p>
             </div>
             <div className="flex items-baseline">
-              <div className="rounded-full w-12 h-12 flex items-center justify-center" style={{
-                  background: `conic-gradient(blue 0deg, blue ${percent * 3.6}deg, white ${percent * 3.6}deg)`
-                }}>
+              <div
+                className="rounded-full w-12 h-12 flex items-center justify-center"
+                style={{
+                  background: `conic-gradient(blue 0deg, blue ${percent * 3.6}deg, white ${
+                    percent * 3.6
+                  }deg)`,
+                }}
+              >
                 <div className="bg-black rounded-full w-9 h-9"></div>
               </div>
               <p className="text-[13px]">{percent}</p>
@@ -341,7 +350,10 @@ const Dashboard = () => {
           <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
             <p className="text-base font-bold">Your supplied positions</p>
             <p className="text-base font-light">
-              Total Supplied: <span className="text-lg font-bold">${toBalance(positionEstimates?.totalCollateral)}</span>
+              Total Supplied:{' '}
+              <span className="text-lg font-bold">
+                ${toBalance(positionEstimates?.totalCollateral)}
+              </span>
             </p>
           </div>
           <div className="flex justify-between">
@@ -352,18 +364,23 @@ const Dashboard = () => {
                 <p className="text-xl">XLM</p>
               </div>
             </div>
-            <ColItem item="Balance" val={balancesData[0] ? balancesData[0].value : "--"} />
-            <ColItem item="APR" val={balancesData[0] ?  balancesData[0].supplyApr : "--"} />
-            <button className="w-40 py-2 px-6 bg-[#94fd0295] font-medium text-xl rounded-lg">
-              Withdraw +
-            </button>
+            <ColItem item="Balance" val={balancesData[0] ? balancesData[0].value : '--'} />
+            <ColItem item="APR" val={balancesData[0] ? balancesData[0].supplyApr : '--'} />
+            <Link href="/withdraw">
+              <button className="w-40 py-2 px-6 bg-[#94fd0295] font-medium text-xl rounded-lg">
+                Withdraw +
+              </button>
+            </Link>
           </div>
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
             <p className="text-base font-bold">Your borrowed positions</p>
             <p className="text-base font-light">
-              Total Borrowed: <span className="text-lg font-bold">${toBalance(positionEstimates?.totalLiabilities)}</span>
+              Total Borrowed:{' '}
+              <span className="text-lg font-bold">
+                ${toBalance(positionEstimates?.totalLiabilities)}
+              </span>
             </p>
           </div>
           <div className="flex justify-between">
@@ -374,8 +391,8 @@ const Dashboard = () => {
                 <p className="text-xl">OUSD</p>
               </div>
             </div>
-            <ColItem item="Balance" val={balancesData[1] ? balancesData[1].value : "--"} />
-            <ColItem item="APR" val={balancesData[1] ?  balancesData[1].borrowApr : "--"} />
+            <ColItem item="Balance" val={balancesData[1] ? balancesData[1].value : '--'} />
+            <ColItem item="APR" val={balancesData[1] ? balancesData[1].borrowApr : '--'} />
             <button className="w-40 py-2 px-6 bg-[#fd02d385] font-medium text-xl rounded-lg">
               Repay -
             </button>
