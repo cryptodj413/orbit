@@ -1,4 +1,7 @@
+'use client'
+ 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation'
 import { NextPage } from 'next';
 import {
   Button,
@@ -26,7 +29,7 @@ import {
   usePoolEmissions,
   usePoolOracle,
   useTokenMetadata,
-  usePoolUser
+  usePoolUser,
 } from '../../hooks/api';
 import { scaleInputToBigInt } from '../../utils/scval';
 import { estimateEmissionsApr } from '../../utils/math';
@@ -48,6 +51,7 @@ const Item = ({ label, value }) => {
 };
 
 const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal }) => {
+  const router = useRouter()
   const [amount, setAmount] = useState<string | undefined>(undefined);
   const [toWithdrawSubmit, setToWithdrawSubmit] = useState<string | undefined>(undefined);
   const [loadingEstimate, setLoadingEstimate] = useState<boolean>(false);
@@ -73,7 +77,6 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(e.target.value);
-    console.log('amount-----', amount)
     // if (reserve && poolUser) {
     //   let curSupplied = poolUser.getCollateralFloat(reserve);
     //   let realWithdraw = amount;
@@ -83,8 +86,8 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
     //     num_withdraw = Number(realWithdraw);
     //   }
     //   setAmount(realWithdraw);
-      setToWithdrawSubmit(amount);
-      setLoadingEstimate(true);
+    setToWithdrawSubmit(amount);
+    setLoadingEstimate(true);
     // }
   };
 
@@ -102,8 +105,12 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
           },
         ],
       };
-      console.log('simArgs----', amount)
-      return await poolSubmit(poolMeta, submitArgs, sim);
+      const result = await poolSubmit(poolMeta, submitArgs, sim);
+      if (!sim) {
+        setAmount(undefined);
+        router.push('/dashboard')
+      }
+      return result;
     }
   };
   useDebouncedState(amount, RPC_DEBOUNCE_DELAY, txType, async () => {
@@ -210,7 +217,11 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
           }}
         >
           <p>${(Number(amount) * assetToBase).toFixed(2)}</p>
-          <Button variant="contained" sx={{ paddingBlock: '10px' }} onClick={() => handleSubmitTransaction(false)}>
+          <Button
+            variant="contained"
+            sx={{ paddingBlock: '10px' }}
+            onClick={() => handleSubmitTransaction(false)}
+          >
             Withdraw
           </Button>
         </Grid>
@@ -218,7 +229,7 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
       <div className="flex items-center justify-center  bg-gradient-to-t to-[rgba(0,0,0,0.1024)] from-[rgba(226,226,226,0.06)] py-4 px-6 font-light">
         <div className="w-3/5 flex flex-col gap-1 text-sm">
           <div className="font-bold text-center text-lg pb-1">Transaction Overview</div>
-          <Item label="Amount to withdraw:" value={amount ? amount + " " + selected : 0} />
+          <Item label="Amount to withdraw:" value={amount ? amount + ' ' + selected : 0} />
           <div className="flex justify-between">
             <div>
               <LocalGasStationIcon /> Gas:

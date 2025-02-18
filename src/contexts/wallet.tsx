@@ -392,7 +392,6 @@ export const WalletProvider = ({ children = null as any }) => {
     sim: boolean
   ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
-      console.log('poolMeta+Args+sim', poolMeta, submitArgs, sim)
       const pool =
         poolMeta.version === Version.V2
           ? new PoolContractV2(poolMeta.id)

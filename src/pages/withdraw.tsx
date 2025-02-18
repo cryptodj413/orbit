@@ -1,11 +1,14 @@
 import React from 'react';
 import { NextPage } from 'next';
+import Link from 'next/link'
 import {
   Grid,
   MenuItem,
   Select,
   SelectChangeEvent,
+  Tooltip
 } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import OverViewBox from '../components/withdraw/OverViewBox';
 import {
   useBackstop,
@@ -50,7 +53,16 @@ const Withdraw: NextPage = () => {
   return (
     <div className="border rounded-lg">
       <Grid container spacing={2} display="flex" justifyContent="center" alignItems="center">
-        <Grid item xs={6}>
+      <Grid item xs={2} display="flex" justifyContent="center" alignItems="center">
+            <Tooltip title="dashboard" placement="top">
+              <Link href="/dashboard">
+                <button className="w-14 h-14 bg-[#0211a9] font-medium text-xl rounded-full">
+                  <ArrowBack />
+                </button>
+              </Link>
+            </Tooltip>
+          </Grid>
+        <Grid item xs={4}>
           <Select
             value={selected}
             onChange={handleChange}
