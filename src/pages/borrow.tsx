@@ -9,12 +9,12 @@ import TransactionOverview from '../components/borrow/TransactionOverview';
 import StyledGrid from '../components/common/StyledGrid';
 import { useWallet } from '../contexts/wallet';
 import { scaleInputToBigInt } from '../utils/scval';
-import { usePool, usePoolOracle, usePoolUser } from '../hooks/api';
+import { usePool, usePoolOracle, usePoolUser, usePoolMeta } from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import { toBalance, toPercentage } from '../utils/formatter';
 
 //TODO: Get this through config or API
-const POOL_ID =
+const poolId =
   process.env.NEXT_PUBLIC_Pool || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
 
 const Borrow: NextPage = () => {
@@ -33,10 +33,13 @@ const Borrow: NextPage = () => {
   const stablecoinId =
     process.env.NEXT_PUBLIC_STABLECOIN_ASSET ||
     'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
+
   const {poolSubmit, txType, walletAddress } = useWallet();
-  const { data: pool } = usePool(POOL_ID);
+  const { data: poolMeta, error: poolError } = usePoolMeta(poolId);
+  const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
   const { data: poolUser } = usePoolUser(pool);
+
   const collateral = pool?.reserves.get(process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '');
   const stablecoin = pool?.reserves.get(process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '');
   const reserve = pool?.reserves.get(stablecoinId);
@@ -92,7 +95,7 @@ const Borrow: NextPage = () => {
             },
           ],
         };
-        return await poolSubmit(POOL_ID, submitArgs, sim);
+        return await poolSubmit(poolId, submitArgs, sim);
       } finally {
         setIsLoading(false);
       }
@@ -141,7 +144,7 @@ const Borrow: NextPage = () => {
           </Box>
         </Grid>
 
-        <Grid item xs={12} sx={{ borderRight: '0px !important', paddingBlock: '32px' }}>
+        <Grid item xs={12} sx={{ borderRight: '0px !important', paddingBlock: '28px' }}>
           <BorrowForm
             collateralAmount={collateralAmount}
             borrowAmount={calculateSupplyAmount()}

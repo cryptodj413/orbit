@@ -121,19 +121,19 @@ const theme: Theme = createTheme({
     fontFamily: FONT,
     h1: {
       fontFamily: FONT,
-      fontWeight: 700,
+      fontWeight: 600,
       fontSize: pxToRem(20),
       lineHeight: 1.6,
     },
     h2: {
       fontFamily: FONT,
-      fontWeight: 600,
+      fontWeight: 500,
       fontSize: pxToRem(18),
       lineHeight: 1.473,
     },
     h3: {
       fontFamily: FONT,
-      fontWeight: 500,
+      fontWeight: 400,
       fontSize: pxToRem(18),
       lineHeight: 1.473,
     },
@@ -145,7 +145,7 @@ const theme: Theme = createTheme({
     },
     h5: {
       fontFamily: FONT,
-      fontWeight: 400,
+      fontWeight: 300,
       fontSize: pxToRem(16),
       lineHeight: 1.3125,
     },
@@ -161,20 +161,20 @@ const theme: Theme = createTheme({
 
     body1: {
       fontFamily: FONT,
-      fontWeight: 400,
+      fontWeight: 300,
       fontSize: pxToRem(16),
       lineHeight: 1.3125,
     },
     body2: {
       fontFamily: FONT,
-      fontWeight: 400,
+      fontWeight: 300,
       fontSize: pxToRem(14),
       lineHeight: 1.125,
     },
     button: {
       textTransform: 'none',
       fontFamily: FONT,
-      fontWeight: 500,
+      fontWeight: 400,
       fontSize: pxToRem(16),
       lineHeight: 1.3125,
     },

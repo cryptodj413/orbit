@@ -6,14 +6,16 @@ import { Asset, rpc } from '@stellar/stellar-sdk';
 import {
   ContractErrorType,
   parseError,
+  PoolContractV1,
   PoolClaimArgs,
   PositionsEstimate,
 } from '@blend-capital/blend-sdk';
-const { PoolContract } = require('@blend-capital/blend-sdk');
 import {
   usePool,
   usePoolOracle,
   usePoolUser,
+  usePoolMeta,
+  usePoolEmissions,
   useTokenBalance,
   useHorizonAccount,
   useSimulateOperation,
@@ -47,7 +49,7 @@ const tokens = [
 const ColItem = ({ item, val }) => {
   return (
     <div className="flex flex-col font-medium">
-      <p className="text-base">{item}</p>
+      <p className="text-base text-[#d4d4d4]">{item}</p>
       <p className="text-xl">{val}</p>
     </div>
   );
@@ -66,7 +68,7 @@ const PositionItem = () => {
         <ColItem item="Asset" val="XLM" />
         <ColItem item="Balance" val="3.06k" />
         <ColItem item="APR" val="151.09%" />
-        <button className="w-40 py-2 px-6 bg-[#94fd0295] font-medium text-xl rounded-lg">
+        <button className="w-40 py-2 px-6 bg-[#94fd0240] font-medium text-xl rounded-lg">
           Withdraw +
         </button>
       </div>
@@ -136,11 +138,17 @@ const getTokenInfo = (contractId: string): TokenType | undefined => {
 
 const Dashboard = () => {
   const { walletAddress, connected, createTrustlines } = useWallet();
-  if (!walletAddress) {
-    return <ConnectWallet />;
-  }
 
   const { data: horizonAccount } = useHorizonAccount();
+  const { data: account, refetch: refechAccount } = useHorizonAccount();
+
+  const poolId = process.env.NEXT_PUBLIC_POOL;
+  const { data: poolMeta } = usePoolMeta(poolId);
+  const { data: pool } = usePool(poolMeta);
+  const { data: poolOracle } = usePoolOracle(pool);
+  const { data: poolEmissions } = usePoolEmissions(pool);
+  const { data: userPoolData, refetch: refetchPoolUser } = usePoolUser(pool);
+
   const { data: stellarBalance } = useTokenBalance(
     tokens[0].contract,
     tokens[0].asset,
@@ -152,18 +160,27 @@ const Dashboard = () => {
     horizonAccount,
   );
 
-  const poolId = process.env.NEXT_PUBLIC_POOL;
-  const { data: pool } = usePool(poolId);
-  const { data: poolOracle } = usePoolOracle(pool);
-  const { data: userPoolData } = usePoolUser(pool);
-  const { data: account, refetch: refechAccount } = useHorizonAccount();
+  const poolContract = poolId ? new PoolContractV1(poolId) : undefined;
 
-  const { emissions, claimedTokens } = React.useMemo(() => {
-    if (!userPoolData || !pool) {
-      return { emissions: 0, claimedTokens: [] };
-    }
-    return userPoolData.estimateEmissions(pool);
-  }, [userPoolData, pool]);
+  const { emissions, claimedTokens } =
+    userPoolData && pool && poolEmissions
+      ? userPoolData.estimateEmissions(pool, poolEmissions)
+      : { emissions: 0, claimedTokens: [] };
+
+
+  const claimArgs: PoolClaimArgs = {
+    from: walletAddress,
+    reserve_token_ids: claimedTokens,
+    to: walletAddress,
+  };
+
+  const sim_op = poolContract && walletAddress !== '' ? poolContract.claim(claimArgs) : '';
+
+  const {
+    data: simResult,
+    isLoading,
+    refetch: refetchSim,
+  } = useSimulateOperation(sim_op, claimedTokens.length > 0 && sim_op !== '' && connected);
 
   const positionEstimates = React.useMemo(() => {
     if (!poolOracle || !pool || !userPoolData) {
@@ -233,11 +250,6 @@ const Dashboard = () => {
     return positionsList;
   }, [pool, userPoolData, poolOracle]);
 
-  const userEst = poolOracle
-    ? PositionsEstimate.build(pool, poolOracle, userPoolData.positions)
-    : undefined;
-  const percent = Number(userEst?.borrowLimit.toFixed(2)) * 100;
-
   async function handleCreateTrustlineClick() {
     if (connected) {
       await createTrustlines([BLND_ASSET]);
@@ -245,25 +257,20 @@ const Dashboard = () => {
     }
   }
 
-  const poolContract = poolId ? new PoolContract(poolId) : undefined;
-  const claimArgs: PoolClaimArgs = {
-    from: walletAddress,
-    reserve_token_ids: claimedTokens,
-    to: walletAddress,
-  };
-  const sim_op = poolContract && walletAddress !== '' ? poolContract.claim(claimArgs) : '';
-  const {
-    data: simResult,
-    isLoading,
-    refetch: refetchSim,
-  } = useSimulateOperation(sim_op, claimedTokens.length > 0 && sim_op !== '' && connected);
-
+  const userEst = poolOracle
+    ? PositionsEstimate.build(pool, poolOracle, userPoolData.positions)
+    : undefined;
+  const percent = Number(userEst?.borrowLimit.toFixed(2)) * 100;
   const hasBLNDTrustline = !requiresTrustline(account, BLND_ASSET);
   const isRestore =
     isLoading === false && simResult !== undefined && rpc.Api.isSimulationRestore(simResult);
   const isError =
     isLoading === false && simResult !== undefined && rpc.Api.isSimulationError(simResult);
   const isTrustline = hasBLNDTrustline && !isRestore && !isError;
+
+  if (!walletAddress) {
+    return <ConnectWallet />;
+  }
 
   return (
     <div className="mx-5 my-2 backdrop-blur-[130px] bg-opacity-20">
@@ -334,7 +341,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="bg-[#ffffff44] rounded-[8px] px-4 py-2 flex items-center justify-between mt-[22px]">
+          <div className="bg-[#2050F249] rounded-[8px] px-4 py-2 flex items-center justify-between mt-[28px]">
             <FlameIcon />
             <div className="flex flex-col cursor-pointer" onClick={handleCreateTrustlineClick}>
               <p className="text-base font-light">Claim Pool Emissions</p>
@@ -356,9 +363,9 @@ const Dashboard = () => {
               </span>
             </p>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <div className="flex flex-col font-medium">
-              <p className="text-base">Asset</p>
+              <p className="text-base text-[#d4d4d4]">Asset</p>
               <div className="flex items-center gap-2">
                 <img src={StellarIcon.src} className="w-8 h-8" />
                 <p className="text-xl">XLM</p>
@@ -367,7 +374,7 @@ const Dashboard = () => {
             <ColItem item="Balance" val={balancesData[0] ? balancesData[0].value : '--'} />
             <ColItem item="APR" val={balancesData[0] ? balancesData[0].supplyApr : '--'} />
             <Link href="/withdraw">
-              <button className="w-40 py-2 px-6 bg-[#94fd0295] font-medium text-xl rounded-lg">
+              <button className="w-40 py-2 px-6 bg-[#94fd0245] font-medium text-xl rounded-lg">
                 Withdraw +
               </button>
             </Link>
@@ -383,9 +390,9 @@ const Dashboard = () => {
               </span>
             </p>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between items-center">
             <div className="flex flex-col font-medium">
-              <p className="text-base">Asset</p>
+              <p className="text-base text-[#d4d4d4]">Asset</p>
               <div className="flex items-center gap-2">
                 <img src={OusdIcon.src} className="w-8 h-8" />
                 <p className="text-xl">OUSD</p>
@@ -393,7 +400,7 @@ const Dashboard = () => {
             </div>
             <ColItem item="Balance" val={balancesData[1] ? balancesData[1].value : '--'} />
             <ColItem item="APR" val={balancesData[1] ? balancesData[1].borrowApr : '--'} />
-            <button className="w-40 py-2 px-6 bg-[#fd02d385] font-medium text-xl rounded-lg">
+            <button className="w-40 py-2 px-6 bg-[#67269cb2] font-medium text-xl rounded-lg">
               Repay -
             </button>
           </div>
