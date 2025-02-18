@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Box, Typography, Grid, CircularProgress } from '@mui/material';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
-import { usePool, usePoolOracle } from '../../hooks/api';
+import { usePool, usePoolOracle, usePoolMeta } from '../../hooks/api';
 import { toBalance, toPercentage } from '../../utils/formatter';
 import { rpc } from '@stellar/stellar-sdk';
 import { PositionsEstimate } from '@blend-capital/blend-sdk';
@@ -34,7 +34,8 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
   const xlmToOUsdRate = 0.091; // 1
   const poolId =
     process.env.NEXT_PUBLIC_Pool || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
-  const { data: pool } = usePool(poolId);
+  const { data: poolMeta, error: poolError } = usePoolMeta(poolId);
+    const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
   const price = poolOracle?.getPriceFloat(assetId) || 0;
 
@@ -86,8 +87,9 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
         paddingBlock: '14px',
         color: 'white',
         background:
-          'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
-        borderRadius: '16px',
+          'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',      
+        borderBottomRightRadius: '17px',
+        borderBottomLeftRadius: '17px'
       }}
     >
       <Typography

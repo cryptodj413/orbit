@@ -7,7 +7,7 @@ interface CollateralRatioSliderProps {
 }
 
 const CollateralRatioSlider: React.FC<CollateralRatioSliderProps> = ({ value, onChange }) => (
-  <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.32)', paddingBlock: '22px', paddingInline: '50px'}}>
+  <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.32)', paddingBlock: '16px', paddingInline: '50px'}}>
     <Typography variant="subtitle1" color="white" marginBottom='8px'>
       Collateral Ratio
     </Typography>
