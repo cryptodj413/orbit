@@ -4,8 +4,10 @@ import {
   parseError,
   PoolClaimArgs,
   PoolContract,
+  PoolContractV2,
   Positions,
   SubmitArgs,
+  Version
 } from '@blend-capital/blend-sdk';
 import {
   AlbedoModule,
@@ -30,6 +32,7 @@ import {
 import React, { useContext, useState } from 'react';
 import { useSettings } from './settings';
 import { useQueryClientCacheCleaner } from '../hooks/api';
+import { PoolMeta } from '../hooks/types';
 import { RouterContract, RouterGetAmountInArgs, RouterGetAmountOutArgs, RouterPairForArgs, RouterSwapExactTokensForTokensArgs, RouterSwapTokensForExactTokensArgs } from '../external/router';
 
 
@@ -48,7 +51,7 @@ export interface IWalletContext {
   clearLastTx: () => void;
   restore: (sim: rpc.Api.SimulateTransactionRestoreResponse) => Promise<void>;
   poolSubmit: (
-    poolId: string,
+    poolId: PoolMeta,
     submitArgs: SubmitArgs,
     sim: boolean,
   ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
@@ -75,7 +78,7 @@ export interface IWalletContext {
     routerPairForArgs: RouterPairForArgs,
   ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
   poolClaim: (
-    poolId: string,
+    poolId: PoolMeta,
     claimArgs: PoolClaimArgs,
     sim: boolean,
   ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
@@ -384,19 +387,22 @@ export const WalletProvider = ({ children = null as any }) => {
    * @returns The Positions, or undefined
    */
   async function poolSubmit(
-    poolId: string,
+    poolMeta: PoolMeta,
     submitArgs: SubmitArgs,
     sim: boolean
   ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
-      const pool = new PoolContract(poolId);
-      const xdrSubmit = pool.submit(submitArgs);
-      const operation = xdr.Operation.fromXDR(xdrSubmit, 'base64');
+      console.log('poolMeta+Args+sim', poolMeta, submitArgs, sim)
+      const pool =
+        poolMeta.version === Version.V2
+          ? new PoolContractV2(poolMeta.id)
+          : new PoolContractV2(poolMeta.id);
+      const operation = xdr.Operation.fromXDR(pool.submit(submitArgs), 'base64');
       if (sim) {
         return await simulateOperation(operation);
       }
-      await invokeSorobanOperation<Positions>(operation, poolId);
-      cleanPoolCache(poolId);
+      await invokeSorobanOperation<Positions>(operation, poolMeta.id);
+      cleanPoolCache(poolMeta.id);
       cleanWalletCache();
     }
   }
@@ -409,18 +415,21 @@ export const WalletProvider = ({ children = null as any }) => {
    * @returns The Positions, or undefined
    */
   async function poolClaim(
-    poolId: string,
+    poolMeta: PoolMeta,
     claimArgs: PoolClaimArgs,
     sim: boolean
   ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
-      const pool = new PoolContract(poolId);
+      const pool =
+        poolMeta.version === Version.V2
+          ? new PoolContractV2(poolMeta.id)
+          : new PoolContractV2(poolMeta.id);
       const operation = xdr.Operation.fromXDR(pool.claim(claimArgs), 'base64');
       if (sim) {
         return await simulateOperation(operation);
       }
-      await invokeSorobanOperation(operation, poolId);
-      cleanPoolCache(poolId);
+      await invokeSorobanOperation(operation, poolMeta.id);
+      cleanPoolCache(poolMeta.id);
       cleanWalletCache();
     }
   }
