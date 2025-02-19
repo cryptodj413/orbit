@@ -95,7 +95,7 @@ const Borrow: NextPage = () => {
             },
           ],
         };
-        return await poolSubmit(poolId, submitArgs, sim);
+        return await poolSubmit(poolMeta, submitArgs, sim);
       } finally {
         setIsLoading(false);
       }

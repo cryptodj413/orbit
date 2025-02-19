@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Typography, Box, Button, Grid } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
+import RemoveIcon from '@mui/icons-material/Remove';
 import { Asset, rpc } from '@stellar/stellar-sdk';
 import {
   ContractErrorType,
@@ -167,7 +168,6 @@ const Dashboard = () => {
       ? userPoolData.estimateEmissions(pool, poolEmissions)
       : { emissions: 0, claimedTokens: [] };
 
-
   const claimArgs: PoolClaimArgs = {
     from: walletAddress,
     reserve_token_ids: claimedTokens,
@@ -194,7 +194,7 @@ const Dashboard = () => {
     pool.reserves.forEach((reserve, assetId) => {
       const collateralAmount = userPoolData.getCollateralFloat(reserve);
       const liabilityAmount = userPoolData.getLiabilitiesFloat(reserve);
-      const price = poolOracle.getPriceFloat(assetId) || 0;
+      const price = poolOracle.getPriceFloat(assetId);
 
       totalCollateral += collateralAmount * price;
       totalLiabilities += liabilityAmount * price;
@@ -274,6 +274,7 @@ const Dashboard = () => {
 
   return (
     <div className="mx-5 my-2 backdrop-blur-[130px] bg-opacity-20">
+      
       <div className="flex gap-6 mb-8">
         <div className="flex flex-col gap-4 w-1/2">
           <div className="">
@@ -398,11 +399,13 @@ const Dashboard = () => {
                 <p className="text-xl">OUSD</p>
               </div>
             </div>
-            <ColItem item="Balance" val={balancesData[1] ? balancesData[1].value : '--'} />
+            <ColItem item="Balance" val={toBalance(positionEstimates?.totalLiabilities) + ' OUSD'} />
             <ColItem item="APR" val={balancesData[1] ? balancesData[1].borrowApr : '--'} />
-            <button className="w-40 py-2 px-6 bg-[#67269cb2] font-medium text-xl rounded-lg">
-              Repay -
-            </button>
+            <Link href="/repay">
+              <button className="w-40 py-2 px-6 bg-[#67269cb2] font-medium text-xl rounded-lg flex items-center justify-center">
+                Repay <RemoveIcon />
+              </button>
+            </Link>
           </div>
         </div>
       </div>
