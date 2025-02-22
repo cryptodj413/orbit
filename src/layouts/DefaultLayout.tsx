@@ -20,7 +20,7 @@ const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const {txStatus} = useWallet()
 
   return (
-    <div className="w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack relative">
+    <div className="w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack mix-blend-hard-light  relative">
       {children}
       {
         txStatus === TxStatus.NONE ? "" :

@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Select, MenuItem, InputBase } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import Icon from '../../../public/icons/Vector.svg';
+import Icon from '../../../public/icons/Borrow.svg';
 import XlmIcon from '../../../public/icons/tokens/xlm.svg';
 import OusdIcon from '../../../public/icons/tokens/ousd.svg';
 

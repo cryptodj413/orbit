@@ -10,12 +10,22 @@ export default {
         secondary: "#96FD02",
         ghostWhite: "#FAFBFF",
         periwinkle: "#C1C8E3",
-        richBlack: "#030615",
+        // richBlack: "#030615",
+        richBlack: "#030615df",
         citrine: "#D3C002",
         platinum: "#E2E2E2",
         zaffre: "#0211A9",
         inactive: "#83868F"
-      }
+      },
+      blur: {
+        'custom': '133.64px',
+      },
+      mixBlendMode: {
+        'hard-light': 'hard-light',
+      },
+      backgroundBlendMode: {
+        'hard-light': 'hard-light',
+      },
     },
   },
   plugins: [],

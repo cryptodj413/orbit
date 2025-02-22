@@ -273,8 +273,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="mx-5 my-2 backdrop-blur-[130px] bg-opacity-20">
-      
+    <div className="mx-5 my-2">
       <div className="flex gap-6 mb-8">
         <div className="flex flex-col gap-4 w-1/2">
           <div className="">
@@ -336,13 +335,13 @@ const Dashboard = () => {
                   }deg)`,
                 }}
               >
-                <div className="bg-black rounded-full w-9 h-9"></div>
+                <div className="bg-[#030615] rounded-full w-9 h-9"></div>
               </div>
               <p className="text-[13px]">{percent}</p>
             </div>
           </div>
 
-          <div className="bg-[#2050F249] rounded-[8px] px-4 py-2 flex items-center justify-between mt-[28px]">
+          <div className="bg-[#FFFFFF29] rounded-[8px] px-4 py-3 flex items-center justify-between mt-[28px]">
             <FlameIcon />
             <div className="flex flex-col cursor-pointer" onClick={handleCreateTrustlineClick}>
               <p className="text-base font-light">Claim Pool Emissions</p>
@@ -375,7 +374,7 @@ const Dashboard = () => {
             <ColItem item="Balance" val={balancesData[0] ? balancesData[0].value : '--'} />
             <ColItem item="APR" val={balancesData[0] ? balancesData[0].supplyApr : '--'} />
             <Link href="/withdraw">
-              <button className="w-40 py-2 px-6 bg-[#94fd0245] font-medium text-xl rounded-lg">
+              <button className="w-40 py-2 px-6 bg-[#94fd025d] font-medium text-xl rounded-lg">
                 Withdraw +
               </button>
             </Link>
@@ -402,7 +401,7 @@ const Dashboard = () => {
             <ColItem item="Balance" val={toBalance(positionEstimates?.totalLiabilities) + ' OUSD'} />
             <ColItem item="APR" val={balancesData[1] ? balancesData[1].borrowApr : '--'} />
             <Link href="/repay">
-              <button className="w-40 py-2 px-6 bg-[#67269cb2] font-medium text-xl rounded-lg flex items-center justify-center">
+              <button className="w-40 py-2 px-6 bg-[#FD02D552] font-medium text-xl rounded-lg flex items-center justify-center">
                 Repay <RemoveIcon />
               </button>
             </Link>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
 import { Box, Button, Typography, Grid } from '@mui/material';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
 import { StrKey, Asset, rpc } from '@stellar/stellar-sdk';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
@@ -279,7 +280,7 @@ const SwapPage: NextPage = () => {
             1 {selectedInputToken.code} = {Number(exchageRate).toFixed(2)}{' '}
             {selectedOutputToken.code}{' '}
           </p>
-          <p className="text-[#ffffffcc]">0.5% = 154.12 XLM</p>
+          <p className="text-[#ffffffcc]  flex items-center justify-center gap-2"><SellOutlinedIcon />0.5% = 154.12 XLM</p>
         </div>
 
         {inputAmount && outputAmount && (
