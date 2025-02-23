@@ -16,7 +16,7 @@ const NavBar: React.FC = () => {
   }, [router.pathname]);
 
   return (
-    <div className="w-[680px] h-12 flex justify-between items-center">
+    <div className="w-[680px] h-12 flex justify-between items-center navbar">
       <div className="flex gap-4 space justify-between rounded-[22px] w-[279px] h-full items-center bg-richBlack px-4 mix-blend-hard-light">
         {['Dashboard', 'Swap', 'Borrow'].map((title, index) => (
           <NavItem

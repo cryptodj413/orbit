@@ -21,18 +21,18 @@ export default function MyApp(props: AppProps) {
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider theme={theme}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider theme={theme}>
             <SettingsProvider>
               <WalletProvider>
                 <CssBaseline />
-                    <DefaultLayout>
-                      <Component {...pageProps} />
-                    </DefaultLayout>
+                <DefaultLayout>
+                  <Component {...pageProps} />
+                </DefaultLayout>
               </WalletProvider>
             </SettingsProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
     </>
   );
 }

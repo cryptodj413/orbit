@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { useRouter } from 'next/router';
 import { Box } from '@mui/material';
 import localFont from 'next/font/local';
 import NavBar from '../components/nav/NavBar';
@@ -17,13 +18,14 @@ const myFont = localFont({
 });
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const {txStatus} = useWallet()
+  const { txStatus } = useWallet();
 
   return (
     <div className="w-[680px] px-[23.28px] py-[25.34px] rounded-[24.78px] bg-richBlack mix-blend-hard-light  relative">
       {children}
-      {
-        txStatus === TxStatus.NONE ? "" :
+      {txStatus === TxStatus.NONE ? (
+        ''
+      ) : (
         <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-richBlack bg-opacity-95 z-20">
           {txStatus === TxStatus.BUILDING && <LoadingComponent />}
           {txStatus === TxStatus.SUBMITTING && <LoadingComponent />}
@@ -31,12 +33,13 @@ const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           {txStatus === TxStatus.SUCCESS && <SuccessComponent />}
           {txStatus === TxStatus.FAIL && <FailComponent />}
         </div>
-      }
+      )}
     </div>
   );
 };
 
 export default function DefaultLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
   return (
     <Box
       sx={{
@@ -68,8 +71,8 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           position: 'relative',
           zIndex: 1,
         },
+        // background: `url(${bg.src})`,
       }}
-      // className={myFont.className}
     >
       <Box
         sx={{
@@ -79,8 +82,9 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           gap: '30px',
           alignItems: 'center',
           my: 'auto',
-
         }}
+        // className={`${router.pathname === '/dashboard' && 'mix-blend-hard-light'}`}
+        className={'mix-blend-hard-light'}
       >
         <NavBar />
         <ChildrenCard>{children}</ChildrenCard>

@@ -29,6 +29,7 @@ import { useWallet } from '../contexts/wallet';
 import FlameIcon from '../components/dashboard/FlameIcon';
 import StellarIcon from '../../public/icons/tokens/xlm.svg';
 import OusdIcon from '../../public/icons/tokens/ousd.svg';
+import { WalletMenu } from '../components/nav/WalletMenu';
 
 const tokens = [
   {
@@ -56,29 +57,28 @@ const ColItem = ({ item, val }) => {
   );
 };
 
-const PositionItem = () => {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
-        <p className="text-base font-bold">Your supplied positions</p>
-        <p className="text-base font-light">
-          Total Supplied: <span className="text-lg font-bold">$612.79</span>
-        </p>
-      </div>
-      <div className="flex justify-between">
-        <ColItem item="Asset" val="XLM" />
-        <ColItem item="Balance" val="3.06k" />
-        <ColItem item="APR" val="151.09%" />
-        <button className="w-40 py-2 px-6 bg-[#94fd0240] font-medium text-xl rounded-lg">
-          Withdraw +
-        </button>
-      </div>
-    </div>
-  );
-};
+// const PositionItem = () => {
+//   return (
+//     <div className="flex flex-col gap-2">
+//       <div className="flex justify-between bg-[#2050F229] rounded-lg px-1 py-3">
+//         <p className="text-base font-bold">Your supplied positions</p>
+//         <p className="text-base font-light">
+//           Total Supplied: <span className="text-lg font-bold">$612.79</span>
+//         </p>
+//       </div>
+//       <div className="flex justify-between">
+//         <ColItem item="Asset" val="XLM" />
+//         <ColItem item="Balance" val="3.06k" />
+//         <ColItem item="APR" val="151.09%" />
+//         <button className="w-40 py-2 px-6 bg-[#94fd0240] font-medium text-xl rounded-lg">
+//           Withdraw +
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
 
 const ConnectWallet = () => {
-  const { connect } = useWallet();
   return (
     <Box
       sx={{
@@ -113,22 +113,9 @@ const ConnectWallet = () => {
         Connect your wallet to view your positions, manage your assets, and interact with the
         protocol
       </Typography>
-      <Button
-        onClick={() => {}}
-        sx={{
-          background: 'rgba(150, 253, 2, 0.16)',
-          borderRadius: '8px',
-          color: 'white',
-          padding: '12px 24px',
-          '&:hover': {
-            backgroundColor: '#96fd0252',
-          },
-          fontWeight: 'bold',
-          fontSize: '1.1rem',
-        }}
-      >
-        Connect Wallet
-      </Button>
+      <div className="h-12">
+        <WalletMenu />
+      </div>
     </Box>
   );
 };
@@ -354,7 +341,7 @@ const Dashboard = () => {
 
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
+          <div className="flex justify-between bg-[#2050F229] rounded-lg px-1 py-3">
             <p className="text-base font-bold">Your supplied positions</p>
             <p className="text-base font-light">
               Total Supplied:{' '}
@@ -381,7 +368,7 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between bg-[#2051f26b] rounded-lg px-1 py-3">
+          <div className="flex justify-between bg-[#2050F229] rounded-lg px-1 py-3">
             <p className="text-base font-bold">Your borrowed positions</p>
             <p className="text-base font-light">
               Total Borrowed:{' '}
@@ -398,7 +385,10 @@ const Dashboard = () => {
                 <p className="text-xl">OUSD</p>
               </div>
             </div>
-            <ColItem item="Balance" val={toBalance(positionEstimates?.totalLiabilities) + ' OUSD'} />
+            <ColItem
+              item="Balance"
+              val={toBalance(positionEstimates?.totalLiabilities) + ' OUSD'}
+            />
             <ColItem item="APR" val={balancesData[1] ? balancesData[1].borrowApr : '--'} />
             <Link href="/repay">
               <button className="w-40 py-2 px-6 bg-[#FD02D552] font-medium text-xl rounded-lg flex items-center justify-center">

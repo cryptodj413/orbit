@@ -216,7 +216,7 @@ const SwapPage: NextPage = () => {
   });
 
   return (
-    <div>
+    <div className="mix-blend-normal isolate">
       <div>
         <div className="flex flex-col gap-[7.48px]">
           <div className="flex justify-between px-2">
