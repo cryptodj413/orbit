@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { Grid, MenuItem, Select, SelectChangeEvent, Tooltip } from '@mui/material';
@@ -16,15 +16,25 @@ import {
   useHorizonAccount,
 } from '../hooks/api';
 import { toBalance, toPercentage } from '../utils/formatter';
+import {
+  NEXT_PUBLIC_POOL,
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+} from '../config/constants';
 
 const Repay: NextPage = () => {
-  const [selected, setSelected] = React.useState('OUSD');
+  const [selected, setSelected] = useState('OUSD');
+  const [clientReady, setClientReady] = useState(false);
 
-  const poolId = process.env.NEXT_PUBLIC_POOL || '';
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
+
+  if (!clientReady) return null;
+
+  const poolId = NEXT_PUBLIC_POOL || '';
   const assetId =
-    selected === 'XLM'
-      ? process.env.NEXT_PUBLIC_COLLATERAL_ASSET || ''
-      : process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '';
+    selected === 'XLM' ? NEXT_PUBLIC_COLLATERAL_ASSET || '' : NEXT_PUBLIC_STABLECOIN_ASSET || '';
 
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);

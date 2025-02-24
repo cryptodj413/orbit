@@ -1,10 +1,11 @@
 import React from 'react';
+import Image from 'next/image';
 import { Box, Typography, Select, MenuItem, InputBase } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import Icon from '../../../public/icons/Borrow.svg';
-import XlmIcon from '../../../public/icons/tokens/xlm.svg';
-import OusdIcon from '../../../public/icons/tokens/ousd.svg';
+import Icon from '../../assets/icons/Borrow.svg';
+import XlmIcon from '../../assets/icons/tokens/xlm.svg';
+import OusdIcon from '../../assets/icons/tokens/ousd.svg';
 
 const StyledInput = styled(InputBase)(({ theme }) => ({
   '& .MuiInputBase-input': {
@@ -87,7 +88,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
         </Box>
         <Select
           value="XLM"
-          IconComponent={null}
+          IconComponent={() => null}
           sx={{
             mt: 1,
             color: 'white',
@@ -139,7 +140,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
         <Select
           value="oUSD"
           id="demo-select-small"
-          IconComponent={null}
+          IconComponent={() => null}          
           sx={{
             mt: 1,
             color: 'white !important',

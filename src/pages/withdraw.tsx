@@ -1,34 +1,26 @@
 import React from 'react';
 import { NextPage } from 'next';
-import Link from 'next/link'
-import {
-  Grid,
-  MenuItem,
-  Select,
-  SelectChangeEvent,
-  Tooltip
-} from '@mui/material';
+import Link from 'next/link';
+import { Grid, MenuItem, Select, SelectChangeEvent, Tooltip } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import OverViewBox from '../components/withdraw/OverViewBox';
 import {
-  useBackstop,
   usePool,
   usePoolMeta,
   usePoolEmissions,
   usePoolOracle,
   usePoolUser,
-  useTokenMetadata,
 } from '../hooks/api';
 import { toBalance, toPercentage } from '../utils/formatter';
+import {NEXT_PUBLIC_POOL, NEXT_PUBLIC_COLLATERAL_ASSET, NEXT_PUBLIC_STABLECOIN_ASSET} from '../config/constants'
+
 
 const Withdraw: NextPage = () => {
   const [selected, setSelected] = React.useState('XLM');
 
-  const poolId = process.env.NEXT_PUBLIC_POOL || '';
+  const poolId = NEXT_PUBLIC_POOL || '';
   const assetId =
-    selected === 'XLM'
-      ? process.env.NEXT_PUBLIC_COLLATERAL_ASSET || ''
-      : process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '';
+    selected === 'XLM' ? NEXT_PUBLIC_COLLATERAL_ASSET || '' : NEXT_PUBLIC_STABLECOIN_ASSET || '';
 
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
@@ -45,7 +37,7 @@ const Withdraw: NextPage = () => {
   const assetToBase = poolOracle?.getPriceFloat(assetId);
 
   const data = [
-    { label: 'Supply APR', value: `${(reserve?.supplyApr)?.toFixed(2) || 0.00}%` },
+    { label: 'Supply APR', value: `${reserve?.supplyApr?.toFixed(2) || 0.0}%` },
     { label: 'Collateral Fator', value: toPercentage(reserve?.getCollateralFactor()) },
     { label: 'Total Supplied', value: toBalance(reserve?.totalSupplyFloat()) },
   ];
@@ -53,15 +45,15 @@ const Withdraw: NextPage = () => {
   return (
     <div className="border rounded-lg">
       <Grid container spacing={2} display="flex" justifyContent="center" alignItems="center">
-      <Grid item xs={2} display="flex" justifyContent="center" alignItems="center">
-            <Tooltip title="dashboard" placement="top">
-              <Link href="/dashboard">
-                <button className="w-14 h-14 bg-[#0211a9] font-medium text-xl rounded-full">
-                  <ArrowBack />
-                </button>
-              </Link>
-            </Tooltip>
-          </Grid>
+        <Grid item xs={2} display="flex" justifyContent="center" alignItems="center">
+          <Tooltip title="dashboard" placement="top">
+            <Link href="/dashboard">
+              <button className="w-14 h-14 bg-[#0211a9] font-medium text-xl rounded-full">
+                <ArrowBack />
+              </button>
+            </Link>
+          </Tooltip>
+        </Grid>
         <Grid item xs={4}>
           <Select
             value={selected}
@@ -110,7 +102,7 @@ const Withdraw: NextPage = () => {
         ))}
       </Grid>
       <Grid item xs={12} sx={{ borderTop: '1px solid #E0E0E0' }}>
-        <OverViewBox assetToBase={assetToBase} selected={selected} maxVal={currentDeposit}/>
+        <OverViewBox assetToBase={assetToBase} selected={selected} maxVal={currentDeposit} />
       </Grid>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Reserve } from '@blend-capital/blend-sdk';
+import { Reserve, TokenMetadata } from '@blend-capital/blend-sdk';
 import { Horizon, StellarToml } from '@stellar/stellar-sdk';
 
 export type StellarTokenMetadata = {
@@ -13,10 +13,10 @@ export type StellarTokenMetadata = {
  */
 export async function getTokenMetadataFromTOML(
   horizonServer: Horizon.Server,
-  reserve: Reserve
+  reserve: TokenMetadata
 ): Promise<StellarTokenMetadata> {
-  const assetId = reserve.assetId;
-  const code = reserve.tokenMetadata.symbol;
+  const assetId = reserve.name;
+  const code = reserve.symbol
   // set default stellar token metadata values
   let iconData: StellarTokenMetadata = {
     assetId,
@@ -27,11 +27,11 @@ export async function getTokenMetadataFromTOML(
   };
   let toml;
 
-  if (!reserve.tokenMetadata.asset) {
+  if (!reserve.asset) {
     // set soroban token defaults
     return { ...iconData, image: `/icons/tokens/soroban.svg` };
   }
-  if (reserve.tokenMetadata.asset.isNative()) {
+  if (reserve.asset.isNative()) {
     // set native asset defaults
     iconData = {
       assetId: 'XLM',
@@ -42,8 +42,8 @@ export async function getTokenMetadataFromTOML(
     };
     return iconData;
   } else {
-    const assetCode = reserve.tokenMetadata.asset.code;
-    const assetIssuer = reserve.tokenMetadata.asset.issuer;
+    const assetCode = reserve.asset.code;
+    const assetIssuer = reserve.asset.issuer;
     try {
       const cachedData = localStorage.getItem(assetIssuer);
       if (cachedData) {

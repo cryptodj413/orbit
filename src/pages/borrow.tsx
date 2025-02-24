@@ -12,10 +12,14 @@ import { scaleInputToBigInt } from '../utils/scval';
 import { usePool, usePoolOracle, usePoolUser, usePoolMeta } from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import { toBalance, toPercentage } from '../utils/formatter';
+import {
+  NEXT_PUBLIC_POOL,
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+} from '../config/constants';
 
 //TODO: Get this through config or API
-const poolId =
-  process.env.NEXT_PUBLIC_Pool || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
+const poolId = NEXT_PUBLIC_POOL || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
 
 const Borrow: NextPage = () => {
   const [collateralRatio, setCollateralRatio] = useState<number>(135);
@@ -28,20 +32,18 @@ const Borrow: NextPage = () => {
   );
 
   const assetId =
-    process.env.NEXT_PUBLIC_COLLATERAL_ASSET ||
-    'CBZFW4ICZQY6WUKDI2EFRGKICT36QTLHZGS7BZTGJQ7RHCA2OTLO2PNM';
+    NEXT_PUBLIC_COLLATERAL_ASSET || 'CBZFW4ICZQY6WUKDI2EFRGKICT36QTLHZGS7BZTGJQ7RHCA2OTLO2PNM';
   const stablecoinId =
-    process.env.NEXT_PUBLIC_STABLECOIN_ASSET ||
-    'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
+    NEXT_PUBLIC_STABLECOIN_ASSET || 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
-  const {poolSubmit, txType, walletAddress } = useWallet();
+  const { poolSubmit, txType, walletAddress } = useWallet();
   const { data: poolMeta, error: poolError } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
   const { data: poolUser } = usePoolUser(pool);
 
-  const collateral = pool?.reserves.get(process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '');
-  const stablecoin = pool?.reserves.get(process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '');
+  const collateral = pool?.reserves.get(NEXT_PUBLIC_COLLATERAL_ASSET || '');
+  const stablecoin = pool?.reserves.get(NEXT_PUBLIC_STABLECOIN_ASSET || '');
   const reserve = pool?.reserves.get(stablecoinId);
   const assetToBase = poolOracle?.getPriceFloat(assetId);
 
@@ -138,9 +140,7 @@ const Borrow: NextPage = () => {
         <Grid item xs={3}>
           <Box sx={{ textAlign: 'center', color: 'white', paddingBlock: '24px' }}>
             <Typography variant="subtitle2">Total Borrowed</Typography>
-            <Typography variant="h6">
-              ${toBalance(reserve?.totalLiabilitiesFloat())}
-            </Typography>
+            <Typography variant="h6">${toBalance(reserve?.totalLiabilitiesFloat())}</Typography>
           </Box>
         </Grid>
 

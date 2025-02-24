@@ -1,6 +1,7 @@
 import React from 'react';
+import Image from 'next/image';
 import { Box } from '@mui/material';
-import flameIcon from '../../../public/icons/flame.png';
+import flameIcon from '../../assets/icons/flame.png';
 
 const FlameIcon:React.FC = () => {
   return (

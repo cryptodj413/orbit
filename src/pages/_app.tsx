@@ -1,16 +1,13 @@
 import { useState } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppProps } from 'next/app';
 import Head from 'next/head';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
-import theme from '../theme';
 import DefaultLayout from '../layouts/DefaultLayout';
+import { SettingsProvider, WalletProvider } from '../contexts';
+import theme from '../theme';
 import '../globals.css';
-import { SettingsProvider } from '../contexts';
-import { WalletProvider } from '../contexts/wallet';
-
-const queryClient = new QueryClient();
 
 export default function MyApp(props: AppProps) {
   const { Component, pageProps } = props;

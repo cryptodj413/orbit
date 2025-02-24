@@ -1,7 +1,7 @@
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import Image from 'next/image';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LogoutIcon from '@mui/icons-material/Logout';
-import settingSvg from '../../../public/icons/setting.svg';
+import settingSvg from '../../assets/icons/setting.svg';
 
 import {
   Alert,
@@ -92,7 +92,7 @@ export const WalletMenu = () => {
             className='px-2 h-full bg-none flex justify-center items-center gap-1 cursor-pointer'
             onClick={handleClickDropdown}
           >
-            <img src={settingSvg.src} className='block w-4 h-4 mix-blend-hard-light text-platinum'/>
+            <img src={settingSvg.src} alt='setting' className='block w-4 h-4 mix-blend-hard-light text-platinum'/>
             <p className="transition-all" style={{ width: openDropdown ? '70px' : '0px', overflow: 'hidden' }}>Settings</p>
           </button>
         </div>

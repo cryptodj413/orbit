@@ -1,21 +1,12 @@
 import React, { ReactNode } from 'react';
 import { useRouter } from 'next/router';
 import { Box } from '@mui/material';
-import localFont from 'next/font/local';
 import NavBar from '../components/nav/NavBar';
+import { TxStatus, useWallet } from '../contexts/wallet';
 import LoadingComponent from '../components/status/loading';
 import SuccessComponent from '../components/status/success';
 import FailComponent from '../components/status/failed';
-import bg from '../../public/background.png';
-import { TxStatus, useWallet } from '../contexts/wallet';
-
-// Load the TTF font
-const myFont = localFont({
-  src: '../fonts/Satoshi-Variable.ttf', // Correct path
-  weight: '400', // Adjust as needed
-  style: 'normal',
-  variable: '--font-myFont', // Optional: CSS variable
-});
+import bg from '../assets/background.png';
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { txStatus } = useWallet();
@@ -49,9 +40,8 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
         minHeight: '100vh',
         width: '100vw',
         overflow: 'hidden',
-        position: 'relative', // Add this
+        position: 'relative', 
         '&::before': {
-          // Add overlay
           content: '""',
           position: 'absolute',
           top: 0,
@@ -67,11 +57,9 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           zIndex: 0,
         },
         '& > *': {
-          // Make children appear above overlay
           position: 'relative',
           zIndex: 1,
         },
-        // background: `url(${bg.src})`,
       }}
     >
       <Box
@@ -83,8 +71,8 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           alignItems: 'center',
           my: 'auto',
         }}
-        // className={`${router.pathname === '/dashboard' && 'mix-blend-hard-light'}`}
-        className={'mix-blend-hard-light'}
+        className={`${(router.pathname === '/dashboard' || router.pathname === '/') && 'mix-blend-hard-light'}`}
+        // className={'mix-blend-hard-light'}
       >
         <NavBar />
         <ChildrenCard>{children}</ChildrenCard>

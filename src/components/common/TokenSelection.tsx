@@ -1,7 +1,7 @@
 import React from 'react';
+import Image from 'next/image';
 import { Box, Typography, IconButton, Menu, MenuItem, TextField } from '@mui/material';
-// import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import arrowDown from '../../../public/icons/arrowdown.svg';
+import arrowDown from '../../assets/icons/arrowdown.svg';
 import { TokenType } from '../../interfaces';
 
 interface TokenSelectionProps {
@@ -75,14 +75,14 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         >
           <div className="flex items-center h-[19px]">
             <div className="w-[15.35px] h-[15.35px] mr-[5.12px]">
-              <img src={selectedToken.icon} alt={selectedToken.code} width="100%" height="100%" />
+              <img src={selectedToken.icon} alt={selectedToken.code}  />
             </div>
             <div className="text-[16px] text-white font-normal leading-[19.2px]">
               {selectedToken.code}
             </div>
           </div>
           <div className="w-[6.43px] h-[3.84px]">
-            <img src={arrowDown.src} alt="*" width="100%" height="100%" />
+            <img src={arrowDown.src} alt="*"  />
           </div>
         </button>
         <Menu
@@ -133,7 +133,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
             color: 'white',
             textAlign: alignment,
             lineHeight: '41.35px',
-            letterSpacing: '8%',
+            letterSpacing: '3px',
             fontWeight: 700,
           },
           width: '100%',

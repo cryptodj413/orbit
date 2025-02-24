@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
+import Image from 'next/image';
 import { Box, Button, Typography, Grid } from '@mui/material';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
@@ -10,21 +11,26 @@ import TokenSelection from '../components/common/TokenSelection';
 import { TokenType } from '../interfaces';
 import { useWallet, TxStatus } from '../contexts/wallet';
 import { toBalance, bigIntToFloat, floatToBigInt } from '../utils/formatter';
-import swapBackground from '../../public/swapBackground.svg';
+import swapBackground from '../assets/swapBackground.svg';
+import {
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+  NEXT_PUBLIC_ROUTER_ID,
+} from '../config/constants';
 
 const SLIPPAGE = 1.0; // Fixed 1% slippage
 
 const tokens = [
   {
     code: 'XLM',
-    contract: process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '',
+    contract: NEXT_PUBLIC_COLLATERAL_ASSET || '',
     icon: '/icons/tokens/xlm.svg',
     decimals: 7,
     asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
   },
   {
     code: 'oUSD',
-    contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
+    contract: NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
     asset: new Asset('OUSD', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
@@ -49,7 +55,7 @@ const OverviewItem = ({
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
       <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
-        {!first && icon && <Box sx={{ mr: 1 }}>{icon}</Box>}
+        {!first && icon && <Box component='span' sx={{ mr: 1 }}>{icon}</Box>}
         {label}
       </Typography>
       <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>{value}</Typography>
@@ -95,8 +101,6 @@ const SwapPage: NextPage = () => {
     horizonAccount,
   );
 
-  
-
   useEffect(() => {
     const fetchPairAddress = async () => {
       try {
@@ -105,8 +109,7 @@ const SwapPage: NextPage = () => {
           token_b: tokens[1].contract,
         };
 
-        const response = await routerPairFor(process.env.NEXT_PUBLIC_ROUTER_ID || '', args);
-
+        const response = await routerPairFor(NEXT_PUBLIC_ROUTER_ID || '', args);
         if (response?.result?.retval) {
           const retval = response.result.retval;
           if (retval._value?._value instanceof Uint8Array) {
@@ -146,7 +149,7 @@ const SwapPage: NextPage = () => {
         path: [selectedInputToken.contract, selectedOutputToken.contract],
       };
 
-      const response = await routerGetAmountOut(process.env.NEXT_PUBLIC_ROUTER_ID || '', args);
+      const response = await routerGetAmountOut(NEXT_PUBLIC_ROUTER_ID || '', args);
 
       if (response?.result?.retval?._value) {
         const outputValue = response.result.retval._value[1];
@@ -191,11 +194,7 @@ const SwapPage: NextPage = () => {
           deadline: BigInt(Math.floor(Date.now() / 1000) + 1200), // 20 minutes
         };
 
-        const result = await swapExactTokensForTokens(
-          process.env.NEXT_PUBLIC_ROUTER_ID || '',
-          args,
-          sim,
-        );
+        const result = await swapExactTokensForTokens(NEXT_PUBLIC_ROUTER_ID || '', args, sim);
         return result;
       } catch (error) {
         console.error('Swap failed:', error);
@@ -268,7 +267,7 @@ const SwapPage: NextPage = () => {
               />
             </Box>
             <div className="absolute left-0 top-0 w-full h-full">
-              <img src={swapBackground.src} width={'100%'} height={'100%'} />
+              <img alt='swap-background' src={swapBackground.src} width='100%' height='100%' />
             </div>
           </Box>
 
@@ -280,7 +279,10 @@ const SwapPage: NextPage = () => {
             1 {selectedInputToken.code} = {Number(exchageRate).toFixed(2)}{' '}
             {selectedOutputToken.code}{' '}
           </p>
-          <p className="text-[#ffffffcc]  flex items-center justify-center gap-2"><SellOutlinedIcon />0.5% = 154.12 XLM</p>
+          <p className="text-[#ffffffcc]  flex items-center justify-center gap-2">
+            <SellOutlinedIcon />
+            0.5% = 154.12 XLM
+          </p>
         </div>
 
         {inputAmount && outputAmount && (

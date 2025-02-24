@@ -3,12 +3,15 @@ import { useMediaQuery, useTheme } from '@mui/material';
 import { rpc } from '@stellar/stellar-sdk';
 import { useLocalStorageState } from '../hooks';
 import React, { useContext, useState } from 'react';
+import {
+  NEXT_PUBLIC_RPC_URL,
+  NEXT_PUBLIC_HORIZON_URL,
+  NEXT_PUBLIC_PASSPHRASE,
+} from '../config/constants';
 
-const DEFAULT_RPC = process.env.NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';
-const DEFAULT_HORIZON =
-  process.env.NEXT_PUBLIC_HORIZON_URL || 'https://horizon-testnet.stellar.org';
-const DEFAULT_PASSPHRASE =
-  process.env.NEXT_PUBLIC_PASSPHRASE || 'Test SDF Network ; September 2015';
+const DEFAULT_RPC = NEXT_PUBLIC_RPC_URL || 'https://soroban-testnet.stellar.org';
+const DEFAULT_HORIZON = NEXT_PUBLIC_HORIZON_URL || 'https://horizon-testnet.stellar.org';
+const DEFAULT_PASSPHRASE = NEXT_PUBLIC_PASSPHRASE || 'Test SDF Network ; September 2015';
 
 export enum ViewType {
   MOBILE,
@@ -66,11 +69,7 @@ export const SettingsProvider = ({ children = null as any }) => {
   else if (compact) viewType = ViewType.COMPACT;
   else viewType = ViewType.REGULAR;
 
-  function handleSetNetwork(
-    newRpcUrl: string,
-    newHorizonUrl: string,
-    opts?: rpc.Server.Options,
-  ) {
+  function handleSetNetwork(newRpcUrl: string, newHorizonUrl: string, opts?: rpc.Server.Options) {
     setNetwork({ rpc: newRpcUrl, passphrase: DEFAULT_PASSPHRASE, opts, horizonUrl: newHorizonUrl });
   }
 

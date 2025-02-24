@@ -41,21 +41,11 @@ declare module '@mui/material/Button' {
 }
 
 const satoshi = localFont({
-  src: "./fonts/Satoshi-Variable.ttf", // Adjust the path if needed'
+  src: "./assets/fonts/Satoshi-Variable.ttf", // Adjust the path if needed'
   display: 'swap',
-  // weight: "400 900",
-  // style: "normal",
   variable: "--font-satoshi", // Define a CSS variable
 });
 
-// const gendy = localFont({
-//   src: "./fonts/Gendy-Regular.ttf",
-//   weight: "400",
-//   style: "normal",
-//   variable: "--font-gendy",
-// });
-
-// const FONT: string = '${satoshi.style.fontFamily}, Helvetica';
 const FONT = satoshi.style.fontFamily
 
 const pxToRem = (px: number) => {

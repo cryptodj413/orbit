@@ -1,12 +1,11 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Typography, Box, Button, Grid } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Asset, rpc } from '@stellar/stellar-sdk';
 import {
-  ContractErrorType,
-  parseError,
   PoolContractV1,
   PoolClaimArgs,
   PositionsEstimate,
@@ -27,21 +26,22 @@ import { requiresTrustline } from '../utils/horizon';
 import { TokenType } from '../interfaces';
 import { useWallet } from '../contexts/wallet';
 import FlameIcon from '../components/dashboard/FlameIcon';
-import StellarIcon from '../../public/icons/tokens/xlm.svg';
-import OusdIcon from '../../public/icons/tokens/ousd.svg';
+import StellarIcon from '../assets/icons/tokens/xlm.svg';
+import OusdIcon from '../assets/icons/tokens/ousd.svg';
 import { WalletMenu } from '../components/nav/WalletMenu';
+import {NEXT_PUBLIC_STABLECOIN_ASSET, NEXT_PUBLIC_COLLATERAL_ASSET, NEXT_PUBLIC_POOL} from '../config/constants'
 
 const tokens = [
   {
     code: 'XLM',
-    contract: process.env.NEXT_PUBLIC_COLLATERAL_ASSET || '',
+    contract: NEXT_PUBLIC_COLLATERAL_ASSET || '',
     icon: '/icons/tokens/xlm.svg',
     decimals: 7,
     asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
   },
   {
     code: 'OUSD',
-    contract: process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '',
+    contract: NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
     asset: new Asset('OUSD', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
@@ -56,8 +56,6 @@ const ColItem = ({ item, val }) => {
     </div>
   );
 };
-
-// const PositionItem = () => {
 //   return (
 //     <div className="flex flex-col gap-2">
 //       <div className="flex justify-between bg-[#2050F229] rounded-lg px-1 py-3">
@@ -130,7 +128,7 @@ const Dashboard = () => {
   const { data: horizonAccount } = useHorizonAccount();
   const { data: account, refetch: refechAccount } = useHorizonAccount();
 
-  const poolId = process.env.NEXT_PUBLIC_POOL;
+  const poolId = NEXT_PUBLIC_POOL;
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
@@ -287,7 +285,7 @@ const Dashboard = () => {
                 <div className="flex items-center">
                   <p className="font-bold">{Number(bigIntToFloat(stellarBalance)).toFixed(2)}</p>
                   &nbsp;
-                  <img src={StellarIcon.src} className="w-4 h-4" />
+                  <img alt='' src={StellarIcon.src} className="w-4 h-4" />
                 </div>
               </div>
               <div className="flex justify-between">
@@ -295,7 +293,7 @@ const Dashboard = () => {
                 <div className="flex items-center">
                   <p className="font-bold">{Number(bigIntToFloat(orbitalBalance)).toFixed(2)}</p>
                   &nbsp;
-                  <img src={OusdIcon.src} className="w-4 h-4" />
+                  <img alt='' src={OusdIcon.src} className="w-4 h-4" />
                 </div>
               </div>
             </div>
@@ -354,7 +352,7 @@ const Dashboard = () => {
             <div className="flex flex-col font-medium">
               <p className="text-base text-[#d4d4d4]">Asset</p>
               <div className="flex items-center gap-2">
-                <img src={StellarIcon.src} className="w-8 h-8" />
+                <img alt='' src={StellarIcon.src} className="w-8 h-8" />
                 <p className="text-xl">XLM</p>
               </div>
             </div>
@@ -381,7 +379,7 @@ const Dashboard = () => {
             <div className="flex flex-col font-medium">
               <p className="text-base text-[#d4d4d4]">Asset</p>
               <div className="flex items-center gap-2">
-                <img src={OusdIcon.src} className="w-8 h-8" />
+                <img alt='' src={OusdIcon.src} className="w-8 h-8" />
                 <p className="text-xl">OUSD</p>
               </div>
             </div>

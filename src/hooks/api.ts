@@ -29,12 +29,13 @@ import { getTokenMetadataFromTOML, StellarTokenMetadata } from '../external/stel
 import { getTokenBalance } from '../external/token';
 import { ReserveTokenMetadata } from '../utils/token';
 import { NOT_BLEND_POOL_ERROR_MESSAGE, PoolMeta } from './types';
+import {NEXT_PUBLIC_BACKSTOP, NEXT_PUBLIC_BACKSTOP_V2} from '../config/constants'
 
 
 const DEFAULT_STALE_TIME = 30 * 1000;
 const USER_STALE_TIME = 60 * 1000;
-const BACKSTOP_ID = process.env.NEXT_PUBLIC_BACKSTOP || '';
-const BACKSTOP_ID_V2 = process.env.NEXT_PUBLIC_BACKSTOP_V2 || '';
+const BACKSTOP_ID = NEXT_PUBLIC_BACKSTOP || '';
+const BACKSTOP_ID_V2 = NEXT_PUBLIC_BACKSTOP_V2 || '';
 
 //********** Query Client Data **********//
 
@@ -515,21 +516,6 @@ export function useSimulateOperation<T>(
  * @param enabled - Whether the query is enabled (optional - defaults to true)
  * @returns Query result with the token metadata.
  */
-export function useTokenMetadataFromToml(
-  reserve: Reserve,
-  enabled: boolean = true
-): UseQueryResult<StellarTokenMetadata, Error> {
-  const { network } = useSettings();
-  return useQuery({
-    staleTime: Infinity,
-    queryKey: ['tokenMetadata', reserve.assetId],
-    enabled,
-    queryFn: async () => {
-      const horizon = new Horizon.Server(network.horizonUrl, network.opts);
-      return await getTokenMetadataFromTOML(horizon, reserve);
-    },
-  });
-}
 
 export function useTokenMetadata(
   assetId: string | undefined,

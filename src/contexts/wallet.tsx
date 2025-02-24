@@ -7,7 +7,7 @@ import {
   PoolContractV2,
   Positions,
   SubmitArgs,
-  Version
+  Version,
 } from '@blend-capital/blend-sdk';
 import {
   AlbedoModule,
@@ -33,8 +33,15 @@ import React, { useContext, useState } from 'react';
 import { useSettings } from './settings';
 import { useQueryClientCacheCleaner } from '../hooks/api';
 import { PoolMeta } from '../hooks/types';
-import { RouterContract, RouterGetAmountInArgs, RouterGetAmountOutArgs, RouterPairForArgs, RouterSwapExactTokensForTokensArgs, RouterSwapTokensForExactTokensArgs } from '../external/router';
-
+import {
+  RouterContract,
+  RouterGetAmountInArgs,
+  RouterGetAmountOutArgs,
+  RouterPairForArgs,
+  RouterSwapExactTokensForTokensArgs,
+  RouterSwapTokensForExactTokensArgs,
+} from '../external/router';
+import { NEXT_PUBLIC_PASSPHRASE } from '../config/constants';
 
 export interface IWalletContext {
   connected: boolean;
@@ -103,7 +110,7 @@ export enum TxType {
 }
 
 const walletKit: StellarWalletsKit = new StellarWalletsKit({
-  network: (process.env.NEXT_PUBLIC_PASSPHRASE ?? WalletNetwork.TESTNET) as WalletNetwork,
+  network: (NEXT_PUBLIC_PASSPHRASE ?? WalletNetwork.TESTNET) as WalletNetwork,
   selectedWalletId: XBULL_ID,
   modules: [new xBullModule(), new FreighterModule(), new LobstrModule(), new AlbedoModule()],
 });
@@ -139,8 +146,8 @@ export const WalletProvider = ({ children = null as any }) => {
   }
 
   /**
-  * Connect a wallet to the application via the walletKit
-  */
+   * Connect a wallet to the application via the walletKit
+   */
   async function handleSetWalletAddress(): Promise<boolean> {
     try {
       const { address: publicKey } = await walletKit.getAddress();
@@ -269,7 +276,7 @@ export const WalletProvider = ({ children = null as any }) => {
   }
 
   async function simulateOperation(
-    operation: xdr.Operation
+    operation: xdr.Operation,
   ): Promise<rpc.Api.SimulateTransactionResponse> {
     try {
       setLoading(true);
@@ -287,7 +294,7 @@ export const WalletProvider = ({ children = null as any }) => {
       //   setFailureMessage(ContractErrorType[error.type]);
       //   throw new Error(`Simulation failed: ${error.message || simulation.error}`);
       // }
-      
+
       setLoading(false);
       return simulation;
     } catch (e) {
@@ -324,7 +331,11 @@ export const WalletProvider = ({ children = null as any }) => {
     setTxType(TxType.CONTRACT);
   }
 
-  async function swapExactTokensForTokens(routerId: string, swapArgs: RouterSwapExactTokensForTokensArgs, sim: boolean): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+  async function swapExactTokensForTokens(
+    routerId: string,
+    swapArgs: RouterSwapExactTokensForTokensArgs,
+    sim: boolean,
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const router = new RouterContract(routerId);
       const xdrSwap = router.swapExactTokensForTokens(swapArgs);
@@ -337,7 +348,11 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  async function swapTokensforExactTokens(routerId: string, swapArgs: RouterSwapTokensForExactTokensArgs, sim: boolean): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+  async function swapTokensforExactTokens(
+    routerId: string,
+    swapArgs: RouterSwapTokensForExactTokensArgs,
+    sim: boolean,
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const router = new RouterContract(routerId);
       const xdrSwap = router.swapTokensForExactTokens(swapArgs);
@@ -350,7 +365,10 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  async function routerGetAmountIn(routerId: string, routerGetAmountInArgs: RouterGetAmountInArgs): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+  async function routerGetAmountIn(
+    routerId: string,
+    routerGetAmountInArgs: RouterGetAmountInArgs,
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const router = new RouterContract(routerId);
       const xdrGetAmountIn = router.routerGetAmountsIn(routerGetAmountInArgs);
@@ -359,7 +377,10 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  async function routerGetAmountOut(routerId: string, routerGetAmountOutArgs: RouterGetAmountOutArgs): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+  async function routerGetAmountOut(
+    routerId: string,
+    routerGetAmountOutArgs: RouterGetAmountOutArgs,
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const router = new RouterContract(routerId);
       const xdrGetAmountOut = router.routerGetAmountsOut(routerGetAmountOutArgs);
@@ -368,14 +389,19 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  async function routerPairFor(router: string, routerPairForArgs: RouterPairForArgs): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
+  async function routerPairFor(
+    router: string,
+    routerPairForArgs: RouterPairForArgs,
+  ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const routerContract = new RouterContract(router);
-      const operation = xdr.Operation.fromXDR(routerContract.routerPairFor(routerPairForArgs), 'base64');
+      const operation = xdr.Operation.fromXDR(
+        routerContract.routerPairFor(routerPairForArgs),
+        'base64',
+      );
       return await simulateOperation(operation);
     }
   }
-
 
   //********** Pool Functions ***********/
 
@@ -389,7 +415,7 @@ export const WalletProvider = ({ children = null as any }) => {
   async function poolSubmit(
     poolMeta: PoolMeta,
     submitArgs: SubmitArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const pool =
@@ -416,7 +442,7 @@ export const WalletProvider = ({ children = null as any }) => {
   async function poolClaim(
     poolMeta: PoolMeta,
     claimArgs: PoolClaimArgs,
-    sim: boolean
+    sim: boolean,
   ): Promise<rpc.Api.SimulateTransactionResponse | undefined> {
     if (connected) {
       const pool =

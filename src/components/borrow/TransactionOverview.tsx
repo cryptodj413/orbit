@@ -5,6 +5,7 @@ import { usePool, usePoolOracle, usePoolMeta } from '../../hooks/api';
 import { toBalance, toPercentage } from '../../utils/formatter';
 import { rpc } from '@stellar/stellar-sdk';
 import { PositionsEstimate } from '@blend-capital/blend-sdk';
+import { NEXT_PUBLIC_POOL } from '../../config/constants'
 
 interface TransactionOverviewProps {
   amount: string;
@@ -32,8 +33,7 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
   simResponse,
 }) => {
   const xlmToOUsdRate = 0.091; // 1
-  const poolId =
-    process.env.NEXT_PUBLIC_Pool || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
+  const poolId = NEXT_PUBLIC_POOL || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
   const { data: poolMeta, error: poolError } = usePoolMeta(poolId);
     const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
@@ -153,7 +153,7 @@ interface OverviewItemProps {
 const OverviewItem: React.FC<OverviewItemProps> = ({ label, value, oldValue, newValue, icon }) => (
   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
     <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
-      {icon && <Box sx={{ mr: 1 }}>{icon}</Box>}
+      {icon && <span className="mr-1">{icon}</span>}
       {label}
     </Typography>
     <Typography sx={{ fontSize: '13px', fontWeight: '600' }}>
