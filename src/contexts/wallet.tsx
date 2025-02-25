@@ -3,7 +3,6 @@ import {
   Network,
   parseError,
   PoolClaimArgs,
-  PoolContract,
   PoolContractV2,
   Positions,
   SubmitArgs,
@@ -103,9 +102,7 @@ export enum TxStatus {
 }
 
 export enum TxType {
-  // Submit a contract invocation
   CONTRACT,
-  // A transaction that is a pre-requisite for another transaction
   PREREQ,
 }
 
@@ -120,8 +117,7 @@ const WalletContext = React.createContext<IWalletContext | undefined>(undefined)
 export const WalletProvider = ({ children = null as any }) => {
   const { network } = useSettings();
 
-  const { cleanWalletCache, cleanBackstopCache, cleanPoolCache, cleanBackstopPoolCache } =
-    useQueryClientCacheCleaner();
+  const { cleanWalletCache, cleanPoolCache } = useQueryClientCacheCleaner();
 
   const stellarRpc = new rpc.Server(network.rpc, network.opts);
 
@@ -135,7 +131,6 @@ export const WalletProvider = ({ children = null as any }) => {
 
   function setFailureMessage(message: string | undefined) {
     if (message) {
-      // some contract failures include diagnostic information. If so, try and remove it.
       let substrings = message.split('Event log (newest first):');
       if (substrings.length > 1) {
         setTxFailure(`Contract Error: ${substrings[0].trimEnd()}`);
@@ -145,7 +140,7 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  /**
+  /*
    * Connect a wallet to the application via the walletKit
    */
   async function handleSetWalletAddress(): Promise<boolean> {
@@ -288,13 +283,6 @@ export const WalletProvider = ({ children = null as any }) => {
       }).addOperation(operation);
       const transaction = tx_builder.build();
       const simulation = await stellarRpc.simulateTransaction(transaction);
-      // if (simulation.error) {
-      //   const error = parseError(simulation);
-      //   console.error('Simulation failed:', error);
-      //   setFailureMessage(ContractErrorType[error.type]);
-      //   throw new Error(`Simulation failed: ${error.message || simulation.error}`);
-      // }
-
       setLoading(false);
       return simulation;
     } catch (e) {

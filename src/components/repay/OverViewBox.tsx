@@ -33,7 +33,11 @@ import {
 import { scaleInputToBigInt } from '../../utils/scval';
 import { toBalance, toPercentage } from '../../utils/formatter';
 import { useWallet } from '../../contexts/wallet';
-import { NEXT_PUBLIC_POOL, NEXT_PUBLIC_COLLATERAL_ASSET, NEXT_PUBLIC_STABLECOIN_ASSET } from '../../config/constants';
+import {
+  NEXT_PUBLIC_POOL,
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+} from '../../config/constants';
 
 interface OverviewProps {
   assetToBase: number;
@@ -69,7 +73,6 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
   const { data: poolUser } = usePoolUser(pool);
   const { data: poolEmissions } = usePoolEmissions(pool);
   const { data: poolOracle } = usePoolOracle(pool);
-  // const { data: tokenMetadata } = useTokenMetadata(assetId);
   const reserve = pool?.reserves.get(assetId);
   const decimals = reserve?.config.decimals ?? 7;
 
@@ -125,7 +128,6 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
   const oraclePrice = reserve ? poolOracle?.getPriceFloat(reserve.assetId) : 0;
 
   const newPoolUser = parsedSimResult && new PoolUser(walletAddress, parsedSimResult, new Map());
-  // console.log('newPoolUser-----', newPoolUser)
   const newPositionsEstimate =
     pool && parsedSimResult && poolOracle
       ? PositionsEstimate.build(pool, poolOracle, parsedSimResult)

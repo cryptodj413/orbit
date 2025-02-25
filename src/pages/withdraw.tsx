@@ -4,16 +4,13 @@ import Link from 'next/link';
 import { Grid, MenuItem, Select, SelectChangeEvent, Tooltip } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import OverViewBox from '../components/withdraw/OverViewBox';
-import {
-  usePool,
-  usePoolMeta,
-  usePoolEmissions,
-  usePoolOracle,
-  usePoolUser,
-} from '../hooks/api';
+import { usePool, usePoolMeta, usePoolOracle, usePoolUser } from '../hooks/api';
 import { toBalance, toPercentage } from '../utils/formatter';
-import {NEXT_PUBLIC_POOL, NEXT_PUBLIC_COLLATERAL_ASSET, NEXT_PUBLIC_STABLECOIN_ASSET} from '../config/constants'
-
+import {
+  NEXT_PUBLIC_POOL,
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+} from '../config/constants';
 
 const Withdraw: NextPage = () => {
   const [selected, setSelected] = React.useState('XLM');
@@ -24,7 +21,6 @@ const Withdraw: NextPage = () => {
 
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
-  const { data: poolEmissions } = usePoolEmissions(pool);
   const { data: poolUser } = usePoolUser(pool);
   const { data: poolOracle } = usePoolOracle(pool);
   const reserve = pool?.reserves.get(assetId);

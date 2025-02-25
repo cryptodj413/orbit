@@ -2,16 +2,24 @@ import React, { useState } from 'react';
 import { NextPage } from 'next';
 import { Box, Button, Grid, Typography } from '@mui/material';
 import { RequestType, SubmitArgs } from '@blend-capital/blend-sdk';
-import { rpc } from '@stellar/stellar-sdk';
+import { rpc, Asset } from '@stellar/stellar-sdk';
 import BorrowForm from '../components/borrow/BorrowForm';
 import CollateralRatioSlider from '../components/borrow/CollateralRatioSlider';
 import TransactionOverview from '../components/borrow/TransactionOverview';
 import StyledGrid from '../components/common/StyledGrid';
+import BalanceError from '../components/borrow/BalanceError';
 import { useWallet } from '../contexts/wallet';
 import { scaleInputToBigInt } from '../utils/scval';
-import { usePool, usePoolOracle, usePoolUser, usePoolMeta } from '../hooks/api';
+import {
+  usePool,
+  usePoolOracle,
+  usePoolUser,
+  usePoolMeta,
+  useHorizonAccount,
+  useTokenBalance,
+} from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
-import { toBalance, toPercentage } from '../utils/formatter';
+import { toBalance, toPercentage, bigIntToFloat } from '../utils/formatter';
 import {
   NEXT_PUBLIC_POOL,
   NEXT_PUBLIC_COLLATERAL_ASSET,
@@ -36,16 +44,31 @@ const Borrow: NextPage = () => {
   const stablecoinId =
     NEXT_PUBLIC_STABLECOIN_ASSET || 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
+  const assetToken = {
+    code: 'XLM',
+    contract: NEXT_PUBLIC_COLLATERAL_ASSET || '',
+    icon: '/icons/tokens/xlm.svg',
+    decimals: 7,
+    asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
+  };
+
   const { poolSubmit, txType, walletAddress } = useWallet();
   const { data: poolMeta, error: poolError } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
   const { data: poolUser } = usePoolUser(pool);
+  const { data: horizonAccount } = useHorizonAccount();
 
   const collateral = pool?.reserves.get(NEXT_PUBLIC_COLLATERAL_ASSET || '');
   const stablecoin = pool?.reserves.get(NEXT_PUBLIC_STABLECOIN_ASSET || '');
   const reserve = pool?.reserves.get(stablecoinId);
   const assetToBase = poolOracle?.getPriceFloat(assetId);
+
+  const { data: totalBalance } = useTokenBalance(
+    assetToken.contract,
+    assetToken.asset,
+    horizonAccount,
+  );
 
   //TODO: Fix the calculations to work using oracle price
   const handleCollateralRatioChange = (_event: Event, newValue: number | number[]) => {
@@ -158,23 +181,25 @@ const Borrow: NextPage = () => {
           <CollateralRatioSlider value={collateralRatio} onChange={handleCollateralRatioChange} />
         </Grid>
 
-        {collateralAmount !== '' && (
-          <Grid item xs={12} sx={{ padding: '0px !important' }}>
-            <TransactionOverview
-              amount={null}
-              symbol={'XLM'}
-              collateralRatio={collateralRatio}
-              collateralAmount={collateralAmount}
-              assetToBase={assetToBase}
-              decimals={7}
-              userPoolData={poolUser}
-              newPositionEstimate={null}
-              assetId={assetId} // Replace with actual asset ID
-              simResponse={simResponse}
-              isLoading={isLoading}
-            />
-          </Grid>
-        )}
+        {collateralAmount !== '' &&
+          (Number(collateralAmount) < Number(bigIntToFloat(totalBalance)) ? (
+            <Grid item xs={12} sx={{ padding: '0px !important' }}>
+              <TransactionOverview
+                symbol={'XLM'}
+                collateralRatio={collateralRatio}
+                collateralAmount={collateralAmount}
+                assetToBase={assetToBase}
+                decimals={7}
+                userPoolData={poolUser}
+                newPositionEstimate={null}
+                assetId={assetId} // Replace with actual asset ID
+                simResponse={simResponse}
+                isLoading={isLoading}
+              />
+            </Grid>
+          ) : (
+            <BalanceError />
+          ))}
       </StyledGrid>
 
       <Button

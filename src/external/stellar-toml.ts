@@ -1,4 +1,4 @@
-import { Reserve, TokenMetadata } from '@blend-capital/blend-sdk';
+import {  TokenMetadata } from '@blend-capital/blend-sdk';
 import { Horizon, StellarToml } from '@stellar/stellar-sdk';
 
 export type StellarTokenMetadata = {

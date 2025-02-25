@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import NavItem from './NavItem';
 import { WalletMenu } from './WalletMenu';

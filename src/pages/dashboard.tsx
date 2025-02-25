@@ -1,15 +1,11 @@
 import React from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { Typography, Box, Button, Grid } from '@mui/material';
+import Link from 'next/link';
+import { Typography, Box } from '@mui/material';
 import ArrowRightAltIcon from '@mui/icons-material/ArrowRightAlt';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { Asset, rpc } from '@stellar/stellar-sdk';
-import {
-  PoolContractV1,
-  PoolClaimArgs,
-  PositionsEstimate,
-} from '@blend-capital/blend-sdk';
+import { PoolContractV1, PoolClaimArgs, PositionsEstimate } from '@blend-capital/blend-sdk';
 import {
   usePool,
   usePoolOracle,
@@ -23,13 +19,17 @@ import {
 import { bigIntToFloat, toBalance, toPercentage } from '../utils/formatter';
 import { BLND_ASSET } from '../utils/token_display';
 import { requiresTrustline } from '../utils/horizon';
-import { TokenType } from '../interfaces';
+import { TokenType } from '../interfaces/tokens';
 import { useWallet } from '../contexts/wallet';
 import FlameIcon from '../components/dashboard/FlameIcon';
-import StellarIcon from '../assets/icons/tokens/xlm.svg';
-import OusdIcon from '../assets/icons/tokens/ousd.svg';
+import StellarIcon from '../../public/icons/tokens/xlm.svg';
+import OusdIcon from '../../public/icons/tokens/ousd.svg';
 import { WalletMenu } from '../components/nav/WalletMenu';
-import {NEXT_PUBLIC_STABLECOIN_ASSET, NEXT_PUBLIC_COLLATERAL_ASSET, NEXT_PUBLIC_POOL} from '../config/constants'
+import {
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_POOL,
+} from '../config/constants';
 
 const tokens = [
   {
@@ -285,7 +285,7 @@ const Dashboard = () => {
                 <div className="flex items-center">
                   <p className="font-bold">{Number(bigIntToFloat(stellarBalance)).toFixed(2)}</p>
                   &nbsp;
-                  <img alt='' src={StellarIcon.src} className="w-4 h-4" />
+                  <Image src={StellarIcon.src} width={16} height={16} alt="" />
                 </div>
               </div>
               <div className="flex justify-between">
@@ -293,7 +293,7 @@ const Dashboard = () => {
                 <div className="flex items-center">
                   <p className="font-bold">{Number(bigIntToFloat(orbitalBalance)).toFixed(2)}</p>
                   &nbsp;
-                  <img alt='' src={OusdIcon.src} className="w-4 h-4" />
+                  <Image src={OusdIcon.src} width={16} height={16} alt="" />
                 </div>
               </div>
             </div>
@@ -352,7 +352,7 @@ const Dashboard = () => {
             <div className="flex flex-col font-medium">
               <p className="text-base text-[#d4d4d4]">Asset</p>
               <div className="flex items-center gap-2">
-                <img alt='' src={StellarIcon.src} className="w-8 h-8" />
+                <Image src={StellarIcon.src} width={32} height={32} alt="" />
                 <p className="text-xl">XLM</p>
               </div>
             </div>
@@ -379,7 +379,7 @@ const Dashboard = () => {
             <div className="flex flex-col font-medium">
               <p className="text-base text-[#d4d4d4]">Asset</p>
               <div className="flex items-center gap-2">
-                <img alt='' src={OusdIcon.src} className="w-8 h-8" />
+                <Image src={OusdIcon.src} width={32} height={32} alt="" />
                 <p className="text-xl">OUSD</p>
               </div>
             </div>

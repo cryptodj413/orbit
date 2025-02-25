@@ -3,9 +3,9 @@ import Image from 'next/image';
 import { Box, Typography, Select, MenuItem, InputBase } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import Icon from '../../assets/icons/Borrow.svg';
-import XlmIcon from '../../assets/icons/tokens/xlm.svg';
-import OusdIcon from '../../assets/icons/tokens/ousd.svg';
+import Icon from '../../../public/icons/Borrow.svg';
+import XlmIcon from '../../../public/icons/tokens/xlm.svg';
+import OusdIcon from '../../../public/icons/tokens/ousd.svg';
 
 const StyledInput = styled(InputBase)(({ theme }) => ({
   '& .MuiInputBase-input': {
@@ -42,13 +42,11 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
   onBorrowChange,
 }) => {
   const handleBorrowChange = (value: string) => {
-    // Allow empty string
     if (value === '') {
       onBorrowChange('');
       return;
     }
 
-    // Only allow numbers and one decimal point
     if (/^\d*\.?\d*$/.test(value)) {
       onBorrowChange(value);
     }
@@ -101,7 +99,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
           }}
           renderValue={() => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <img src={XlmIcon.src} width="18px" height="18px" alt="oUSD" />
+              <Image src={XlmIcon.src} width={18} height={18} alt="oUSD" />
               <Typography>
                 Stellar Lumen (XLM) <KeyboardArrowDownIcon />
               </Typography>
@@ -112,14 +110,14 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
             value="XLM"
             sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}
           >
-            <img src={XlmIcon.src} width="18px" height="18px" alt="XLM" />
+            <Image src={XlmIcon.src} width={18} height={18} alt="XLM" />
             <Typography>Stellar Lumen (XLM)</Typography>
           </MenuItem>
         </Select>
       </Box>
 
       <Box sx={{ color: 'white', fontSize: 24 }}>
-        <img src={Icon.src} />
+        <Image src={Icon.src} width={Icon.width} height={Icon.height} alt="Icon" />
       </Box>
 
       {/* Supply Display (XLM) */}
@@ -140,7 +138,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
         <Select
           value="oUSD"
           id="demo-select-small"
-          IconComponent={() => null}          
+          IconComponent={() => null}
           sx={{
             mt: 1,
             color: 'white !important',
@@ -153,7 +151,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
           }}
           renderValue={() => (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <img src={OusdIcon.src} width="18px" height="18px" alt="oUSD" />
+              <Image src={OusdIcon.src} width={18} height={18} alt="oUSD" />
               <Typography>
                 Orbital Dollar (oUSD)
                 <KeyboardArrowDownIcon />
@@ -162,7 +160,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
           )}
         >
           <MenuItem value="oUSD" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <img src={OusdIcon.src} width="18px" height="18px" alt="oUSD" />
+            <Image src={OusdIcon.src} width={18} height={18} alt="oUSD" />
             <Typography>Orbital Dollar (oUSD)</Typography>
           </MenuItem>
         </Select>

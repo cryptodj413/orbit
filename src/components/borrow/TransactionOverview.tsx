@@ -1,14 +1,13 @@
-import React, { useMemo, useState } from 'react';
-import { Box, Typography, Grid, CircularProgress } from '@mui/material';
+import React, { useMemo } from 'react';
+import { Box, Typography, Grid } from '@mui/material';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import { usePool, usePoolOracle, usePoolMeta } from '../../hooks/api';
-import { toBalance, toPercentage } from '../../utils/formatter';
+import { toBalance } from '../../utils/formatter';
 import { rpc } from '@stellar/stellar-sdk';
 import { PositionsEstimate } from '@blend-capital/blend-sdk';
-import { NEXT_PUBLIC_POOL } from '../../config/constants'
+import { NEXT_PUBLIC_POOL } from '../../config/constants';
 
 interface TransactionOverviewProps {
-  amount: string;
   symbol: string;
   collateralRatio: number;
   collateralAmount: string;
@@ -22,7 +21,6 @@ interface TransactionOverviewProps {
 }
 
 const TransactionOverview: React.FC<TransactionOverviewProps> = ({
-  amount,
   symbol,
   collateralRatio,
   collateralAmount,
@@ -35,7 +33,7 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
   const xlmToOUsdRate = 0.091; // 1
   const poolId = NEXT_PUBLIC_POOL || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
   const { data: poolMeta, error: poolError } = usePoolMeta(poolId);
-    const { data: pool } = usePool(poolMeta);
+  const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
   const price = poolOracle?.getPriceFloat(assetId) || 0;
 
@@ -70,13 +68,13 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
       nextBorrowLimit,
     };
   }, [
-    amount,
     collateralAmount,
     collateralRatio,
     xlmToOUsdRate,
     assetToBase,
     userPoolData,
     newPositionEstimate,
+    price,
   ]);
 
   return (
@@ -87,9 +85,9 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
         paddingBlock: '14px',
         color: 'white',
         background:
-          'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',      
+          'linear-gradient(360deg, rgba(226, 226, 226, 0.1024) -0.02%, rgba(0, 0, 0, 0.1024) 99.98%)',
         borderBottomRightRadius: '17px',
-        borderBottomLeftRadius: '17px'
+        borderBottomLeftRadius: '17px',
       }}
     >
       <Typography
@@ -141,7 +139,6 @@ const TransactionOverview: React.FC<TransactionOverviewProps> = ({
     </Box>
   );
 };
-
 interface OverviewItemProps {
   label: string;
   value: string;

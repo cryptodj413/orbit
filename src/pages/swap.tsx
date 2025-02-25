@@ -8,10 +8,10 @@ import { StrKey, Asset, rpc } from '@stellar/stellar-sdk';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import TokenSelection from '../components/common/TokenSelection';
-import { TokenType } from '../interfaces';
+import { TokenType } from '../interfaces/tokens';
 import { useWallet, TxStatus } from '../contexts/wallet';
 import { toBalance, bigIntToFloat, floatToBigInt } from '../utils/formatter';
-import swapBackground from '../assets/swapBackground.svg';
+import swapBackground from '../../public/background/swapBackground.svg';
 import {
   NEXT_PUBLIC_COLLATERAL_ASSET,
   NEXT_PUBLIC_STABLECOIN_ASSET,
@@ -46,7 +46,7 @@ const OverviewItem = ({
   value: string;
   icon?: React.ReactElement;
 }) => {
-  const [first, setFirst] = useState(true);
+  const [first, setFirst] = useState<boolean>(true);
 
   useEffect(() => {
     setFirst(false);
@@ -55,7 +55,11 @@ const OverviewItem = ({
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
       <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
-        {!first && icon && <Box component='span' sx={{ mr: 1 }}>{icon}</Box>}
+        {!first && icon && (
+          <Box component="span" sx={{ mr: 1 }}>
+            {icon}
+          </Box>
+        )}
         {label}
       </Typography>
       <Typography sx={{ fontSize: '13px', fontWeight: 600 }}>{value}</Typography>
@@ -110,11 +114,25 @@ const SwapPage: NextPage = () => {
         };
 
         const response = await routerPairFor(NEXT_PUBLIC_ROUTER_ID || '', args);
-        if (response?.result?.retval) {
+
+        if ('result' in response && response.result) {
           const retval = response.result.retval;
-          if (retval._value?._value instanceof Uint8Array) {
-            const contractId = Buffer.from(retval._value._value);
-            setPairAddress(StrKey.encodeContract(contractId));
+
+          if ('retval' in response.result && retval) {
+            if ('value' in retval && typeof retval.value === 'function') {
+              const value = retval.value(); // Call the function to get the actual value
+
+              if (value instanceof Uint8Array) {
+                const contractId = Buffer.from(value);
+                setPairAddress(StrKey.encodeContract(contractId));
+              } else {
+                console.error('retval.value() did not return a Uint8Array:', value);
+              }
+            } else {
+              console.error('retval.value is not a function or is missing:', retval);
+            }
+          } else {
+            console.error('retval is missing in result:', response.result);
           }
         }
       } catch (error) {
@@ -136,7 +154,7 @@ const SwapPage: NextPage = () => {
       setOutputAmount('');
       return;
     }
-    // setIsCalculating(true)
+    setIsCalculating(true);
     try {
       if (selectedInputToken.code === selectedOutputToken.code) {
         setOutputAmount(inputValue);
@@ -151,20 +169,32 @@ const SwapPage: NextPage = () => {
 
       const response = await routerGetAmountOut(NEXT_PUBLIC_ROUTER_ID || '', args);
 
-      if (response?.result?.retval?._value) {
-        const outputValue = response.result.retval._value[1];
-        if (outputValue?._value?._attributes?.lo?._value) {
-          const amount = bigIntToFloat(BigInt(outputValue._value._attributes.lo._value));
-          setOutputAmount(amount);
-          const rate = Number(amount) / Number(inputValue);
-          setExchangeRate(String(rate));
+      if ('result' in response && response.result && 'retval' in response.result) {
+        const retval = response.result.retval;
+
+        if ('_value' in retval && Array.isArray(retval._value)) {
+          const outputValue = retval._value[1];
+
+          if (outputValue && '_value' in outputValue && '_attributes' in outputValue._value) {
+            const attributes = outputValue._value._attributes;
+
+            if ('lo' in attributes && '_value' in attributes.lo) {
+              const amount = bigIntToFloat(BigInt(attributes.lo._value));
+              setOutputAmount(amount);
+
+              const rate = Number(amount) / Number(inputValue);
+              setExchangeRate(String(rate));
+            }
+          }
         }
+      } else {
+        console.error('Response structure is unexpected:', response);
       }
     } catch (error) {
       console.error('Failed to get output amount:', error);
       setOutputAmount('');
     } finally {
-      // setIsCalculating(false);
+      setIsCalculating(false);
     }
   };
 
@@ -267,7 +297,12 @@ const SwapPage: NextPage = () => {
               />
             </Box>
             <div className="absolute left-0 top-0 w-full h-full">
-              <img alt='swap-background' src={swapBackground.src} width='100%' height='100%' />
+              <Image
+                src={swapBackground.src}
+                width={swapBackground.width}
+                height={swapBackground.height}
+                alt="swap-back"
+              />
             </div>
           </Box>
 
@@ -281,7 +316,7 @@ const SwapPage: NextPage = () => {
           </p>
           <p className="text-[#ffffffcc]  flex items-center justify-center gap-2">
             <SellOutlinedIcon />
-            0.5% = 154.12 XLM
+            0.3% = {(Number(outputAmount) * 0.003).toFixed(2)} {selectedOutputToken.code}
           </p>
         </div>
 
@@ -304,27 +339,31 @@ const SwapPage: NextPage = () => {
               gutterBottom
               sx={{ fontSize: '16px', fontWeight: '600', mb: 2 }}
             >
-              Transaction Overview
+              {Number(bigIntToFloat(inputTokenBalance)) >= Number(inputAmount)
+                ? 'Transaction Overview'
+                : 'BalanceError!'}
             </Typography>
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={12}>
-                <OverviewItem
-                  label="You Swap"
-                  value={`${inputAmount} ${selectedInputToken.code}`}
-                />
-                <OverviewItem
-                  label="You Receive"
-                  value={`${Number(outputAmount).toFixed(2)} ${selectedOutputToken.code}`}
-                />
+            {Number(bigIntToFloat(inputTokenBalance)) >= Number(inputAmount) && (
+              <Grid container spacing={4}>
+                <Grid item xs={12} md={12}>
+                  <OverviewItem
+                    label="You Swap"
+                    value={`${inputAmount} ${selectedInputToken.code}`}
+                  />
+                  <OverviewItem
+                    label="You Receive"
+                    value={`${Number(outputAmount).toFixed(2)} ${selectedOutputToken.code}`}
+                  />
 
-                <OverviewItem
-                  icon={<LocalGasStationIcon />}
-                  label="Gas:"
-                  value={`${toBalance(BigInt((simResponse as any)?.minResourceFee ?? 0), 7)} XLM`}
-                />
-                <OverviewItem label="Platform Fee:" value={`0.5%`} />
+                  <OverviewItem
+                    icon={<LocalGasStationIcon />}
+                    label="Gas:"
+                    value={`${toBalance(BigInt((simResponse as any)?.minResourceFee ?? 0), 7)} XLM`}
+                  />
+                  <OverviewItem label="Platform Fee:" value={`0.3%`} />
+                </Grid>
               </Grid>
-            </Grid>
+            )}
           </Box>
         )}
       </div>
@@ -355,7 +394,7 @@ const SwapPage: NextPage = () => {
             },
           }}
         >
-          {'Submit Transaction'}
+          {isCalculating ? 'Processing ... ' : 'Submit Transaction'}
         </Button>
 
         {txError && (

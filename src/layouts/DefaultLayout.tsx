@@ -1,12 +1,11 @@
 import React, { ReactNode } from 'react';
-import { useRouter } from 'next/router';
 import { Box } from '@mui/material';
 import NavBar from '../components/nav/NavBar';
 import { TxStatus, useWallet } from '../contexts/wallet';
 import LoadingComponent from '../components/status/loading';
 import SuccessComponent from '../components/status/success';
 import FailComponent from '../components/status/failed';
-import bg from '../assets/background.png';
+import bg from '../../public/background/background.png';
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { txStatus } = useWallet();
@@ -30,7 +29,6 @@ const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 export default function DefaultLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
   return (
     <Box
       sx={{
@@ -53,7 +51,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          filter: 'brightness(1.0)', // Adjust value between 0-1
+          filter: 'brightness(1.0)', 
           zIndex: 0,
         },
         '& > *': {
@@ -71,8 +69,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           alignItems: 'center',
           my: 'auto',
         }}
-        className={`${(router.pathname === '/dashboard' || router.pathname === '/') && 'mix-blend-hard-light'}`}
-        // className={'mix-blend-hard-light'}
+        className={'mix-blend-hard-light'}
       >
         <NavBar />
         <ChildrenCard>{children}</ChildrenCard>

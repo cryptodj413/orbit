@@ -33,7 +33,11 @@ import {
 import { scaleInputToBigInt } from '../../utils/scval';
 import { toBalance, toPercentage } from '../../utils/formatter';
 import { useWallet } from '../../contexts/wallet';
-import { NEXT_PUBLIC_COLLATERAL_ASSET, NEXT_PUBLIC_STABLECOIN_ASSET, NEXT_PUBLIC_POOL } from '../../config/constants';
+import {
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+  NEXT_PUBLIC_POOL,
+} from '../../config/constants';
 interface OverviewProps {
   assetToBase: number;
   selected: string;
@@ -73,18 +77,8 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(e.target.value);
-    // if (reserve && poolUser) {
-    //   let curSupplied = poolUser.getCollateralFloat(reserve);
-    //   let realWithdraw = amount;
-    //   let num_withdraw = Number(amount);
-    //   if (num_withdraw > curSupplied) {
-    //     realWithdraw = curSupplied.toFixed(decimals);
-    //     num_withdraw = Number(realWithdraw);
-    //   }
-    //   setAmount(realWithdraw);
     setToWithdrawSubmit(amount);
     setLoadingEstimate(true);
-    // }
   };
 
   const handleSubmitTransaction = async (sim: boolean) => {
@@ -133,7 +127,6 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
   const oraclePrice = reserve ? poolOracle?.getPriceFloat(reserve.assetId) : 0;
 
   const newPoolUser = parsedSimResult && new PoolUser(walletAddress, parsedSimResult, new Map());
-  // console.log('newPoolUser-----', newPoolUser)
   const newPositionsEstimate =
     pool && parsedSimResult && poolOracle
       ? PositionsEstimate.build(pool, poolOracle, parsedSimResult)

@@ -18,12 +18,10 @@ export enum ViewType {
   COMPACT,
   REGULAR,
 }
-
 export interface TrackedPool {
   id: string;
   name: string;
 }
-
 export interface ISettingsContext {
   viewType: ViewType;
   network: Network & { horizonUrl: string };
@@ -44,8 +42,8 @@ const SettingsContext = React.createContext<ISettingsContext | undefined>(undefi
 
 export const SettingsProvider = ({ children = null as any }) => {
   const theme = useTheme();
-  const compact = useMediaQuery(theme.breakpoints.down('lg')); // hook causes refresh on change
-  const mobile = useMediaQuery(theme.breakpoints.down('sm')); // hook causes refresh on change
+  const compact = useMediaQuery(theme.breakpoints.down('lg')); 
+  const mobile = useMediaQuery(theme.breakpoints.down('sm')); 
 
   const [network, setNetwork] = useState<Network & { horizonUrl: string }>({
     rpc: DEFAULT_RPC,
