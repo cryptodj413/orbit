@@ -561,7 +561,7 @@ export function usePoolMeta(
             return { id: poolId, version: Version.V1, ...metadata } as PoolMeta;
           }
         } else if (
-          metadata.wasmHash === 'd89babfef41542f013451644f3de18c05a1cc0a81bef447f3c15d26f75ee0f38'
+          metadata.wasmHash === '6a7c67449f6bad0d5f641cfbdf03f430ec718faa85107ecb0b97df93410d1c43'
         ) {
           // v2 pool - validate backstop is correct
           if (metadata.backstop === BACKSTOP_ID_V2) {
