@@ -1,7 +1,7 @@
-'use client'
- 
+'use client';
+
 import { useState } from 'react';
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import { NextPage } from 'next';
 import {
   Button,
@@ -26,15 +26,18 @@ import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../../hooks/debounce';
 import {
   usePool,
   usePoolMeta,
-  usePoolEmissions,
   usePoolOracle,
-  useTokenMetadata,
   usePoolUser,
 } from '../../hooks/api';
 import { scaleInputToBigInt } from '../../utils/scval';
-import { estimateEmissionsApr } from '../../utils/math';
-import { toBalance, toCompactAddress, toPercentage } from '../../utils/formatter';
+import { toBalance, toPercentage } from '../../utils/formatter';
 import { useWallet } from '../../contexts/wallet';
+import {
+  NEXT_PUBLIC_POOL,
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+} from '../../config/constants';
+
 interface OverviewProps {
   assetToBase: number;
   selected: string;
@@ -51,8 +54,8 @@ const Item = ({ label, value }) => {
 };
 
 const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal }) => {
-  const router = useRouter()
-  const [amount, setAmount] = useState<string | undefined>(undefined);
+  const router = useRouter();
+  const [amount, setAmount] = useState<string | undefined>('');
   const [toWithdrawSubmit, setToWithdrawSubmit] = useState<string | undefined>(undefined);
   const [loadingEstimate, setLoadingEstimate] = useState<boolean>(false);
   const [simResponse, setSimResponse] = useState<rpc.Api.SimulateTransactionResponse>();
@@ -60,35 +63,22 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
 
   const { connected, txType, poolSubmit, walletAddress } = useWallet();
 
-  const poolId = process.env.NEXT_PUBLIC_POOL || '';
+  const poolId = NEXT_PUBLIC_POOL || '';
   const assetId =
-    selected === 'XLM'
-      ? process.env.NEXT_PUBLIC_COLLATERAL_ASSET || ''
-      : process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '';
+    selected === 'XLM' ? NEXT_PUBLIC_COLLATERAL_ASSET || '' : NEXT_PUBLIC_STABLECOIN_ASSET || '';
 
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolUser } = usePoolUser(pool);
-  const { data: poolEmissions } = usePoolEmissions(pool);
+  // const { data: poolEmissions } = usePoolEmissions(pool);
   const { data: poolOracle } = usePoolOracle(pool);
-  const { data: tokenMetadata } = useTokenMetadata(assetId);
   const reserve = pool?.reserves.get(assetId);
   const decimals = reserve?.config.decimals ?? 7;
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(e.target.value);
-    // if (reserve && poolUser) {
-    //   let curSupplied = poolUser.getCollateralFloat(reserve);
-    //   let realWithdraw = amount;
-    //   let num_withdraw = Number(amount);
-    //   if (num_withdraw > curSupplied) {
-    //     realWithdraw = curSupplied.toFixed(decimals);
-    //     num_withdraw = Number(realWithdraw);
-    //   }
-    //   setAmount(realWithdraw);
     setToWithdrawSubmit(amount);
     setLoadingEstimate(true);
-    // }
   };
 
   const handleSubmitTransaction = async (sim: boolean) => {
@@ -105,10 +95,10 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
           },
         ],
       };
-      const result = await poolSubmit(poolMeta, submitArgs, sim)
-      if(!sim) {
-        setAmount('')
-        router.push('dashboard')
+      const result = await poolSubmit(poolMeta, submitArgs, sim);
+      if (!sim) {
+        setAmount('');
+        router.push('dashboard');
       }
       return result;
     }
@@ -126,18 +116,7 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
     setLoadingEstimate(false);
   });
 
-  const reserveEmissions = poolEmissions?.find((e) => e.assetId === reserve?.assetId);
-  const emissionsPerAsset =
-    reserveEmissions?.supplyEmissions !== undefined && reserve
-      ? reserveEmissions.supplyEmissions.emissionsPerYearPerToken(
-          reserve.totalSupply(),
-          reserve.config.decimals,
-        )
-      : 0;
-  const oraclePrice = reserve ? poolOracle?.getPriceFloat(reserve.assetId) : 0;
-
   const newPoolUser = parsedSimResult && new PoolUser(walletAddress, parsedSimResult, new Map());
-  // console.log('newPoolUser-----', newPoolUser)
   const newPositionsEstimate =
     pool && parsedSimResult && poolOracle
       ? PositionsEstimate.build(pool, poolOracle, parsedSimResult)

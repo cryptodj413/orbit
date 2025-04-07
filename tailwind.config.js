@@ -15,7 +15,16 @@ export default {
         platinum: "#E2E2E2",
         zaffre: "#0211A9",
         inactive: "#83868F"
-      }
+      },
+      blur: {
+        'custom': '133.64px',
+      },
+      mixBlendMode: {
+        'hard-light': 'hard-light',
+      },
+      backgroundBlendMode: {
+        'hard-light': 'hard-light',
+      },
     },
   },
   plugins: [],

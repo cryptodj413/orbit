@@ -1,8 +1,8 @@
 import React from 'react';
-import { Box, Typography, IconButton, Menu, MenuItem, TextField } from '@mui/material';
-// import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import Image from 'next/image';
+import { Box, Typography, Menu, MenuItem, TextField } from '@mui/material';
 import arrowDown from '../../../public/icons/arrowdown.svg';
-import { TokenType } from '../../interfaces';
+import { TokenType } from '../../interfaces/tokens';
 
 interface TokenSelectionProps {
   tokens: TokenType[];
@@ -75,14 +75,14 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
         >
           <div className="flex items-center h-[19px]">
             <div className="w-[15.35px] h-[15.35px] mr-[5.12px]">
-              <img src={selectedToken.icon} alt={selectedToken.code} width="100%" height="100%" />
+              <Image src={selectedToken.icon} alt={selectedToken.code} width={18} height={18} />
             </div>
             <div className="text-[16px] text-white font-normal leading-[19.2px]">
               {selectedToken.code}
             </div>
           </div>
           <div className="w-[6.43px] h-[3.84px]">
-            <img src={arrowDown.src} alt="*" width="100%" height="100%" />
+            <Image src={arrowDown.src} alt="*" width={18} height={18} />
           </div>
         </button>
         <Menu
@@ -101,11 +101,11 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
           {tokens.map((token) => (
             <MenuItem key={token.contract} onClick={() => handleTokenSelect(token)}>
               <Box display="flex" alignItems="center" gap={1}>
-                <img
+                <Image
                   src={token.icon}
                   alt={token.code}
-                  width="20"
-                  height="20"
+                  width={20}
+                  height={20}
                   style={{ borderRadius: '100px' }}
                 />
                 <Typography variant="body2">{token.code}</Typography>
@@ -133,7 +133,7 @@ const TokenSelection: React.FC<TokenSelectionProps> = ({
             color: 'white',
             textAlign: alignment,
             lineHeight: '41.35px',
-            letterSpacing: '8%',
+            letterSpacing: '3px',
             fontWeight: 700,
           },
           width: '100%',

@@ -1,14 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { Grid, MenuItem, Select, SelectChangeEvent, Tooltip } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import OverViewBox from '../components/repay/OverViewBox';
 import {
-  useBackstop,
   usePool,
   usePoolMeta,
-  usePoolEmissions,
   usePoolOracle,
   usePoolUser,
   useTokenBalance,
@@ -16,30 +14,39 @@ import {
   useHorizonAccount,
 } from '../hooks/api';
 import { toBalance, toPercentage } from '../utils/formatter';
+import {
+  NEXT_PUBLIC_POOL,
+  NEXT_PUBLIC_COLLATERAL_ASSET,
+  NEXT_PUBLIC_STABLECOIN_ASSET,
+} from '../config/constants';
 
 const Repay: NextPage = () => {
-  const [selected, setSelected] = React.useState('OUSD');
+  const [selected, setSelected] = useState<string>('OUSD');
+  const [clientReady, setClientReady] = useState(false);
 
-  const poolId = process.env.NEXT_PUBLIC_POOL || '';
+  useEffect(() => {
+    setClientReady(true);
+  }, []);
+
+  const poolId = NEXT_PUBLIC_POOL || '';
   const assetId =
-    selected === 'XLM'
-      ? process.env.NEXT_PUBLIC_COLLATERAL_ASSET || ''
-      : process.env.NEXT_PUBLIC_STABLECOIN_ASSET || '';
+    selected === 'XLM' ? NEXT_PUBLIC_COLLATERAL_ASSET || '' : NEXT_PUBLIC_STABLECOIN_ASSET || '';
 
-  const { data: poolMeta } = usePoolMeta(poolId);
-  const { data: pool } = usePool(poolMeta);
-  const { data: poolEmissions } = usePoolEmissions(pool);
-  const { data: poolUser } = usePoolUser(pool);
-  const { data: tokenMetadata } = useTokenMetadata(assetId);
-  const { data: poolOracle } = usePoolOracle(pool);
-  const { data: horizonAccount } = useHorizonAccount();
-  const reserve = pool?.reserves.get(assetId);
-  const { data: tokenBalance } = useTokenBalance(
-    reserve?.assetId,
-    tokenMetadata?.asset,
-    horizonAccount,
-    reserve !== undefined,
-  );
+  const poolMeta = usePoolMeta(poolId)?.data || null;
+  const pool = usePool(poolMeta)?.data || null;
+  const poolUser = usePoolUser(pool)?.data || null;
+  const tokenMetadata = useTokenMetadata(assetId)?.data || null;
+  const poolOracle = usePoolOracle(pool)?.data || null;
+  const horizonAccount = useHorizonAccount()?.data || null;
+
+  const reserve = pool?.reserves.get(assetId) || null;
+  const tokenBalance =
+    useTokenBalance(
+      reserve?.assetId ?? undefined, // Ensure it's either `Asset` or `undefined`
+      tokenMetadata?.asset ?? undefined, // Ensure it's either `Asset` or `undefined`
+      horizonAccount ?? undefined, // Ensure it's either correct type or `undefined`
+      !!reserve,
+    )?.data || null;
 
   const handleChange = (event: SelectChangeEvent) => {
     setSelected(event.target.value);
@@ -53,6 +60,8 @@ const Repay: NextPage = () => {
     { label: 'Liability Fator', value: toPercentage(reserve?.getLiabilityFactor()) },
     { label: 'Wallet Balance', value: toBalance(tokenBalance, reserve?.config.decimals) },
   ];
+
+  if (!clientReady) return null;
 
   return (
     <>

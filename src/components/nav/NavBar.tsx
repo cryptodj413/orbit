@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import NavItem from './NavItem';
 import { WalletMenu } from './WalletMenu';
@@ -16,7 +15,7 @@ const NavBar: React.FC = () => {
   }, [router.pathname]);
 
   return (
-    <div className="w-[680px] h-12 flex justify-between items-center">
+    <div className="w-[680px] h-12 flex justify-between items-center navbar">
       <div className="flex gap-4 space justify-between rounded-[22px] w-[279px] h-full items-center bg-richBlack px-4 mix-blend-hard-light">
         {['Dashboard', 'Swap', 'Borrow'].map((title, index) => (
           <NavItem

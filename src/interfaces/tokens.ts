@@ -10,16 +10,3 @@ export interface TokenType {
   decimals?: number;
   asset: Asset;
 }
-
-export interface tokensResponse {
-  network: string;
-  tokens: TokenType[];
-}
-
-export type TokenMapType = {
-  [key: string]: TokenType;
-};
-
-export type TokenBalancesMap = {
-  [tokenAddress: string]: { usdValue: number; balance: string };
-};

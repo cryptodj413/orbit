@@ -7,35 +7,49 @@ interface CollateralRatioSliderProps {
 }
 
 const CollateralRatioSlider: React.FC<CollateralRatioSliderProps> = ({ value, onChange }) => (
-  <Box sx={{ borderTop: '1px solid rgba(255, 255, 255, 0.32)', paddingBlock: '16px', paddingInline: '50px'}}>
-    <Typography variant="subtitle1" color="white" marginBottom='8px'>
+  <Box
+    sx={{
+      borderTop: '1px solid rgba(255, 255, 255, 0.32)',
+      paddingBlock: '16px',
+      paddingInline: '50px',
+    }}
+  >
+    <Typography variant="subtitle1" color="white" marginBottom="8px">
       Collateral Ratio
     </Typography>
 
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Slider
         value={value}
         onChange={onChange}
         aria-labelledby="collateral-ratio-slider"
         valueLabelDisplay="auto"
-        size='small'
+        size="small"
         step={1}
         marks={[
-          { 
-            value: 135, 
-            label: <span style={{ textShadow: value === 135 ? '0 4px 4px #D1CA45' : 'none' }}>135%</span>
+          {
+            value: 135,
+            label: (
+              <span style={{ textShadow: value === 135 ? '0 4px 4px #D1CA45' : 'none' }}>135%</span>
+            ),
           },
-          { 
-            value: 200, 
-            label: <span style={{ textShadow: value === 200 ? '0 4px 4px #D1CA45' : 'none' }}>200%</span>
+          {
+            value: 200,
+            label: (
+              <span style={{ textShadow: value === 200 ? '0 4px 4px #D1CA45' : 'none' }}>200%</span>
+            ),
           },
-          { 
-            value: 250, 
-            label: <span style={{ textShadow: value === 250 ? '0 4px 4px #D1CA45' : 'none' }}>250%</span>
+          {
+            value: 250,
+            label: (
+              <span style={{ textShadow: value === 250 ? '0 4px 4px #D1CA45' : 'none' }}>250%</span>
+            ),
           },
-          { 
-            value: 300, 
-            label: <span style={{ textShadow: value === 300 ? '0 4px 4px #D1CA45' : 'none' }}>300%</span>
+          {
+            value: 300,
+            label: (
+              <span style={{ textShadow: value === 300 ? '0 4px 4px #D1CA45' : 'none' }}>300%</span>
+            ),
           },
         ]}
         min={135}
@@ -56,7 +70,7 @@ const CollateralRatioSlider: React.FC<CollateralRatioSliderProps> = ({ value, on
           '& .MuiSlider-mark': {
             backgroundColor: '#797979',
             opacity: 0.4,
-            width: 6, 
+            width: 6,
             height: 6,
             borderRadius: '50%',
           },

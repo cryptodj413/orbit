@@ -11,30 +11,43 @@ import {
   PoolOracle,
   PoolUser,
   Positions,
-  Reserve,
   UserBalance,
   Version,
   ErrorTypes,
   BackstopPoolV1,
   BackstopPoolV2,
-  ReserveEmissions, 
   Network,
-  TokenMetadata
+  TokenMetadata,
 } from '@blend-capital/blend-sdk';
-import { Account, Address, Asset, BASE_FEE, Horizon, rpc, TransactionBuilder, xdr } from '@stellar/stellar-sdk';
-import { keepPreviousData, useQuery, useQueryClient, UseQueryResult, UseQueryOptions } from '@tanstack/react-query';
+import {
+  Account,
+  Address,
+  Asset,
+  BASE_FEE,
+  Horizon,
+  rpc,
+  TransactionBuilder,
+  xdr,
+} from '@stellar/stellar-sdk';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+  UseQueryResult,
+  UseQueryOptions,
+} from '@tanstack/react-query';
 import { useSettings } from '../contexts';
 import { useWallet } from '../contexts/wallet';
-import { getTokenMetadataFromTOML, StellarTokenMetadata } from '../external/stellar-toml';
+import { getTokenMetadataFromTOML } from '../external/stellar-toml';
 import { getTokenBalance } from '../external/token';
 import { ReserveTokenMetadata } from '../utils/token';
 import { NOT_BLEND_POOL_ERROR_MESSAGE, PoolMeta } from './types';
-
+import { NEXT_PUBLIC_BACKSTOP, NEXT_PUBLIC_BACKSTOP_V2 } from '../config/constants';
 
 const DEFAULT_STALE_TIME = 30 * 1000;
 const USER_STALE_TIME = 60 * 1000;
-const BACKSTOP_ID = process.env.NEXT_PUBLIC_BACKSTOP || '';
-const BACKSTOP_ID_V2 = process.env.NEXT_PUBLIC_BACKSTOP_V2 || '';
+const BACKSTOP_ID = NEXT_PUBLIC_BACKSTOP || '';
+const BACKSTOP_ID_V2 = NEXT_PUBLIC_BACKSTOP_V2 || '';
 
 //********** Query Client Data **********//
 
@@ -116,7 +129,10 @@ export function useCurrentBlockNumber(): UseQueryResult<number, Error> {
  * @param enabled - Whether the query is enabled (optional - defaults to true)
  * @returns Query result with the pool data.
  */
-export function usePool(poolMeta: PoolMeta | undefined, enabled: boolean = true): UseQueryResult<Pool, Error> {
+export function usePool(
+  poolMeta: PoolMeta | undefined,
+  enabled: boolean = true,
+): UseQueryResult<Pool, Error> {
   const { network } = useSettings();
   return useQuery({
     staleTime: DEFAULT_STALE_TIME,
@@ -147,7 +163,7 @@ export function usePool(poolMeta: PoolMeta | undefined, enabled: boolean = true)
  */
 export function usePoolOracle(
   pool: Pool | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<PoolOracle, Error> {
   return useQuery({
     staleTime: DEFAULT_STALE_TIME,
@@ -171,7 +187,7 @@ export function usePoolOracle(
  */
 export function usePoolUser(
   pool: Pool | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<PoolUser, Error> {
   const { walletAddress, connected } = useWallet();
   return useQuery({
@@ -181,7 +197,7 @@ export function usePoolUser(
     placeholderData: new PoolUser(
       walletAddress,
       new Positions(new Map(), new Map(), new Map()),
-      new Map()
+      new Map(),
     ),
     queryFn: async () => {
       if (pool !== undefined && walletAddress !== '') {
@@ -200,7 +216,7 @@ export function usePoolUser(
  */
 export function useBackstop(
   version: Version | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<Backstop, Error> {
   const { network } = useSettings();
   return useQuery({
@@ -221,7 +237,7 @@ export function useBackstop(
  */
 export function useBackstopPool(
   poolMeta: PoolMeta | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<BackstopPool, Error> {
   const { network } = useSettings();
   return useQuery({
@@ -246,7 +262,7 @@ export function useBackstopPool(
  */
 export function useBackstopPoolUser(
   poolId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<BackstopPoolUser, Error> {
   const { network } = useSettings();
   const { walletAddress, connected } = useWallet();
@@ -258,7 +274,7 @@ export function useBackstopPoolUser(
       walletAddress,
       poolId,
       new UserBalance(BigInt(0), [], BigInt(0), BigInt(0)),
-      undefined
+      undefined,
     ),
     queryFn: async () => {
       if (walletAddress !== '') {
@@ -307,7 +323,7 @@ export function useTokenBalance(
   tokenId: string | undefined,
   asset: Asset | undefined,
   account: Horizon.AccountResponse | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<bigint> {
   const { walletAddress, connected } = useWallet();
   const { network } = useSettings();
@@ -345,7 +361,7 @@ export function useTokenBalance(
         stellarRpc,
         network.passphrase,
         tokenId,
-        new Address(walletAddress)
+        new Address(walletAddress),
       );
     },
   });
@@ -369,7 +385,7 @@ const AUCTION_EVENT_FILTERS_V2 = [[xdr.ScVal.scvSymbol('new_auction').toXDR('bas
  */
 export function useAuctionEventsLongQuery(
   poolMeta: PoolMeta | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<{ events: PoolEvent[]; latestLedger: number }, Error> {
   const { network } = useSettings();
   return useQuery({
@@ -422,7 +438,6 @@ export function useAuctionEventsLongQuery(
   });
 }
 
-
 /**
  * Fetch auction related events starting from the `lastCurser` or `lastLedgerFetched`.
  * @param poolId - The pool ID
@@ -433,7 +448,7 @@ export function useAuctionEventsLongQuery(
 export function useAuctionEventsShortQuery(
   poolId: string,
   lastLedgerFetched: number,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<{ events: PoolEvent[]; latestLedger: number }, Error> {
   const { network } = useSettings();
   // TODO: Use cursor instead of lastLedger when possible once RPC cursor usage is fixed.
@@ -481,7 +496,7 @@ export function useAuctionEventsShortQuery(
  */
 export function useSimulateOperation<T>(
   operation_str: string,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<rpc.Api.SimulateTransactionResponse> {
   const { walletAddress, connected } = useWallet();
   const { network } = useSettings();
@@ -515,25 +530,10 @@ export function useSimulateOperation<T>(
  * @param enabled - Whether the query is enabled (optional - defaults to true)
  * @returns Query result with the token metadata.
  */
-export function useTokenMetadataFromToml(
-  reserve: Reserve,
-  enabled: boolean = true
-): UseQueryResult<StellarTokenMetadata, Error> {
-  const { network } = useSettings();
-  return useQuery({
-    staleTime: Infinity,
-    queryKey: ['tokenMetadata', reserve.assetId],
-    enabled,
-    queryFn: async () => {
-      const horizon = new Horizon.Server(network.horizonUrl, network.opts);
-      return await getTokenMetadataFromTOML(horizon, reserve);
-    },
-  });
-}
 
 export function useTokenMetadata(
   assetId: string | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<ReserveTokenMetadata, Error> {
   const { network } = useSettings();
   return useQuery(createTokenMetadataQuery(network, assetId, enabled));
@@ -541,7 +541,7 @@ export function useTokenMetadata(
 
 export function usePoolMeta(
   poolId: string,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryResult<PoolMeta, Error> {
   const { network } = useSettings();
 
@@ -560,7 +560,7 @@ export function usePoolMeta(
             return { id: poolId, version: Version.V1, ...metadata } as PoolMeta;
           }
         } else if (
-          metadata.wasmHash === 'd89babfef41542f013451644f3de18c05a1cc0a81bef447f3c15d26f75ee0f38'
+          metadata.wasmHash === '6a7c67449f6bad0d5f641cfbdf03f430ec718faa85107ecb0b97df93410d1c43'
         ) {
           // v2 pool - validate backstop is correct
           if (metadata.backstop === BACKSTOP_ID_V2) {
@@ -587,33 +587,12 @@ export function usePoolMeta(
   });
 }
 
-export function usePoolEmissions(
-  pool: Pool | undefined,
-  enabled: boolean = true
-): UseQueryResult<ReserveEmissions[], Error> {
-  const { network } = useSettings();
-  return useQuery({
-    staleTime: USER_STALE_TIME,
-    queryKey: ['poolEmissions', pool?.id],
-    enabled: enabled && pool !== undefined,
-    queryFn: async () => {
-      if (pool !== undefined) {
-        return await Promise.all(
-          Array.from(pool.reserves.values()).map((reserve) =>
-            ReserveEmissions.load(network, reserve)
-          )
-        );
-      }
-    },
-  });
-}
-
 function createTokenMetadataQuery(
   network: Network & {
     horizonUrl: string;
   },
   assetId: string | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
 ): UseQueryOptions<ReserveTokenMetadata, Error> {
   return {
     staleTime: Infinity,

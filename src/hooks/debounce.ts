@@ -15,7 +15,7 @@ export function useDebouncedState(
   value: any,
   delay: number,
   txType: TxType,
-  callbackFn?: (value: any) => void
+  callbackFn?: (value: any) => void,
 ) {
   const [debouncedValue, setDebouncedValue] = useState(value);
 

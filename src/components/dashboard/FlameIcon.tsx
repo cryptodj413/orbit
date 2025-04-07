@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Box } from '@mui/material';
 import flameIcon from '../../../public/icons/flame.png';
 
@@ -14,7 +15,7 @@ const FlameIcon:React.FC = () => {
         width: '32px',
         height: '32px',
     }}>
-      <img src={flameIcon.src} alt="Flame Icon" />
+      <Image src={flameIcon.src} alt="Flame Icon" width={32} height={32}/>
     </Box>
   );
 };
