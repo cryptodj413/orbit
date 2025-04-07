@@ -26,7 +26,6 @@ import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../../hooks/debounce';
 import {
   usePool,
   usePoolMeta,
-  usePoolEmissions,
   usePoolOracle,
   usePoolUser,
 } from '../../hooks/api';
@@ -71,7 +70,7 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolUser } = usePoolUser(pool);
-  const { data: poolEmissions } = usePoolEmissions(pool);
+  // const { data: poolEmissions } = usePoolEmissions(pool);
   const { data: poolOracle } = usePoolOracle(pool);
   const reserve = pool?.reserves.get(assetId);
   const decimals = reserve?.config.decimals ?? 7;
@@ -116,16 +115,6 @@ const OverViewBox: NextPage<OverviewProps> = ({ assetToBase, selected, maxVal })
     }
     setLoadingEstimate(false);
   });
-
-  const reserveEmissions = poolEmissions?.find((e) => e.assetId === reserve?.assetId);
-  const emissionsPerAsset =
-    reserveEmissions?.supplyEmissions !== undefined && reserve
-      ? reserveEmissions.supplyEmissions.emissionsPerYearPerToken(
-          reserve.totalSupply(),
-          reserve.config.decimals,
-        )
-      : 0;
-  const oraclePrice = reserve ? poolOracle?.getPriceFloat(reserve.assetId) : 0;
 
   const newPoolUser = parsedSimResult && new PoolUser(walletAddress, parsedSimResult, new Map());
   const newPositionsEstimate =

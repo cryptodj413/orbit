@@ -11,7 +11,6 @@ import {
   usePoolOracle,
   usePoolUser,
   usePoolMeta,
-  usePoolEmissions,
   useTokenBalance,
   useHorizonAccount,
   useSimulateOperation,
@@ -56,25 +55,6 @@ const ColItem = ({ item, val }) => {
     </div>
   );
 };
-//   return (
-//     <div className="flex flex-col gap-2">
-//       <div className="flex justify-between bg-[#2050F229] rounded-lg px-1 py-3">
-//         <p className="text-base font-bold">Your supplied positions</p>
-//         <p className="text-base font-light">
-//           Total Supplied: <span className="text-lg font-bold">$612.79</span>
-//         </p>
-//       </div>
-//       <div className="flex justify-between">
-//         <ColItem item="Asset" val="XLM" />
-//         <ColItem item="Balance" val="3.06k" />
-//         <ColItem item="APR" val="151.09%" />
-//         <button className="w-40 py-2 px-6 bg-[#94fd0240] font-medium text-xl rounded-lg">
-//           Withdraw +
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
 
 const ConnectWallet = () => {
   return (
@@ -132,7 +112,6 @@ const Dashboard = () => {
   const { data: poolMeta } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
-  const { data: poolEmissions } = usePoolEmissions(pool);
   const { data: userPoolData, refetch: refetchPoolUser } = usePoolUser(pool);
 
   const { data: stellarBalance } = useTokenBalance(
@@ -149,8 +128,8 @@ const Dashboard = () => {
   const poolContract = poolId ? new PoolContractV1(poolId) : undefined;
 
   const { emissions, claimedTokens } =
-    userPoolData && pool && poolEmissions
-      ? userPoolData.estimateEmissions(pool, poolEmissions)
+    userPoolData && pool
+      ? userPoolData.estimateEmissions(Array.from(pool.reserves.values()))
       : { emissions: 0, claimedTokens: [] };
 
   const claimArgs: PoolClaimArgs = {
@@ -199,7 +178,6 @@ const Dashboard = () => {
       const collateral = userPoolData.getCollateralFloat(reserve);
       const supply = userPoolData.getSupplyFloat(reserve);
       const dTokens = userPoolData.getLiabilityDTokens(reserve);
-      // if (collateral > 0 || supply > 0) {
       const tokenInfo = getTokenInfo(assetId);
       balances.push({
         label: tokenInfo?.code || assetId,
@@ -207,7 +185,6 @@ const Dashboard = () => {
         borrowApr: toPercentage(reserve.borrowApr),
         supplyApr: toPercentage(reserve.supplyApr),
       });
-      // }
     });
     return balances;
   }, [pool, userPoolData]);
@@ -304,8 +281,8 @@ const Dashboard = () => {
           <div className="text-xl font-bold mb-4">My Positions</div>
           <div className="flex gap-4">
             <div className="flex flex-col font-medium">
-              <p className="text-base font-light">Net APR</p>
-              <p className="text-base font-medium">{toPercentage(userEst?.netApr)}</p>
+              <p className="text-base font-light">Net APY</p>
+              <p className="text-base font-medium">{toPercentage(userEst?.netApy)}</p>
             </div>
             <div className="flex flex-col font-medium">
               <p className="text-base font-light">Borrow Capacity</p>

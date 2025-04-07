@@ -16,7 +16,6 @@ import {
   ErrorTypes,
   BackstopPoolV1,
   BackstopPoolV2,
-  ReserveEmissions,
   Network,
   TokenMetadata,
 } from '@blend-capital/blend-sdk';
@@ -584,27 +583,6 @@ export function usePoolMeta(
         return false;
       }
       return failureCount < 3;
-    },
-  });
-}
-
-export function usePoolEmissions(
-  pool: Pool | undefined,
-  enabled: boolean = true,
-): UseQueryResult<ReserveEmissions[], Error> {
-  const { network } = useSettings();
-  return useQuery({
-    staleTime: USER_STALE_TIME,
-    queryKey: ['poolEmissions', pool?.id],
-    enabled: enabled && pool !== undefined,
-    queryFn: async () => {
-      if (pool !== undefined) {
-        return await Promise.all(
-          Array.from(pool.reserves.values()).map((reserve) =>
-            ReserveEmissions.load(network, reserve),
-          ),
-        );
-      }
     },
   });
 }
