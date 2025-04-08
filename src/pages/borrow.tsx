@@ -10,6 +10,7 @@ import StyledGrid from '../components/common/StyledGrid';
 import BalanceError from '../components/borrow/BalanceError';
 import { useWallet } from '../contexts/wallet';
 import { scaleInputToBigInt } from '../utils/scval';
+import { requiresTrustline } from '../utils/horizon';
 import {
   usePool,
   usePoolOracle,
@@ -25,6 +26,7 @@ import {
   NEXT_PUBLIC_COLLATERAL_ASSET,
   NEXT_PUBLIC_STABLECOIN_ASSET,
 } from '../config/constants';
+import { BLND_ASSET, OUSD_ASSET } from '../utils/token_display';
 
 //TODO: Get this through config or API
 const poolId = NEXT_PUBLIC_POOL || 'CC7OVK4NABUX52HD7ZBO7PQDZEAUJOH55G6V7OD6Q7LB6HNVPN7JYIEU';
@@ -52,12 +54,14 @@ const Borrow: NextPage = () => {
     asset: new Asset('XLM', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
   };
 
-  const { poolSubmit, txType, walletAddress } = useWallet();
+  const { poolSubmit, txType, walletAddress, createTrustlines, connected } = useWallet();
   const { data: poolMeta, error: poolError } = usePoolMeta(poolId);
   const { data: pool } = usePool(poolMeta);
   const { data: poolOracle } = usePoolOracle(pool);
   const { data: poolUser } = usePoolUser(pool);
-  const { data: horizonAccount } = useHorizonAccount();
+  const { data: account, data: horizonAccount, refetch: refechAccount } = useHorizonAccount();
+  const hasTrustline = !requiresTrustline(account, BLND_ASSET) && !requiresTrustline(account, OUSD_ASSET);
+  
 
   const collateral = pool?.reserves.get(NEXT_PUBLIC_COLLATERAL_ASSET || '');
   const stablecoin = pool?.reserves.get(NEXT_PUBLIC_STABLECOIN_ASSET || '');
@@ -145,6 +149,21 @@ const Borrow: NextPage = () => {
     }
   });
 
+  async function handleCreateTrustlineClick() {
+    if (connected) {
+      await createTrustlines([BLND_ASSET, OUSD_ASSET]);
+      refechAccount();
+    }
+  }
+
+  const handleClick = () => {
+    if(hasTrustline) {
+      handleSubmitTransaction(false)
+    } else {
+      handleCreateTrustlineClick()
+    }
+  }
+
   return (
     <>
       <StyledGrid>
@@ -205,8 +224,8 @@ const Borrow: NextPage = () => {
       <Button
         variant="contained"
         fullWidth
-        onClick={() => handleSubmitTransaction(false)}
-        disabled={isLoading || !collateralAmount || !walletAddress}
+        onClick={() => handleClick()}
+        disabled={ hasTrustline && (isLoading || !collateralAmount || !walletAddress)}
         sx={{
           mt: 2,
           padding: '16px 8px',
@@ -224,7 +243,10 @@ const Borrow: NextPage = () => {
           fontSize: '16px',
         }}
       >
-        {isLoading ? 'Processing...' : 'Submit Transaction'}
+        {hasTrustline
+         ? (isLoading ? 'Processing...' : 'Submit Transaction')
+         : 'Add trustline'
+        }
       </Button>
     </>
   );

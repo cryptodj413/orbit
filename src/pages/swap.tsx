@@ -11,6 +11,8 @@ import TokenSelection from '../components/common/TokenSelection';
 import { TokenType } from '../interfaces/tokens';
 import { useWallet, TxStatus } from '../contexts/wallet';
 import { toBalance, bigIntToFloat, floatToBigInt } from '../utils/formatter';
+import { BLND_ASSET, OUSD_ASSET } from '../utils/token_display';
+import { requiresTrustline } from '../utils/horizon';
 import swapBackground from '../../public/background/swapBackground.svg';
 import {
   NEXT_PUBLIC_COLLATERAL_ASSET,
@@ -52,6 +54,7 @@ const OverviewItem = ({
     setFirst(false);
   }, []);
 
+
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
       <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
@@ -76,7 +79,6 @@ const SwapPage: NextPage = () => {
   const [exchageRate, setExchangeRate] = useState<string>('0');
   const [selectedInputToken, setSelectedInputToken] = useState<TokenType>(tokens[0]);
   const [selectedOutputToken, setSelectedOutputToken] = useState<TokenType>(tokens[1]);
-  const [pairAddress, setPairAddress] = useState<string>('');
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [txError, setTxError] = useState<boolean>(false);
   const [txErrorMessage, setTxErrorMessage] = useState<string>();
@@ -86,13 +88,13 @@ const SwapPage: NextPage = () => {
     walletAddress,
     txType,
     swapExactTokensForTokens,
-    routerPairFor,
     routerGetAmountOut,
-    routerGetAmountIn,
     setTxStatus,
+    createTrustlines
   } = useWallet();
 
-  const { data: horizonAccount } = useHorizonAccount();
+  const { data: account, data: horizonAccount, refetch: refechAccount } = useHorizonAccount();
+  const hasTrustline = !requiresTrustline(account, BLND_ASSET) && !requiresTrustline(account, OUSD_ASSET);
 
   const { data: inputTokenBalance } = useTokenBalance(
     selectedInputToken.contract,
@@ -104,7 +106,6 @@ const SwapPage: NextPage = () => {
     selectedOutputToken.asset,
     horizonAccount,
   );
-
 
   useEffect(() => {
     getOutputAmount(inputAmount);
@@ -204,6 +205,21 @@ const SwapPage: NextPage = () => {
       setSimResponse(response);
     }
   });
+
+  async function handleCreateTrustlineClick() {
+    if (connected) {
+      await createTrustlines([BLND_ASSET, OUSD_ASSET]);
+      refechAccount();
+    }
+  }
+
+  const handleClick = () => {
+    if(hasTrustline) {
+      handleSwap(false)
+    } else {
+      handleCreateTrustlineClick()
+    }
+  }
 
   return (
     <div className="mix-blend-normal isolate">
@@ -332,8 +348,8 @@ const SwapPage: NextPage = () => {
         <Button
           fullWidth
           variant="contained"
-          onClick={() => handleSwap(false)}
-          disabled={!connected || !inputAmount || parseFloat(inputAmount) <= 0 || isCalculating}
+          onClick={() => handleClick()}
+          disabled={hasTrustline && (!connected || !inputAmount || parseFloat(inputAmount) <= 0 || isCalculating)}
           sx={{
             backgroundColor: '#2050F2',
             height: '62.96px',
@@ -355,7 +371,10 @@ const SwapPage: NextPage = () => {
             },
           }}
         >
-          {isCalculating ? 'Processing ... ' : 'Submit Transaction'}
+          {hasTrustline 
+            ? (isCalculating ? 'Processing ... ' : 'Submit Transaction') 
+            : 'Add trustline'
+          }
         </Button>
 
         {txError && (
