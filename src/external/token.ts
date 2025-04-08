@@ -27,13 +27,11 @@ export async function getTokenBalance(
   if (rpc.Api.isSimulationSuccess(result)) {
     let resultScVal = (result as rpc.Api.SimulateTransactionSuccessResponse).result?.retval;
     if (resultScVal == undefined) {
-      console.error(`Error: unable to fetch balance for token: ${token_id}`);
       return BigInt(0);
     } else {
       return scValToNative(resultScVal);
     }
   } else {
-    console.error(`Error: unable to fetch balance for token: ${token_id}`);
     return BigInt(0);
   }
 }
