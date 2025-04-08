@@ -16,7 +16,7 @@ import {
   useSimulateOperation,
 } from '../hooks/api';
 import { bigIntToFloat, toBalance, toPercentage } from '../utils/formatter';
-import { BLND_ASSET } from '../utils/token_display';
+import { BLND_ASSET, OUSD_ASSET } from '../utils/token_display';
 import { requiresTrustline } from '../utils/horizon';
 import { TokenType } from '../interfaces/tokens';
 import { useWallet } from '../contexts/wallet';
@@ -214,7 +214,7 @@ const Dashboard = () => {
 
   async function handleCreateTrustlineClick() {
     if (connected) {
-      await createTrustlines([BLND_ASSET]);
+      await createTrustlines([BLND_ASSET, OUSD_ASSET]);
       refechAccount();
     }
   }
@@ -223,12 +223,12 @@ const Dashboard = () => {
     ? PositionsEstimate.build(pool, poolOracle, userPoolData.positions)
     : undefined;
   const percent = Number(userEst?.borrowLimit.toFixed(2)) * 100;
-  const hasBLNDTrustline = !requiresTrustline(account, BLND_ASSET);
+  const hasTrustline = !requiresTrustline(account, BLND_ASSET) && !requiresTrustline(account, OUSD_ASSET);
   const isRestore =
     isLoading === false && simResult !== undefined && rpc.Api.isSimulationRestore(simResult);
   const isError =
     isLoading === false && simResult !== undefined && rpc.Api.isSimulationError(simResult);
-  const isTrustline = hasBLNDTrustline && !isRestore && !isError;
+  const isTrustline = hasTrustline && !isRestore && !isError;
 
   if (!walletAddress) {
     return <ConnectWallet />;
@@ -307,7 +307,7 @@ const Dashboard = () => {
             <FlameIcon />
             <div className="flex flex-col cursor-pointer" onClick={handleCreateTrustlineClick}>
               <p className="text-base font-light">Claim Pool Emissions</p>
-              <p className="text-xl font-medium">{isTrustline ? `0 BLND` : `Add Blnd TrustLine`}</p>
+              <p className="text-xl font-medium">{isTrustline ? `0 BLND` : `Add TrustLine`}</p>
             </div>
             <ArrowRightAltIcon />
           </div>

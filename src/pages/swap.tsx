@@ -33,7 +33,7 @@ const tokens = [
     contract: NEXT_PUBLIC_STABLECOIN_ASSET || '',
     icon: '/icons/tokens/ousd.svg',
     decimals: 7,
-    asset: new Asset('OUSD', 'GAXHVI4RI4KFLWWEZSUNLDKMQSKHRBCFB44FNUZDOGSJODVX5GAAKOMX'),
+    asset: new Asset('OUSD', 'GCAA2HBEFR7JWYZAVZ4HRZRMT3P6EVGI63HPUCSWIT37AMNXGJ5IKFXW'),
   },
 ];
 
@@ -105,52 +105,13 @@ const SwapPage: NextPage = () => {
     horizonAccount,
   );
 
-  useEffect(() => {
-    const fetchPairAddress = async () => {
-      try {
-        const args = {
-          token_a: tokens[0].contract,
-          token_b: tokens[1].contract,
-        };
-
-        const response = await routerPairFor(NEXT_PUBLIC_ROUTER_ID || '', args);
-
-        if ('result' in response && response.result) {
-          const retval = response.result.retval;
-
-          if ('retval' in response.result && retval) {
-            if ('value' in retval && typeof retval.value === 'function') {
-              const value = retval.value(); // Call the function to get the actual value
-
-              if (value instanceof Uint8Array) {
-                const contractId = Buffer.from(value);
-                setPairAddress(StrKey.encodeContract(contractId));
-              } else {
-                console.error('retval.value() did not return a Uint8Array:', value);
-              }
-            } else {
-              console.error('retval.value is not a function or is missing:', retval);
-            }
-          } else {
-            console.error('retval is missing in result:', response.result);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch pair address:', error);
-      }
-    };
-
-    if (connected) {
-      fetchPairAddress();
-    }
-  }, [connected, routerPairFor]);
 
   useEffect(() => {
     getOutputAmount(inputAmount);
   }, [selectedInputToken, selectedOutputToken]);
 
   const getOutputAmount = async (inputValue: string) => {
-    if (!inputValue || isNaN(parseFloat(inputValue)) || !connected) {
+    if (!inputValue || isNaN(parseFloat(inputValue)) || !connected || parseFloat(inputValue) <= 0) {
       setOutputAmount('');
       return;
     }
