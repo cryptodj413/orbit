@@ -307,7 +307,7 @@ const Dashboard = () => {
             <FlameIcon />
             <div className="flex flex-col cursor-pointer" onClick={handleCreateTrustlineClick}>
               <p className="text-base font-light">Claim Pool Emissions</p>
-              <p className="text-xl font-medium">{isTrustline ? `0 BLND` : `Add TrustLine`}</p>
+              <p className="text-xl font-medium">{isTrustline ? `Token trusted` : `Add TrustLine`}</p>
             </div>
             <ArrowRightAltIcon />
           </div>
