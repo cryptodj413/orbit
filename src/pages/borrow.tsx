@@ -238,9 +238,9 @@ const Borrow: NextPage = () => {
             background: '#1a2847',
             color: 'rgba(255, 255, 255, 0.3)',
           },
-          borderRadius: '7px',
+          borderRadius: '10px',
           fontWeight: '400',
-          fontSize: '16px',
+          fontSize: '18px',
         }}
       >
         {hasTrustline

@@ -5,7 +5,7 @@ import { TxStatus, useWallet } from '../contexts/wallet';
 import LoadingComponent from '../components/status/loading';
 import SuccessComponent from '../components/status/success';
 import FailComponent from '../components/status/failed';
-import bg from '../../public/background/background.png';
+import bg from '../../public/background/background_1.webp';
 
 const ChildrenCard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { txStatus } = useWallet();
@@ -69,7 +69,6 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
           alignItems: 'center',
           my: 'auto',
         }}
-        className={'mix-blend-hard-light'}
       >
         <NavBar />
         <ChildrenCard>{children}</ChildrenCard>

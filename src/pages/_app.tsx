@@ -17,6 +17,7 @@ export default function MyApp(props: AppProps) {
     <>
       <Head>
         <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <link rel="icon" href="/icons/orbit-logo.svg" />
       </Head>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider theme={theme}>

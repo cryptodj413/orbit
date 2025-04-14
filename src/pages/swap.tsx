@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Box, Button, Typography, Grid } from '@mui/material';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
-import { StrKey, Asset, rpc } from '@stellar/stellar-sdk';
+import { Asset, rpc } from '@stellar/stellar-sdk';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import TokenSelection from '../components/common/TokenSelection';
@@ -74,8 +74,8 @@ const SwapPage: NextPage = () => {
   const [simResponse, setSimResponse] = useState<rpc.Api.SimulateTransactionResponse | undefined>(
     undefined,
   );
-  const [inputAmount, setInputAmount] = useState<string>('0');
-  const [outputAmount, setOutputAmount] = useState<string>('0');
+  const [inputAmount, setInputAmount] = useState<string>(undefined);
+  const [outputAmount, setOutputAmount] = useState<string>(undefined);
   const [exchageRate, setExchangeRate] = useState<string>('0');
   const [selectedInputToken, setSelectedInputToken] = useState<TokenType>(tokens[0]);
   const [selectedOutputToken, setSelectedOutputToken] = useState<TokenType>(tokens[1]);
@@ -214,7 +214,7 @@ const SwapPage: NextPage = () => {
   }
 
   const handleClick = () => {
-    if(hasTrustline) {
+    if (hasTrustline) {
       handleSwap(false)
     } else {
       handleCreateTrustlineClick()
@@ -254,8 +254,8 @@ const SwapPage: NextPage = () => {
                 tokens={tokens}
                 selectedToken={selectedInputToken}
                 onTokenSelect={setSelectedInputToken}
-                balance={bigIntToFloat(inputTokenBalance)}
-                amount={inputAmount}
+                balance={bigIntToFloat(inputTokenBalance ?? BigInt(0))}
+                amount={inputAmount ?? ''}
                 onAmountChange={handleInputChange}
                 alignment="start"
                 decimals={7}
@@ -266,9 +266,9 @@ const SwapPage: NextPage = () => {
                 tokens={tokens}
                 selectedToken={selectedOutputToken}
                 onTokenSelect={setSelectedOutputToken}
-                balance={bigIntToFloat(outputTokenBalance)}
-                amount={outputAmount}
-                onAmountChange={() => {}}
+                balance={bigIntToFloat(outputTokenBalance ?? BigInt(0))}
+                amount={outputAmount ?? ''}
+                onAmountChange={() => { }}
                 alignment="end"
                 decimals={7}
               />
@@ -351,28 +351,24 @@ const SwapPage: NextPage = () => {
           onClick={() => handleClick()}
           disabled={hasTrustline && (!connected || !inputAmount || parseFloat(inputAmount) <= 0 || isCalculating)}
           sx={{
-            backgroundColor: '#2050F2',
-            height: '62.96px',
+            mt: 2,
+            padding: '16px 8px',
+            background: '#2050F2',
             color: 'white',
-            marginTop: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            borderRadius: '12px',
-            fontSize: '20px',
             '&:hover': {
-              backgroundColor: '#1565c0',
+              background: '#1565c0',
             },
             '&:disabled': {
-              backgroundColor: '#83868F',
-              opacity: '32%',
-              color: 'rgba(255, 255, 255)',
+              background: '#1a2847',
+              color: 'rgba(255, 255, 255, 0.3)',
             },
+            borderRadius: '10px',
+            fontWeight: '400',
+            fontSize: '18px',
           }}
         >
-          {hasTrustline 
-            ? (isCalculating ? 'Processing ... ' : 'Submit Transaction') 
+          {hasTrustline
+            ? (isCalculating ? 'Processing ... ' : 'Submit Transaction')
             : 'Add trustline'
           }
         </Button>

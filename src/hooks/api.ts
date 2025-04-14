@@ -366,8 +366,8 @@ export function useTokenBalance(
     },
   });
 }
-//********** Auction Data **********//
 
+//********** Auction Data **********//
 const AUCTION_EVENT_FILTERS = [
   [xdr.ScVal.scvSymbol('fill_auction').toXDR('base64'), '*', '*'],
   [xdr.ScVal.scvSymbol('delete_liquidation_auction').toXDR('base64'), '*'],
