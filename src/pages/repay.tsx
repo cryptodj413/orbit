@@ -90,7 +90,6 @@ const Repay: NextPage = () => {
               }}
             >
               <MenuItem value={'OUSD'}>Repay OUSD</MenuItem>
-              <MenuItem value={'XLM'}>Repay XLM</MenuItem>
             </Select>
           </Grid>
           <Grid item xs={6}>

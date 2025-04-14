@@ -105,8 +105,7 @@ const getTokenInfo = (contractId: string): TokenType | undefined => {
 const Dashboard = () => {
   const { walletAddress, connected, createTrustlines } = useWallet();
 
-  const { data: horizonAccount } = useHorizonAccount();
-  const { data: account, refetch: refechAccount } = useHorizonAccount();
+  const { data: account, data: horizonAccount, refetch: refechAccount } = useHorizonAccount();
 
   const poolId = NEXT_PUBLIC_POOL;
   const { data: poolMeta } = usePoolMeta(poolId);
@@ -188,29 +187,6 @@ const Dashboard = () => {
     });
     return balances;
   }, [pool, userPoolData]);
-
-  const positions = React.useMemo(() => {
-    if (!pool || !userPoolData || !poolOracle) return [];
-
-    const positionsList = [];
-    pool.reserves.forEach((reserve, assetId) => {
-      const collateral = userPoolData.getCollateralFloat(reserve);
-      const supply = userPoolData.getSupplyFloat(reserve);
-      const liabilities = userPoolData.getLiabilitiesFloat(reserve);
-
-      if (collateral > 0 || supply > 0 || liabilities > 0) {
-        const tokenInfo = getTokenInfo(assetId);
-        positionsList.push({
-          token: assetId,
-          tokenCode: tokenInfo?.code || assetId,
-          tokenIcon: tokenInfo?.icon || `/icons/tokens/default.svg`,
-          amount: collateral + supply - liabilities,
-          price: poolOracle.getPriceFloat(assetId) || 0,
-        });
-      }
-    });
-    return positionsList;
-  }, [pool, userPoolData, poolOracle]);
 
   async function handleCreateTrustlineClick() {
     if (connected) {
@@ -303,11 +279,11 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="bg-[#FFFFFF29] rounded-[8px] px-4 py-3 flex items-center justify-between mt-[28px]">
+          <div className="bg-[#FFFFFF29] rounded-[8px] px-4 py-3 flex items-center justify-between mt-[28px]" onClick={handleCreateTrustlineClick}>
             <FlameIcon />
-            <div className="flex flex-col cursor-pointer" onClick={handleCreateTrustlineClick}>
+            <div className="flex flex-col cursor-pointer">
               <p className="text-base font-light">Claim Pool Emissions</p>
-              <p className="text-xl font-medium">{isTrustline ? `0 BLND` : `Add TrustLine`}</p>
+              <p className="text-xl font-medium">{isTrustline ? `Token trusted` : `Add TrustLine`}</p>
             </div>
             <ArrowRightAltIcon />
           </div>

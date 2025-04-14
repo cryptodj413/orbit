@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { NextPage } from 'next';
 import Link from 'next/link';
 import { Grid, MenuItem, Select, SelectChangeEvent, Tooltip } from '@mui/material';
@@ -13,7 +14,8 @@ import {
 } from '../config/constants';
 
 const Withdraw: NextPage = () => {
-  const [selected, setSelected] = React.useState('XLM');
+  const router = useRouter()
+  const [selected, setSelected] = React.useState(router.pathname === '/withdraw' ? 'XLM' : 'OUSD');
 
   const poolId = NEXT_PUBLIC_POOL || '';
   const assetId =
@@ -64,7 +66,6 @@ const Withdraw: NextPage = () => {
             }}
           >
             <MenuItem value={'XLM'}>Withdraw XLM</MenuItem>
-            <MenuItem value={'OUSD'}>Withdraw OUSD</MenuItem>
           </Select>
         </Grid>
         <Grid item xs={6}>

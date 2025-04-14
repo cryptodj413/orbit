@@ -4,13 +4,15 @@ import Image from 'next/image';
 import { Box, Button, Typography, Grid } from '@mui/material';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
-import { StrKey, Asset, rpc } from '@stellar/stellar-sdk';
+import { Asset, rpc } from '@stellar/stellar-sdk';
 import { useHorizonAccount, useTokenBalance } from '../hooks/api';
 import { RPC_DEBOUNCE_DELAY, useDebouncedState } from '../hooks/debounce';
 import TokenSelection from '../components/common/TokenSelection';
 import { TokenType } from '../interfaces/tokens';
 import { useWallet, TxStatus } from '../contexts/wallet';
 import { toBalance, bigIntToFloat, floatToBigInt } from '../utils/formatter';
+import { BLND_ASSET, OUSD_ASSET } from '../utils/token_display';
+import { requiresTrustline } from '../utils/horizon';
 import swapBackground from '../../public/background/swapBackground.svg';
 import {
   NEXT_PUBLIC_COLLATERAL_ASSET,
@@ -52,6 +54,7 @@ const OverviewItem = ({
     setFirst(false);
   }, []);
 
+
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
       <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center', fontSize: '13px' }}>
@@ -71,12 +74,11 @@ const SwapPage: NextPage = () => {
   const [simResponse, setSimResponse] = useState<rpc.Api.SimulateTransactionResponse | undefined>(
     undefined,
   );
-  const [inputAmount, setInputAmount] = useState<string>('0');
-  const [outputAmount, setOutputAmount] = useState<string>('0');
+  const [inputAmount, setInputAmount] = useState<string>(undefined);
+  const [outputAmount, setOutputAmount] = useState<string>(undefined);
   const [exchageRate, setExchangeRate] = useState<string>('0');
   const [selectedInputToken, setSelectedInputToken] = useState<TokenType>(tokens[0]);
   const [selectedOutputToken, setSelectedOutputToken] = useState<TokenType>(tokens[1]);
-  const [pairAddress, setPairAddress] = useState<string>('');
   const [isCalculating, setIsCalculating] = useState<boolean>(false);
   const [txError, setTxError] = useState<boolean>(false);
   const [txErrorMessage, setTxErrorMessage] = useState<string>();
@@ -86,13 +88,13 @@ const SwapPage: NextPage = () => {
     walletAddress,
     txType,
     swapExactTokensForTokens,
-    routerPairFor,
     routerGetAmountOut,
-    routerGetAmountIn,
     setTxStatus,
+    createTrustlines
   } = useWallet();
 
-  const { data: horizonAccount } = useHorizonAccount();
+  const { data: account, data: horizonAccount, refetch: refechAccount } = useHorizonAccount();
+  const hasTrustline = !requiresTrustline(account, BLND_ASSET) && !requiresTrustline(account, OUSD_ASSET);
 
   const { data: inputTokenBalance } = useTokenBalance(
     selectedInputToken.contract,
@@ -104,7 +106,6 @@ const SwapPage: NextPage = () => {
     selectedOutputToken.asset,
     horizonAccount,
   );
-
 
   useEffect(() => {
     getOutputAmount(inputAmount);
@@ -205,6 +206,21 @@ const SwapPage: NextPage = () => {
     }
   });
 
+  async function handleCreateTrustlineClick() {
+    if (connected) {
+      await createTrustlines([BLND_ASSET, OUSD_ASSET]);
+      refechAccount();
+    }
+  }
+
+  const handleClick = () => {
+    if (hasTrustline) {
+      handleSwap(false)
+    } else {
+      handleCreateTrustlineClick()
+    }
+  }
+
   return (
     <div className="mix-blend-normal isolate">
       <div>
@@ -238,8 +254,8 @@ const SwapPage: NextPage = () => {
                 tokens={tokens}
                 selectedToken={selectedInputToken}
                 onTokenSelect={setSelectedInputToken}
-                balance={bigIntToFloat(inputTokenBalance)}
-                amount={inputAmount}
+                balance={bigIntToFloat(inputTokenBalance ?? BigInt(0))}
+                amount={inputAmount ?? ''}
                 onAmountChange={handleInputChange}
                 alignment="start"
                 decimals={7}
@@ -250,9 +266,9 @@ const SwapPage: NextPage = () => {
                 tokens={tokens}
                 selectedToken={selectedOutputToken}
                 onTokenSelect={setSelectedOutputToken}
-                balance={bigIntToFloat(outputTokenBalance)}
-                amount={outputAmount}
-                onAmountChange={() => {}}
+                balance={bigIntToFloat(outputTokenBalance ?? BigInt(0))}
+                amount={outputAmount ?? ''}
+                onAmountChange={() => { }}
                 alignment="end"
                 decimals={7}
               />
@@ -332,30 +348,29 @@ const SwapPage: NextPage = () => {
         <Button
           fullWidth
           variant="contained"
-          onClick={() => handleSwap(false)}
-          disabled={!connected || !inputAmount || parseFloat(inputAmount) <= 0 || isCalculating}
+          onClick={() => handleClick()}
+          disabled={hasTrustline && (!connected || !inputAmount || parseFloat(inputAmount) <= 0 || isCalculating)}
           sx={{
-            backgroundColor: '#2050F2',
-            height: '62.96px',
+            mt: 2,
+            padding: '16px 8px',
+            background: '#2050F2',
             color: 'white',
-            marginTop: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '16px',
-            borderRadius: '12px',
-            fontSize: '20px',
             '&:hover': {
-              backgroundColor: '#1565c0',
+              background: '#1565c0',
             },
             '&:disabled': {
-              backgroundColor: '#83868F',
-              opacity: '32%',
-              color: 'rgba(255, 255, 255)',
+              background: '#1a2847',
+              color: 'rgba(255, 255, 255, 0.3)',
             },
+            borderRadius: '10px',
+            fontWeight: '400',
+            fontSize: '18px',
           }}
         >
-          {isCalculating ? 'Processing ... ' : 'Submit Transaction'}
+          {hasTrustline
+            ? (isCalculating ? 'Processing ... ' : 'Submit Transaction')
+            : 'Add trustline'
+          }
         </Button>
 
         {txError && (

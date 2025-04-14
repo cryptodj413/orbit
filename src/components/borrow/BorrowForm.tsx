@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import { Box, Typography, Select, MenuItem, InputBase } from '@mui/material';
+import { Box, Typography, Select, MenuItem, InputBase, TextField } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import Icon from '../../../public/icons/Borrow.svg';
@@ -70,7 +70,7 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center' }}>
-          <StyledInput
+          {/* <TextField
             value={collateralAmount}
             onChange={(e) => handleBorrowChange(e.target.value)}
             placeholder="0.00"
@@ -79,6 +79,28 @@ const BorrowForm: React.FC<BorrowFormProps> = ({
               inputMode: 'decimal',
               pattern: '[0-9]*[.]?[0-9]*',
             }}
+          /> */}
+          <TextField
+            value={collateralAmount}
+            onChange={(e) => handleBorrowChange(e.target.value)}
+            variant="standard"
+            InputProps={{
+              disableUnderline: true,
+              style: { fontSize: '2.125rem', fontWeight: 700 },
+            }}
+            sx={{
+              '& .MuiInputBase-input': {
+                fontWeight: 700,
+              },
+              input: {
+                color: 'white',
+                lineHeight: '41.35px',
+                letterSpacing: '3px',
+                fontWeight: '500 !important'
+              },
+              width: '100%',
+            }}
+            placeholder="0.0"
           />
           <Typography color="white" sx={{ ml: 1, fontSize: '30px', fontWeight: 500 }}>
             XLM

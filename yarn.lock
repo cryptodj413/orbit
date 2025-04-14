@@ -1905,11 +1905,6 @@
     "@stablelib/random" "^1.0.2"
     "@stablelib/wipe" "^1.0.1"
 
-"@stellar/freighter-api@3.0.0":
-  version "3.0.0"
-  resolved "https://registry.npmjs.org/@stellar/freighter-api/-/freighter-api-3.0.0.tgz"
-  integrity sha512-AI1AeHnCPLMcM8d6182FScOJjCFd1tLZcNuu5M10NmtuLfNzavw+f991dWBoz6h41mOKjauIaojR+7VfU2nULg==
-
 "@stellar/freighter-api@4.0.0":
   version "4.0.0"
   resolved "https://registry.npmjs.org/@stellar/freighter-api/-/freighter-api-4.0.0.tgz"

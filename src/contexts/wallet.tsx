@@ -18,7 +18,6 @@ import {
   XBULL_ID,
   xBullModule,
 } from '@creit.tech/stellar-wallets-kit';
-import { getNetworkDetails as getFreighterNetwork } from '@stellar/freighter-api';
 import {
   Asset,
   BASE_FEE,
@@ -89,7 +88,7 @@ export interface IWalletContext {
     sim: boolean,
   ) => Promise<rpc.Api.SimulateTransactionResponse | undefined>;
   createTrustlines(assets: Asset[]): Promise<void>;
-  getNetworkDetails(): Promise<Network & { horizonUrl: string }>;
+  // getNetworkDetails(): Promise<Network & { horizonUrl: string }>;
 }
 
 export enum TxStatus {
@@ -128,6 +127,8 @@ export const WalletProvider = ({ children = null as any }) => {
   const [txFailure, setTxFailure] = useState<string | undefined>(undefined);
   const [txType, setTxType] = useState<TxType>(TxType.CONTRACT);
   const [walletAddress, setWalletAddress] = useState<string>('');
+
+  
 
   function setFailureMessage(message: string | undefined) {
     if (message) {
@@ -478,21 +479,6 @@ export const WalletProvider = ({ children = null as any }) => {
     }
   }
 
-  async function getNetworkDetails() {
-    try {
-      const freighterDetails: any = await getFreighterNetwork();
-      return {
-        rpc: freighterDetails.sorobanRpcUrl,
-        passphrase: freighterDetails.networkPassphrase,
-        maxConcurrentRequests: network.maxConcurrentRequests,
-        horizonUrl: freighterDetails.networkUrl,
-      };
-    } catch (e) {
-      console.error('Failed to get network details from freighter', e);
-      return network;
-    }
-  }
-
   return (
     <WalletContext.Provider
       value={{
@@ -517,7 +503,6 @@ export const WalletProvider = ({ children = null as any }) => {
         poolSubmit,
         poolClaim,
         createTrustlines,
-        getNetworkDetails,
       }}
     >
       {children}
